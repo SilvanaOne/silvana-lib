@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist/node",
+    "composite": true
+  },
+  "references": [{ "path": "../storage" }],
+  "include": ["src/**/*"],
+  "exclude": ["dist/**", "node_modules"]
+}

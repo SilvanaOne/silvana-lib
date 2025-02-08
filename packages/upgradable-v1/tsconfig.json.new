@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist/node"
+  },
+  "typedocOptions": {
+    "entryPoints": ["src/index.ts"],
+    "out": "docs",
+    "plugin": [],
+    "excludeExternals": true,
+    "sourceLinkTemplate": "https://github.com/zkcloudworker/minatokens-lib/blob/main/packages/token/{path}#L{line}"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist/**", "node_modules"],
+  "ts-node": {
+    "experimentalSpecifierResolution": "node",
+    "transpileOnly": true,
+    "esm": true
+  }
+}

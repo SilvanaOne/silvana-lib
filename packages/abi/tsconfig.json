@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist/node"
+  },
+  "references": [
+    { "path": "../token" },
+    { "path": "../storage" },
+    { "path": "../api" }
+  ],
+  "include": ["src/**/*"],
+  "exclude": ["dist/**", "node_modules"]
+}

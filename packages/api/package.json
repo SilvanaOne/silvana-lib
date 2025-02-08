@@ -1,0 +1,61 @@
+{
+  "name": "@silvana-one/api",
+  "description": "Silvana API",
+  "version": "0.1.0",
+  "author": "DFST",
+  "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
+  "dependencies": {
+    "@hey-api/client-fetch": "^0.5.6"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.60.0",
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "exports": {
+    "types": "./dist/node/index.d.ts",
+    "node": {
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.cjs"
+    },
+    "browser": "./dist/web/index.js",
+    "default": "./dist/web/index.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://docs.silvana.one",
+  "keywords": [
+    "cloud",
+    "fungible-token",
+    "mina-protocol",
+    "silvana",
+    "NFT",
+    "proving",
+    "tokens",
+    "typescript"
+  ],
+  "license": "Apache-2.0",
+  "main": "dist/web/index.js",
+  "peerDependencies": {},
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": "SilvanaOne/silvana-lib.git",
+  "scripts": {
+    "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
+    "generate": "npm run validate && openapi-ts && rm src/client/index.ts && node replace-import.cjs && npm run build",
+    "release": "npm publish --access public",
+    "validate": "swagger-cli validate open-api.yaml"
+  },
+  "type": "module",
+  "types": "./dist/node/index.d.ts"
+}
