@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: MinaTokens API
+  title: Silvana OpenAPI
   description: API for interacting with Mina Fungible Tokens and NFTs.
-  version: "0.16.3"
+  version: "0.1.0"
 servers:
   - url: https://minatokens.com/api/v1/
     description: Mina Mainnet
@@ -11,7 +11,7 @@ servers:
   - url: https://zekotokens.com/api/v1/
     description: Zeko Devnet
 tags:
-  - name: Fungible Token
+  - name: FungibleToken
     description: Fungible Token Requests
   - name: Transaction
     description: Transaction Requests
@@ -25,7 +25,7 @@ paths:
   /token/launch:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Deploy a new fungible token contract.
       description: |
         The `launch` endpoint is used to deploy a new fungible token on the Mina blockchain.
@@ -390,7 +390,7 @@ paths:
   /token/mint:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Mint new tokens to a specified address.
       description: |
         The `mint` endpoint allows authorized users to mint new tokens of a fungible token on the Mina blockchain.
@@ -446,7 +446,7 @@ paths:
   /token/transfer:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Transfer tokens from one address to another.
       description: |
         The `transfer` endpoint allows users to transfer tokens of a fungible token on the Mina blockchain from one address to another.
@@ -501,7 +501,7 @@ paths:
   /token/airdrop:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Distribute tokens to multiple addresses via airdrop.
       description: |
         Allows users to distribute tokens to multiple addresses in a single transaction.
@@ -562,7 +562,7 @@ paths:
   /token/redeem:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Redeem tokens for a MINA (applicable for Fungible Tokens with Bonding Curve Admin)
       description: |
         The `redeem` endpoint allows users to redeem tokens of a fungible token on the Mina blockchain for a MINA.
@@ -617,7 +617,7 @@ paths:
   /token/burn:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Burn tokens from one address.
       description: |
         The `burn` endpoint allows users to burn tokens of a fungible token on the Mina blockchain from one address.
@@ -672,7 +672,7 @@ paths:
   /token/bid/create:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Place a bid on a token
       description: |
         Allows users to place a bid on an token.
@@ -705,7 +705,7 @@ paths:
   /token/offer/create:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Create an offer to sell tokens at a specified price.
       description: |
         Allows users to create an offer to sell a specified amount of tokens at a given price.
@@ -759,7 +759,7 @@ paths:
   /token/offer/buy:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Purchase tokens from an existing offer.
       description: |
         Allows users to purchase tokens from an existing offer on the Mina blockchain.
@@ -814,7 +814,7 @@ paths:
   /token/bid/sell:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Sell a token to the Bid contract.
       description: |
         Allows token owners to sell their tokens to the Bid contract.
@@ -847,7 +847,7 @@ paths:
   /token/bid/withdraw:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Withdraw a previously placed bid on an token.
       description: |
         Allows users to withdraw a bid they have previously placed using the `/bid` endpoint.
@@ -881,7 +881,7 @@ paths:
   /token/offer/withdraw:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Withdraw a previously made offer to sell a token.
       description: |
         Allows users to withdraw an offer they have previously made using the `/offer` endpoint.
@@ -915,7 +915,7 @@ paths:
   /token/bid/whitelist:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Update the bid whitelist
       description: |
         Allows administrators to update the whitelist of addresses permitted to interact with the Bid contract.
@@ -949,7 +949,7 @@ paths:
   /token/offer/whitelist:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Update the offer whitelist
       description: |
         Allows administrators to update the whitelist of addresses permitted to interact with the Offer contract.
@@ -983,7 +983,7 @@ paths:
   /token/admin/whitelist:
     post:
       tags:
-        - Fungible Token
+        - FungibleToken
       summary: Update the advanced admin whitelist
       description: |
         Allows administrators to update the whitelist of admin contracts.
@@ -1318,9 +1318,8 @@ components:
         - sender
       properties:
         txType:
-          type: string
-          enum:
-            $ref: "#/components/schemas/TokenTransactionType"
+          allOf:
+            - $ref: "#/components/schemas/TokenTransactionType"
           description: Type of the token transaction.
         tokenAddress:
           type: string
@@ -1873,7 +1872,8 @@ components:
             - feePayer
           properties:
             zkappCommand:
-              type: any
+              type: object
+              additionalProperties: true
               description: The zkApp command data.
             feePayer:
               type: object
