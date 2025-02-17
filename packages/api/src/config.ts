@@ -17,8 +17,8 @@ export function config({
       chain === "zeko"
         ? "https://zekotokens.com/api/v1/"
         : chain === "devnet"
-        ? "https://devnet.silvana-one.com/api/v1/"
-        : "https://silvana-one.com/api/v1/",
+        ? "https://devnet.minatokens.com/api/v1/"
+        : "https://minatokens.com/api/v1/",
     throwOnError: throwOnError ?? true,
   });
 }

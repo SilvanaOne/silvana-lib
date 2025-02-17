@@ -94,7 +94,7 @@ export class MetadataTree {
    */
   static fromJSON(json: {
     height: number;
-    root: string;
+    root?: string;
     values: { key: string; value: string }[];
   }): MetadataTree {
     const { height, values, root } = json;
@@ -102,7 +102,7 @@ export class MetadataTree {
     if (typeof height !== "number" || height < 1 || height > 254)
       throw new Error(`Invalid tree height`);
 
-    if (!root || typeof root !== "string") throw new Error(`Invalid tree root`);
+    if (root && typeof root !== "string") throw new Error(`Invalid tree root`);
 
     if (!values || !Array.isArray(values))
       throw new Error(`Tree values are required`);
@@ -121,7 +121,8 @@ export class MetadataTree {
       }))
     );
 
-    if (tree.root.toJSON() !== root) throw new Error("Invalid tree json");
+    if (root && tree.root.toJSON() !== root)
+      throw new Error("Invalid tree json");
 
     return tree;
   }

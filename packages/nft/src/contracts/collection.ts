@@ -57,6 +57,7 @@ import {
   MAX_ROYALTY_FEE,
   TransferExtendedParams,
 } from "../interfaces/index.js";
+import { mulDiv } from "../util/index.js";
 import { nftVerificationKeys } from "../vk.js";
 export { CollectionDeployProps, CollectionFactory, CollectionErrors };
 
@@ -781,10 +782,11 @@ function CollectionFactory(params: {
         // We cannot check the price here, so we just rely on owner contract
         // Malicious owner contracts can be blocked by the admin contract
         // or by setting the transfer fee to a higher value reflecting the market price
-        transferEventDraft.price
-          .orElse(1_000_000_000n) // is not used, can be any value
-          .div(MAX_ROYALTY_FEE)
-          .mul(UInt64.from(royaltyFee)),
+        mulDiv({
+          value: transferEventDraft.price.value,
+          multiplier: UInt64.from(royaltyFee),
+          denominator: UInt64.from(MAX_ROYALTY_FEE),
+        }).result,
         transferFee
       );
 

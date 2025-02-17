@@ -25,6 +25,7 @@ import {
   TransferExtendedParams,
   TransferParams,
 } from "../interfaces/index.js";
+import { mulDiv } from "../util/index.js";
 
 const MAX_SALE_FEE = 100000;
 const MIN_STEP = 10; // 1% to previous bid
@@ -252,7 +253,11 @@ export function AuctionFactory(params: {
         UInt32.from(MAX_SALE_FEE),
         "Sale fee is too high"
       );
-      return price.div(MAX_SALE_FEE).mul(UInt64.from(saleFee));
+      return mulDiv({
+        value: price,
+        multiplier: UInt64.from(saleFee),
+        denominator: UInt64.from(MAX_SALE_FEE),
+      }).result;
     }
     // anyone can call this method to bid, paying the bid amount for the bidder
     @method.returns(Auction)
@@ -268,7 +273,13 @@ export function AuctionFactory(params: {
         "Bid should be greater or equal than the minimum price"
       );
       price.assertGreaterThan(
-        bidAmount.add(bidAmount.div(1000).mul(UInt64.from(MIN_STEP))),
+        bidAmount.add(
+          mulDiv({
+            value: bidAmount,
+            multiplier: UInt64.from(MIN_STEP),
+            denominator: UInt64.from(1000),
+          }).result
+        ),
         "Bid should be greater than the existing bid plus the minimum step"
       );
       this.network.globalSlotSinceGenesis.requireBetween(

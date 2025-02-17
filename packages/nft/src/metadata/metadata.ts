@@ -1,6 +1,7 @@
-import { Field, Poseidon, Struct, Experimental } from "o1js";
+import { Field, Poseidon, Struct, Experimental, PublicKey, UInt64 } from "o1js";
 import { fieldFromString } from "../interfaces/index.js";
 import { Text } from "./text.js";
+import { MinaAddress } from "./address.js";
 import { MetadataTree } from "./tree.js";
 export {
   Metadata,
@@ -31,7 +32,9 @@ type MetadataFieldType =
   | "text"
   | "image"
   | "url"
-  | "field"
+  | "field" // Field
+  | "number" // UInt64
+  | "address" // PublicKey
   | "map"
   | "tree";
 
@@ -50,7 +53,7 @@ class MetadataValue extends Struct({
    * @returns A new MetadataValue.
    */
   static new(params: {
-    value: Field | Text | Metadata | MetadataTree;
+    value: Field | Text | Metadata | MetadataTree | PublicKey | UInt64;
     type: MetadataFieldType;
   }) {
     const { value, type } = params;
@@ -73,6 +76,18 @@ class MetadataValue extends Struct({
       case "field":
         if (!(value instanceof Field)) throw new Error(`Invalid value type`);
         valueField = value;
+        break;
+      case "number":
+        if (!(value instanceof UInt64)) throw new Error(`Invalid value type`);
+        valueField = value.value;
+        break;
+      case "address":
+        if (!(value instanceof PublicKey))
+          throw new Error(`Invalid value type`);
+        const address = new MinaAddress(value);
+        valueField = address.hash;
+        length = Field(2);
+        height = Field(0);
         break;
       case "map":
         if (!(value instanceof Metadata)) throw new Error(`Invalid value type`);
@@ -271,7 +286,14 @@ class Metadata {
   traits: {
     [key: string]: {
       type: string;
-      value: string | Field | Metadata | MetadataTree | unknown;
+      value:
+        | string
+        | Field
+        | Metadata
+        | MetadataTree
+        | UInt64
+        | PublicKey
+        | unknown;
       isPrivate: boolean;
     };
   } = {};
@@ -328,7 +350,14 @@ class Metadata {
   addTrait(params: {
     key: string;
     type: string;
-    value: string | Field | Metadata | MetadataTree | unknown;
+    value:
+      | string
+      | Field
+      | Metadata
+      | MetadataTree
+      | UInt64
+      | PublicKey
+      | unknown;
     isPrivate?: boolean;
   }): {
     key: Field;
@@ -340,7 +369,13 @@ class Metadata {
     let canonicalRepresentation: unknown = value;
 
     if (type in MetadataFieldTypeValues) {
-      let valueObject: Field | Text | Metadata | MetadataTree;
+      let valueObject:
+        | Field
+        | Text
+        | Metadata
+        | MetadataTree
+        | UInt64
+        | PublicKey;
       switch (type) {
         case "string":
           if (typeof value !== "string")
@@ -356,6 +391,16 @@ class Metadata {
           break;
         case "field":
           if (!(value instanceof Field))
+            throw new Error(`Invalid trait value type`);
+          valueObject = value;
+          break;
+        case "number":
+          if (!(value instanceof UInt64))
+            throw new Error(`Invalid trait value type`);
+          valueObject = value;
+          break;
+        case "address":
+          if (!(value instanceof PublicKey))
             throw new Error(`Invalid trait value type`);
           valueObject = value;
           break;
@@ -430,6 +475,16 @@ class Metadata {
               if (!(value instanceof Field))
                 throw new Error(`Invalid trait value type`);
               jsonValue = value.toJSON();
+              break;
+            case "number":
+              if (!(value instanceof UInt64))
+                throw new Error(`Invalid trait value type`);
+              jsonValue = value.toJSON();
+              break;
+            case "address":
+              if (!(value instanceof PublicKey))
+                throw new Error(`Invalid trait value type`);
+              jsonValue = value.toBase58();
               break;
             case "map":
               if (!(value instanceof Metadata))
@@ -511,7 +566,14 @@ class Metadata {
       plugins,
     });
     for (const { key, type, value, isPrivate } of traits) {
-      let valueField: string | Field | Metadata | MetadataTree | unknown;
+      let valueField:
+        | string
+        | Field
+        | Metadata
+        | MetadataTree
+        | UInt64
+        | PublicKey
+        | unknown;
       switch (type) {
         case "string":
         case "text":
@@ -525,6 +587,16 @@ class Metadata {
           if (typeof value !== "string")
             throw new Error(`Invalid trait value type`);
           valueField = Field.fromJSON(value);
+          break;
+        case "number":
+          if (typeof value !== "string")
+            throw new Error(`Invalid trait value type`);
+          valueField = UInt64.fromJSON(value);
+          break;
+        case "address":
+          if (typeof value !== "string")
+            throw new Error(`Invalid trait value type`);
+          valueField = PublicKey.fromBase58(value);
           break;
         case "map":
           if (typeof value !== "object")
@@ -587,6 +659,133 @@ class Metadata {
 
     return metadata;
   }
+
+  /**
+   * Constructs a Metadata instance from JSON data.
+   * @param params - The parameters including json data, checkRoot flag, and plugins.
+   * @returns A new Metadata instance.
+   */
+  static fromOpenApiJSON(params: {
+    json: {
+      name: string;
+      image: string;
+      description?: string;
+      banner?: string;
+      traits: {
+        key: string;
+        type: string;
+        value: string | object;
+        isPrivate?: boolean;
+      }[];
+    };
+    plugins?: MetadataPlugin[];
+  }): Metadata {
+    const { json, plugins } = params;
+    const { name, description, image, banner, traits } = json;
+    if (!name) throw new Error(`Metadata name is required`);
+    if (typeof name !== "string") throw new Error(`Invalid metadata name`);
+    if (!image || typeof image !== "string")
+      throw new Error(`Invalid metadata image`);
+    if (description && typeof description !== "string")
+      throw new Error(`Invalid metadata description`);
+    if (banner && typeof banner !== "string")
+      throw new Error(`Invalid metadata banner`);
+    if (!traits || !Array.isArray(traits))
+      throw new Error(`Metadata traits are required`);
+    for (const { key, type, value, isPrivate } of traits) {
+      if (!key || typeof key !== "string") throw new Error(`Invalid trait key`);
+      if (!type || typeof type !== "string")
+        throw new Error(`Invalid trait type`);
+      if (!value || (typeof value !== "string" && typeof value !== "object"))
+        throw new Error(`Invalid trait value`);
+      if (isPrivate && typeof isPrivate !== "boolean")
+        throw new Error(`Invalid trait isPrivate`);
+    }
+    const metadata = new Metadata({
+      name,
+      description,
+      image,
+      banner,
+      plugins,
+    });
+    for (const { key, type, value, isPrivate } of traits) {
+      let valueField:
+        | string
+        | Field
+        | Metadata
+        | MetadataTree
+        | UInt64
+        | PublicKey
+        | unknown;
+      switch (type) {
+        case "string":
+        case "text":
+        case "image":
+        case "url":
+          if (typeof value !== "string")
+            throw new Error(`Invalid trait value type`);
+          valueField = value;
+          break;
+        case "field":
+          if (typeof value !== "string")
+            throw new Error(`Invalid trait value type`);
+          valueField = Field.fromJSON(value);
+          break;
+        case "number":
+          if (typeof value !== "string")
+            throw new Error(`Invalid trait value type`);
+          valueField = UInt64.fromJSON(value);
+          break;
+        case "address":
+          if (typeof value !== "string")
+            throw new Error(`Invalid trait value type`);
+          valueField = PublicKey.fromBase58(value);
+          break;
+        case "map":
+          if (typeof value !== "object")
+            throw new Error(`Invalid trait value type`);
+          valueField = Metadata.fromOpenApiJSON({
+            json: value as unknown as {
+              name: string;
+              image: string;
+              description?: string;
+              traits: {
+                key: string;
+                type: string;
+                value: string | object;
+                isPrivate?: boolean;
+              }[];
+            },
+          });
+          break;
+        case "tree":
+          if (typeof value !== "object")
+            throw new Error(`Invalid trait value type`);
+          valueField = MetadataTree.fromJSON(
+            value as unknown as {
+              height: number;
+              root: string;
+              values: { key: string; value: string }[];
+            }
+          );
+          break;
+        default:
+          const plugin = metadata.plugins.find(
+            (plugin) => plugin.name === type
+          );
+          if (!plugin) throw new Error(`Unknown trait type`);
+          valueField = plugin.fromJSON(value);
+      }
+      metadata.addTrait({
+        key,
+        type,
+        value: valueField,
+        isPrivate: isPrivate ?? false,
+      });
+    }
+
+    return metadata;
+  }
 }
 
 /**
@@ -600,4 +799,6 @@ const MetadataFieldTypeValues = {
   field: { code: 5n, inputType: Field, storedType: Field }, // Field
   map: { code: 6n, inputType: Metadata, storedType: Metadata }, // Metadata
   tree: { code: 7n, inputType: MetadataTree, storedType: MetadataTree }, // MetadataTree
+  number: { code: 8n, inputType: UInt64, storedType: UInt64 }, // UInt64
+  address: { code: 9n, inputType: PublicKey, storedType: MinaAddress }, // MinaAddress
 } as const;

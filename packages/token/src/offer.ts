@@ -14,6 +14,7 @@ import {
 } from "o1js";
 import { Whitelist } from "@silvana-one/storage";
 import { FungibleToken } from "./FungibleToken.js";
+import { mulDiv } from "./div.js";
 
 export interface FungibleTokenOfferContractDeployProps
   extends Exclude<DeployArgs, undefined> {
@@ -124,14 +125,11 @@ export class FungibleTokenOfferContract extends SmartContract {
     const tokenId = tokenContract.deriveTokenId();
     tokenId.assertEquals(this.tokenId);
     const price = this.price.getAndRequireEquals();
-    const totalPriceField = price.value
-      .mul(amount.value)
-      .div(Field(1_000_000_000));
-    totalPriceField.assertLessThan(
-      UInt64.MAXINT().value,
-      "totalPrice overflow"
-    );
-    const totalPrice = UInt64.Unsafe.fromField(totalPriceField);
+    const totalPrice = mulDiv({
+      value: price,
+      multiplier: amount,
+      denominator: UInt64.from(1_000_000_000),
+    }).result;
 
     const buyer = this.sender.getUnconstrained();
     const buyerUpdate = AccountUpdate.createSigned(buyer);

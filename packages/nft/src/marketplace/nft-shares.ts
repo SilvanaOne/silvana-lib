@@ -21,6 +21,7 @@ import {
 } from "@silvana-one/token";
 import { NFTOwnerBase, TransferExtendedParams } from "../interfaces/index.js";
 import { Auction, AuctionFactory } from "./auction.js";
+import { mulDiv } from "../util/index.js";
 
 export interface NFTSharesAdminDeployProps
   extends Exclude<DeployArgs, undefined> {
@@ -275,14 +276,12 @@ export function NFTSharesFactory(params: {
       balance
         .equals(UInt64.zero)
         .assertFalse("Balance is zero, nothing to withdraw");
-      const amountInMinaField = shares.value
-        .mul(balance.value)
-        .div(sharesOutstanding.value);
-      amountInMinaField.assertLessThanOrEqual(
-        balance.value,
-        "Amount in Mina is greater than the balance"
-      );
-      const amountInMina = UInt64.Unsafe.fromField(amountInMinaField);
+      const amountInMina = mulDiv({
+        value: shares,
+        multiplier: balance,
+        denominator: sharesOutstanding,
+      }).result;
+
       const sender = this.sender.getUnconstrained();
       const senderUpdate = AccountUpdate.createSigned(sender);
       senderUpdate.balance.addInPlace(amountInMina);

@@ -22,6 +22,43 @@ tags:
   - name: Faucet
     description: Faucet Requests
 paths:
+  /nft/launch:
+    post:
+      tags:
+        - NFT
+      summary: Deploy a new NFT Collection contract.
+      description: |
+        The `launch` endpoint is used to deploy a new NFT Collection on the Mina blockchain.
+        It allows users to create a new NFT Collection with customizable parameters.
+      operationId: launchNftCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/LaunchNftCollectionStandardAdminParams"
+                - $ref: "#/components/schemas/LaunchNftCollectionAdvancedAdminParams"
+      responses:
+        "200":
+          description: Successful deployment of a new NFT Collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NftTransaction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
   /token/launch:
     post:
       tags:
@@ -275,6 +312,7 @@ paths:
               oneOf:
                 - $ref: "#/components/schemas/ProveTokenTransaction"
                 - $ref: "#/components/schemas/ProveTokenTransactions"
+                - $ref: "#/components/schemas/ProveNftTransaction"
       responses:
         "200":
           description: Successfully initiated proof generation.
@@ -431,6 +469,41 @@ paths:
                     walletPayload:
                       transaction: '{"feePayer":{"body":{"publicKey":"B62qjFmTAzm..."},"authorization":"..."}]}'
                     # Additional fields as per the TokenTransaction schema
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /nft/mint:
+    post:
+      tags:
+        - NFT
+      summary: Mint new NFT to a specified address.
+      description: |
+        The `mint` endpoint allows authorized users to mint new NFT on the Mina blockchain.
+        This transaction creates new NFT.
+        The sender must have the authority to mint NFTs, typically the admin of the NFT contract.
+      operationId: mintNFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NftMintTransactionParams"
+      responses:
+        "200":
+          description: Successfully built mint transaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NftTransaction"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1239,7 +1312,7 @@ components:
         contractAddress:
           type: string
           example: B62qs2NthDuxAT94tTFg6MtuaP1gaBxTZyNv9D3uQiQciy1VsaimNFT
-          description: Always set to this contract address for Mina NFTs.
+          description: Always set to this contract address for Mina NFT V2.
         nftAddress:
           type: string
           example: B62qoT6jXebkJVmsUmxCxGJmvHJUXPNF417rms4PATi5R6Hw7e56CRt
@@ -1312,19 +1385,51 @@ components:
         - "token:bid:whitelist"
         - "token:offer:whitelist"
         - "token:admin:whitelist"
+    NftTransactionType:
+      type: string
+      enum:
+        - "nft:launch"
+        - "nft:mint"
+        - "nft:transfer"
     TokenTransactionBaseParams:
       type: object
       required:
         - sender
       properties:
         txType:
-          type: string
-          enum:
-            $ref: "#/components/schemas/TokenTransactionType"
+          $ref: "#/components/schemas/TokenTransactionType"
           description: Type of the token transaction.
         tokenAddress:
           type: string
           description: Optional. The address of the token contract.
+        sender:
+          type: string
+          description: The address (public key) of the sender.
+        senderPrivateKey:
+          type: string
+          description: The private key of the sender. It is NOT recommended to use this field. Please use the `sender` field instead. Use this field at your own risk and only if you know what you are doing and do not have access to mina-signer or wallet to get the signature.
+        nonce:
+          type: integer
+          format: int64
+          description: Optional. The nonce for the transaction.
+        memo:
+          type: string
+          description: Optional. A memo for the transaction.
+        developerFee:
+          type: number
+          format: double
+          description: Optional. The developer fee for the transaction.
+    NftTransactionBaseParams:
+      type: object
+      required:
+        - sender
+      properties:
+        txType:
+          $ref: "#/components/schemas/NftTransactionType"
+          description: Type of the NFT transaction.
+        collectionAddress:
+          type: string
+          description: Optional. The address of the NFT collection.
         sender:
           type: string
           description: The address (public key) of the sender.
@@ -1352,6 +1457,16 @@ components:
             tokenAddress:
               type: string
               description: The address of the token contract.
+    DeployedNftCollectionTransactionBaseParams:
+      allOf:
+        - $ref: "#/components/schemas/NftTransactionBaseParams"
+        - type: object
+          required:
+            - collectionAddress
+          properties:
+            collectionAddress:
+              type: string
+              description: The address of the NFT collection.
     LaunchTokenTransactionBaseParams:
       allOf:
         - $ref: "#/components/schemas/TokenTransactionBaseParams"
@@ -1398,6 +1513,220 @@ components:
             adminContractPrivateKey:
               type: string
               description: Optional. Private key for the admin contract.
+    CollectionData:
+      type: object
+      properties:
+        royaltyFee:
+          type: integer
+          format: int32
+          description: The royalty fee percentage (e.g., 1000 = 1%, 100 = 0.1%, 10000 = 10%, 100000 = 100%)
+        transferFee:
+          type: integer
+          format: int64
+          description: The transfer fee amount
+        requireTransferApproval:
+          type: boolean
+          description: If true, transferring NFTs requires approval from the admin contract
+        mintingIsLimited:
+          type: boolean
+          description: If true, the minting is stopped and cannot be resumed
+        isPaused:
+          type: boolean
+          description: Indicates whether the collection is currently paused
+    NftMetadata:
+      type: object
+      required:
+        - name
+        - image
+      properties:
+        name:
+          type: string
+          description: The name of the NFT
+        image:
+          type: string
+          description: The image URL or IPFS hash associated with the NFT
+        description:
+          type: string
+          description: Optional description of the NFT
+        banner:
+          type: string
+          description: Optional banner image URL or IPFS hash. Required for Collection Master NFT.
+        traits:
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - type
+              - value
+            properties:
+              key:
+                type: string
+                description: The trait key/name
+              type:
+                type: string
+                enum:
+                  - string
+                  - text
+                  - image
+                  - url
+                  - field
+                  - number
+                  - address
+                  - map
+                  - tree
+                description: The type of the trait value
+              value:
+                oneOf:
+                  - type: string
+                  - type: object
+                description: The trait value, can be a string or complex object depending on type
+              isPrivate:
+                type: boolean
+                description: Optional flag indicating if this trait is private
+    NftData:
+      type: object
+      required:
+        - owner
+      properties:
+        owner:
+          type: string
+          description: The public key of the owner of the NFT
+        approved:
+          type: string
+          description: The public key of the approved address of the NFT
+        version:
+          type: integer
+          format: int32
+          description: The version number of the NFT state
+        id:
+          type: integer
+          format: int64
+          description: The unique identifier of the NFT within the collection
+        canChangeOwnerByProof:
+          type: boolean
+          description: Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly)
+        canTransfer:
+          type: boolean
+          description: Specifies if the NFT's ownership can be transferred (readonly)
+        canApprove:
+          type: boolean
+          description: Specifies if the NFT's approved address can be changed (readonly)
+        canChangeMetadata:
+          type: boolean
+          description: Indicates whether the NFT's metadata can be updated (readonly)
+        canChangeStorage:
+          type: boolean
+          description: Determines whether the storage associated with the NFT can be altered (readonly)
+        canChangeName:
+          type: boolean
+          description: Specifies if the name of the NFT can be changed (readonly)
+        canChangeMetadataVerificationKeyHash:
+          type: boolean
+          description: Indicates whether the verification key hash for the metadata can be changed (readonly)
+        canPause:
+          type: boolean
+          description: Specifies if the NFT contract can be paused, preventing certain operations (readonly)
+        isPaused:
+          type: boolean
+          description: Indicates whether the NFT contract is currently paused
+        requireOwnerAuthorizationToUpgrade:
+          type: boolean
+          description: Determines whether the owner's authorization is required to upgrade the NFT's verification key (readonly)
+    NftMintParams:
+      type: object
+      required:
+        - name
+        - data
+        - metadata
+      properties:
+        name:
+          type: string
+          description: The name of the NFT
+        address:
+          type: string
+          description: The address of the NFT contract
+        addressPrivateKey:
+          type: string
+          description: The private key of the NFT contract
+        tokenId:
+          type: integer
+          format: int64
+          description: The token ID of the NFT
+        data:
+          $ref: "#/components/schemas/NftData"
+          description: The data associated with the NFT, including owner, approved, version, id, permissions and flags
+        fee:
+          type: integer
+          format: int64
+          description: The fee associated with minting the NFT
+        metadata:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/NftMetadata"
+          description: The metadata associated with the NFT, Field as a string or NftMetadata object
+        storage:
+          type: string
+          description: The off-chain storage information (e.g., IPFS hash)
+        metadataVerificationKeyHash:
+          type: string
+          description: The hash of the verification key used for metadata proofs, Field as a string
+        expiry:
+          type: integer
+          format: int32
+          description: The expiry time slot for minting the NFT
+    LaunchNftCollectionTransactionBaseParams:
+      allOf:
+        - $ref: "#/components/schemas/NftTransactionBaseParams"
+        - type: object
+          required:
+            - collectionName
+            - url
+          properties:
+            txType:
+              type: string
+              enum:
+                - "nft:launch"
+              description: Must be "nft:launch"
+            adminContract:
+              type: string
+              enum:
+                - standard
+                - advanced
+              description: The type of admin contract to use. Default is "standard".
+            symbol:
+              type: string
+              description: The symbol of the NFT collection. Use NFT as a default value.
+            url:
+              type: string
+              format: uri
+              description: The URL of the NFT collection.
+            collectionName:
+              type: string
+              description: The name of the NFT collection.
+            creator:
+              type: string
+              description: The creator of the NFT collection. Should be the public key of the creator starting with B62.
+            baseURL:
+              type: string
+              format: uri
+              description: The base URL of the NFT collection, can be 'ipfs' or url with or without `https://`. Default is 'ipfs'.
+            collectionData:
+              $ref: "#/components/schemas/CollectionData"
+            masterNFT:
+              $ref: "#/components/schemas/NftMintParams"
+            collectionAddress:
+              type: string
+              description: Optional. The address of the    collection.
+            adminContractAddress:
+              type: string
+              description: Optional. The address of the admin contract.
+            collectionContractPrivateKey:
+              type: string
+              description: Optional. Private key for the collection contract.
+            adminContractPrivateKey:
+              type: string
+              description: Optional. Private key for the admin contract.
 
     TokenMintTransactionParams:
       allOf:
@@ -1423,6 +1752,21 @@ components:
               type: number
               format: double
               description: The price of the token in the bonding curve.
+    NftMintTransactionParams:
+      allOf:
+        - $ref: "#/components/schemas/DeployedNftCollectionTransactionBaseParams"
+        - type: object
+          required:
+            - txType
+            - nftMintParams
+          properties:
+            txType:
+              type: string
+              enum:
+                - "nft:mint"
+              description: Must be "nft:mint"
+            nftMintParams:
+              $ref: "#/components/schemas/NftMintParams"
     TokenBurnTransactionParams:
       allOf:
         - $ref: "#/components/schemas/DeployedTokenTransactionBaseParams"
@@ -1729,6 +2073,18 @@ components:
               enum:
                 - standard
               description: Must be "standard" for standard admin contract.
+    LaunchNftCollectionStandardAdminParams:
+      allOf:
+        - $ref: "#/components/schemas/LaunchNftCollectionTransactionBaseParams"
+        - type: object
+          required:
+            - adminContract
+          properties:
+            adminContract:
+              type: string
+              enum:
+                - standard
+              description: Must be "standard" for standard admin contract.
     LaunchTokenAdvancedAdminParams:
       allOf:
         - $ref: "#/components/schemas/LaunchTokenTransactionBaseParams"
@@ -1758,6 +2114,56 @@ components:
               type: number
               format: double
               description: Optional. Maximum total supply. Uses UInt64.MAXINT() if not provided.
+    AdvancedNftCollectionAdminData:
+      type: object
+      properties:
+        canPause:
+          type: boolean
+          description: Indicates whether the contract can be paused
+        isPaused:
+          type: boolean
+          description: Indicates whether the contract is currently paused
+        allowChangeRoyalty:
+          type: boolean
+          description: Indicates whether the contract can change the royalty fee
+        allowChangeTransferFee:
+          type: boolean
+          description: Indicates whether the contract can change the transfer fee
+        allowChangeBaseUri:
+          type: boolean
+          description: Indicates whether the contract can change the base URI
+        allowChangeCreator:
+          type: boolean
+          description: Indicates whether the contract can change the creator
+        allowChangeAdmin:
+          type: boolean
+          description: Indicates whether the contract can change the admin
+        allowChangeName:
+          type: boolean
+          description: Indicates whether the contract can change the name
+    LaunchNftCollectionAdvancedAdminParams:
+      allOf:
+        - $ref: "#/components/schemas/LaunchNftCollectionTransactionBaseParams"
+        - type: object
+          required:
+            - adminContract
+            - upgradeAuthority
+          properties:
+            adminContract:
+              type: string
+              enum:
+                - advanced
+              description: Must be "advanced" for advanced admin contract.
+            upgradeAuthority:
+              type: string
+              description: The address of the upgrade authority contract
+            adminData:
+              $ref: "#/components/schemas/AdvancedNftCollectionAdminData"
+              description: The admin data for the NFT collection
+            whitelist:
+              $ref: "#/components/schemas/Whitelist"
+              description: Optional. List of whitelisted addresses with optional amounts, or a string.
+
     LaunchTokenBondingCurveAdminParams:
       allOf:
         - $ref: "#/components/schemas/LaunchTokenTransactionBaseParams"
@@ -1922,6 +2328,12 @@ components:
         - $ref: "#/components/schemas/TokenUpdateBidWhitelistTransactionParams"
         - $ref: "#/components/schemas/TokenUpdateOfferWhitelistTransactionParams"
         - $ref: "#/components/schemas/TokenUpdateAdminWhitelistTransactionParams"
+    NftTransactionParams:
+      oneOf:
+        - $ref: "#/components/schemas/LaunchNftCollectionStandardAdminParams"
+        - $ref: "#/components/schemas/LaunchNftCollectionAdvancedAdminParams"
+        - $ref: "#/components/schemas/NftMintTransactionParams"
+
     TokenTransaction:
       type: object
       allOf:
@@ -1943,7 +2355,29 @@ components:
                   properties:
                     txType:
                       $ref: "#/components/schemas/TokenTransactionType"
-                      description: The type of the transaction.
+                      description: The type of the token transaction.
+    NftTransaction:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/TransactionPayloads"
+        - type: object
+          required:
+            - request
+            - symbol
+          properties:
+            symbol:
+              type: string
+              description: The symbol of the NFT collection.
+            request:
+              allOf:
+                - $ref: "#/components/schemas/NftTransactionParams"
+                - type: object
+                  required:
+                    - txType
+                  properties:
+                    txType:
+                      $ref: "#/components/schemas/NftTransactionType"
+                      description: The type of the NFT transaction.
 
     TokenTransactions:
       type: object
@@ -1963,6 +2397,21 @@ components:
       properties:
         tx:
           $ref: "#/components/schemas/TokenTransaction"
+          description: The transaction object.
+        signedData:
+          type: string
+          description: The signed data for the transaction.
+        sendTransaction:
+          type: boolean
+          description: Optional. Whether to broadcast the transaction after proving.
+    ProveNftTransaction:
+      type: object
+      required:
+        - tx
+        - signedData
+      properties:
+        tx:
+          $ref: "#/components/schemas/NftTransaction"
           description: The transaction object.
         signedData:
           type: string

@@ -14,6 +14,7 @@ import {
 } from "o1js";
 import { Whitelist } from "@silvana-one/storage";
 import { FungibleToken } from "./FungibleToken.js";
+import { mulDiv } from "./div.js";
 
 export interface FungibleTokenBidContractDeployProps
   extends Exclude<DeployArgs, undefined> {
@@ -55,14 +56,11 @@ export class FungibleTokenBidContract extends SmartContract {
     this.account.provedState.requireEquals(Bool(false));
     amount.equals(UInt64.from(0)).assertFalse();
 
-    const totalPriceField = price.value
-      .mul(amount.value)
-      .div(Field(1_000_000_000));
-    totalPriceField.assertLessThan(
-      UInt64.MAXINT().value,
-      "totalPrice overflow"
-    );
-    const totalPrice = UInt64.Unsafe.fromField(totalPriceField);
+    const totalPrice = mulDiv({
+      value: price,
+      multiplier: amount,
+      denominator: UInt64.from(1_000_000_000),
+    }).result;
 
     const buyer = this.sender.getUnconstrained();
     const buyerUpdate = AccountUpdate.createSigned(buyer);
@@ -87,14 +85,11 @@ export class FungibleTokenBidContract extends SmartContract {
       .assertTrue();
     this.price.set(price);
 
-    const totalPriceField = price.value
-      .mul(amount.value)
-      .div(Field(1_000_000_000));
-    totalPriceField.assertLessThan(
-      UInt64.MAXINT().value,
-      "totalPrice overflow"
-    );
-    const totalPrice = UInt64.Unsafe.fromField(totalPriceField);
+    const totalPrice = mulDiv({
+      value: price,
+      multiplier: amount,
+      denominator: UInt64.from(1_000_000_000),
+    }).result;
 
     const sender = this.sender.getUnconstrained();
     const buyer = this.buyer.getAndRequireEquals();
@@ -128,14 +123,11 @@ export class FungibleTokenBidContract extends SmartContract {
   @method async sell(amount: UInt64) {
     amount.equals(UInt64.from(0)).assertFalse();
     const price = this.price.getAndRequireEquals();
-    const totalPriceField = price.value
-      .mul(amount.value)
-      .div(Field(1_000_000_000));
-    totalPriceField.assertLessThan(
-      UInt64.MAXINT().value,
-      "totalPrice overflow"
-    );
-    const totalPrice = UInt64.Unsafe.fromField(totalPriceField);
+    const totalPrice = mulDiv({
+      value: price,
+      multiplier: amount,
+      denominator: UInt64.from(1_000_000_000),
+    }).result;
 
     this.account.balance.requireBetween(totalPrice, UInt64.MAXINT());
     const buyer = this.buyer.getAndRequireEquals();

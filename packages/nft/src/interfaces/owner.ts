@@ -24,7 +24,7 @@ type DefineOwnerFactory = (params: {
 }) => NFTOwnerContractConstructor;
 
 /**
- * The `NFTAdminBase` interface defines the administrative functionalities required for managing an NFT collection on the Mina Protocol.
+ * The `NFTOwnerBase` interface defines the administrative functionalities required for managing an NFT collection on the Mina Protocol.
  * It extends the `SmartContract` class and specifies methods that enforce permissions and validations for various NFT operations.
  */
 type NFTOwnerBase = SmartContract & {
