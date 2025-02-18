@@ -315,7 +315,7 @@ class NFTData extends Struct({
     owner: string | PublicKey;
     approved?: string | PublicKey;
     version?: number;
-    id?: bigint;
+    id?: bigint | string;
     canChangeOwnerByProof?: boolean;
     canTransfer?: boolean;
     canApprove?: boolean;
@@ -351,7 +351,7 @@ class NFTData extends Struct({
           : approved
         : PublicKey.empty(),
       version: UInt32.from(version ?? 0),
-      id: UInt64.from(id ?? 0),
+      id: UInt64.from(BigInt(id ?? 0)),
       canChangeOwnerByProof: Bool(canChangeOwnerByProof ?? false),
       canTransfer: Bool(canTransfer ?? true),
       canApprove: Bool(canApprove ?? true),
@@ -470,7 +470,7 @@ class CollectionData extends Struct({
    */
   static new(params: {
     royaltyFee?: number;
-    transferFee?: number;
+    transferFee?: number | bigint | string;
     requireTransferApproval?: boolean;
     mintingIsLimited?: boolean;
     isPaused?: boolean;
@@ -484,7 +484,7 @@ class CollectionData extends Struct({
     } = params;
     return new CollectionData({
       royaltyFee: UInt32.from(royaltyFee ?? 0),
-      transferFee: UInt64.from(transferFee ?? 0),
+      transferFee: UInt64.from(BigInt(transferFee ?? 0)),
       requireTransferApproval: Bool(requireTransferApproval ?? false),
       mintingIsLimited: Bool(mintingIsLimited ?? false),
       isPaused: Bool(isPaused ?? false),

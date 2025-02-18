@@ -357,6 +357,8 @@ class Metadata {
       | MetadataTree
       | UInt64
       | PublicKey
+      | bigint
+      | number
       | unknown;
     isPrivate?: boolean;
   }): {
@@ -390,19 +392,34 @@ class Metadata {
           valueObject = new Text(value);
           break;
         case "field":
-          if (!(value instanceof Field))
+          if (
+            !(
+              value instanceof Field ||
+              typeof value === "bigint" ||
+              typeof value === "number" ||
+              typeof value === "string"
+            )
+          )
             throw new Error(`Invalid trait value type`);
-          valueObject = value;
+          valueObject = Field(value);
           break;
         case "number":
-          if (!(value instanceof UInt64))
+          if (
+            !(
+              value instanceof UInt64 ||
+              typeof value === "bigint" ||
+              typeof value === "number" ||
+              typeof value === "string"
+            )
+          )
             throw new Error(`Invalid trait value type`);
-          valueObject = value;
+          valueObject = UInt64.from(value);
           break;
         case "address":
-          if (!(value instanceof PublicKey))
+          if (!(value instanceof PublicKey || typeof value === "string"))
             throw new Error(`Invalid trait value type`);
-          valueObject = value;
+          valueObject =
+            typeof value === "string" ? PublicKey.fromBase58(value) : value;
           break;
         case "map":
           if (!(value instanceof Metadata))
@@ -525,7 +542,7 @@ class Metadata {
       description?: string;
       banner?: string;
       metadataRoot: string;
-      traits: {
+      traits?: {
         key: string;
         type: string;
         value: string | object;
@@ -536,7 +553,14 @@ class Metadata {
     plugins?: MetadataPlugin[];
   }): Metadata {
     const { json, checkRoot = false, plugins } = params;
-    const { name, description, image, banner, metadataRoot, traits } = json;
+    const {
+      name,
+      description,
+      image,
+      banner,
+      metadataRoot,
+      traits = [],
+    } = json;
     if (!name) throw new Error(`Metadata name is required`);
     if (typeof name !== "string") throw new Error(`Invalid metadata name`);
     if (!image || typeof image !== "string")
@@ -661,7 +685,7 @@ class Metadata {
   }
 
   /**
-   * Constructs a Metadata instance from JSON data.
+   * Constructs a Metadata instance from OpenAPI JSON data (without calculated root).
    * @param params - The parameters including json data, checkRoot flag, and plugins.
    * @returns A new Metadata instance.
    */
@@ -671,7 +695,7 @@ class Metadata {
       image: string;
       description?: string;
       banner?: string;
-      traits: {
+      traits?: {
         key: string;
         type: string;
         value: string | object;
@@ -681,7 +705,7 @@ class Metadata {
     plugins?: MetadataPlugin[];
   }): Metadata {
     const { json, plugins } = params;
-    const { name, description, image, banner, traits } = json;
+    const { name, description, image, banner, traits = [] } = json;
     if (!name) throw new Error(`Metadata name is required`);
     if (typeof name !== "string") throw new Error(`Invalid metadata name`);
     if (!image || typeof image !== "string")

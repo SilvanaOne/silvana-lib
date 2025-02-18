@@ -211,9 +211,10 @@ export async function tokenBalance(
       tokenAddress,
       address,
       tokenId: tokenId ? TokenId.toBase58(tokenId) : undefined,
+      hasAccount: Mina.hasAccount(publicKey, tokenId),
       balance: Mina.hasAccount(publicKey, tokenId)
         ? Number(Mina.getAccount(publicKey, tokenId).balance.toBigInt())
-        : null,
+        : undefined,
     };
   } catch (error) {
     console.error("Cannot fetch account balance", params, error);
@@ -222,7 +223,8 @@ export async function tokenBalance(
       tokenAddress,
       address,
       tokenId: tokenId ? TokenId.toBase58(tokenId) : undefined,
-      balance: null,
+      hasAccount: undefined,
+      balance: undefined,
     };
   }
 }

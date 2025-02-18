@@ -24,9 +24,10 @@ class MinaAddress {
    * @param address - The address to be represented.
    * @throws Will throw an error if the address is not a valid Mina address.
    */
-  constructor(address: PublicKey) {
-    this.address = address;
-    this.hash = Poseidon.hashPacked(PublicKey, address);
+  constructor(address: PublicKey | string) {
+    this.address =
+      typeof address === "string" ? PublicKey.fromBase58(address) : address;
+    this.hash = Poseidon.hashPacked(PublicKey, this.address);
   }
 
   /**

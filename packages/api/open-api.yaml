@@ -313,6 +313,7 @@ paths:
                 - $ref: "#/components/schemas/ProveTokenTransaction"
                 - $ref: "#/components/schemas/ProveTokenTransactions"
                 - $ref: "#/components/schemas/ProveNftTransaction"
+                - $ref: "#/components/schemas/ProveNftTransactions"
       responses:
         "200":
           description: Successfully initiated proof generation.
@@ -1141,7 +1142,6 @@ components:
       type: object
       required:
         - address
-        - balance
       properties:
         tokenAddress:
           type: string
@@ -1154,8 +1154,10 @@ components:
           description: The Mina address for which the balance was requested.
         balance:
           type: number
-          nullable: true
           description: The balance of the token for the specified address.
+        hasAccount:
+          type: boolean
+          description: Indicates whether the account exists.
     ErrorResponse:
       type: object
       properties:
@@ -1600,9 +1602,8 @@ components:
           format: int32
           description: The version number of the NFT state
         id:
-          type: integer
-          format: int64
-          description: The unique identifier of the NFT within the collection
+          type: string
+          description: The unique identifier of the NFT within the collection. A bigint encoded as a string.
         canChangeOwnerByProof:
           type: boolean
           description: Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly)
@@ -1681,7 +1682,7 @@ components:
         - type: object
           required:
             - collectionName
-            - url
+            - masterNFT
           properties:
             txType:
               type: string
@@ -2429,6 +2430,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ProveTokenTransaction"
+          description: Array of transactions to be proved.
+    ProveNftTransactions:
+      type: object
+      required:
+        - txs
+      properties:
+        txs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProveNftTransaction"
           description: Array of transactions to be proved.
     TokenState:
       type: object

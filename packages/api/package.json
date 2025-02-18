@@ -5,12 +5,12 @@
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "@hey-api/client-fetch": "^0.5.6"
+    "@hey-api/client-fetch": "^0.8.1"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.60.0",
+    "@hey-api/openapi-ts": "^0.64.4",
     "@types/node": "^22.10.2",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "typescript": "^5.7.2"
   },
   "engines": {
@@ -45,7 +45,6 @@
   ],
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
-  "peerDependencies": {},
   "publishConfig": {
     "access": "public"
   },

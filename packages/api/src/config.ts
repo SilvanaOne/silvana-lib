@@ -1,4 +1,4 @@
-import { client } from "./client/sdk.gen.js";
+import { client } from "./client/client.gen.js";
 
 export function config({
   apiKey,

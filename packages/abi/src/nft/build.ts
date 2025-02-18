@@ -20,9 +20,14 @@ import {
   Admin,
   NFT,
   AdvancedCollection,
-  AdvancedAdmin,
+  NFTAdmin,
+  NFTAdvancedAdmin,
   Metadata,
   pinMetadata,
+  fieldFromString,
+  CollectionData,
+  MintParams,
+  NFTData,
 } from "@silvana-one/nft";
 import { tokenVerificationKeys } from "../vk/index.js";
 import {
@@ -37,6 +42,7 @@ import {
   Field,
   TokenId,
   UInt32,
+  fetchLastBlock,
 } from "o1js";
 
 export type NftAdminType = "standard" | "advanced" | "unknown";
@@ -57,15 +63,17 @@ export async function buildNftCollectionLaunchTransaction(params: {
   adminType: NftAdminType;
   name: string;
   verificationKeyHashes: string[];
-  metadataHash: string;
+  metadataRoot: string;
   storage: string;
   privateMetadata?: string;
   map?: IndexedMapSerialized;
 }> {
   const { chain, args } = params;
   const {
-    url,
-    symbol,
+    url = chain === "mainnet"
+      ? "https://minanft.io"
+      : `https://${chain}.minanft.io`,
+    symbol = "NFT",
     memo,
     nonce,
     adminContract: adminType,
@@ -105,7 +113,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
   )
     throw new Error("adminContractAddress is required");
 
-  const adminContract = adminType === "advanced" ? AdvancedAdmin : Admin;
+  const adminContract = adminType === "advanced" ? NFTAdvancedAdmin : NFTAdmin;
   const collectionContract =
     adminType === "advanced" ? AdvancedCollection : Collection;
   const vk =
@@ -156,8 +164,12 @@ export async function buildNftCollectionLaunchTransaction(params: {
 
   const collectionAddress = PublicKey.fromBase58(args.collectionAddress);
   const adminContractAddress = PublicKey.fromBase58(args.adminContractAddress);
+  const creator = args.creator ? PublicKey.fromBase58(args.creator) : sender;
   const zkCollection = new collectionContract(collectionAddress);
   const zkAdmin = new adminContract(adminContractAddress);
+  const metadataVerificationKeyHash = masterNFT.metadataVerificationKeyHash
+    ? Field.fromJSON(masterNFT.metadataVerificationKeyHash)
+    : Field(0);
 
   const provingKey = params.provingKey
     ? PublicKey.fromBase58(params.provingKey)
@@ -172,95 +184,112 @@ export async function buildNftCollectionLaunchTransaction(params: {
     ? PublicKey.fromBase58(params.developerAddress)
     : undefined;
 
-  let metadataHash: Field =
-    typeof masterNFT.metadata === "string"
-      ? Field.fromJSON(masterNFT.metadata)
-      : Field(0);
-
   const { name, ipfsHash, metadataRoot, privateMetadata, serializedMap } =
-    await pinMetadata(masterNFT.metadata);
+    typeof masterNFT.metadata === "string"
+      ? {
+          name: masterNFT.name,
+          ipfsHash: masterNFT.storage,
+          metadataRoot: Field.fromJSON(masterNFT.metadata),
+          privateMetadata: undefined,
+          serializedMap: undefined,
+        }
+      : await pinMetadata(
+          Metadata.fromOpenApiJSON({ json: masterNFT.metadata })
+        );
+
+  if (ipfsHash === undefined)
+    throw new Error("storage is required, but not provided");
+  if (metadataRoot === undefined) throw new Error("metadataRoot is required");
+
+  const slot =
+    chain === "local"
+      ? Mina.currentSlot()
+      : chain === "zeko"
+      ? UInt32.zero
+      : (await fetchLastBlock()).globalSlotSinceGenesis;
+  const expiry = slot.add(
+    UInt32.from(chain === "mainnet" || chain === "devnet" ? 20 : 100000)
+  );
+
+  const nftData = NFTData.new({
+    owner: creator,
+    approved: undefined,
+    version: undefined,
+    id: masterNFT.data.id ? BigInt(masterNFT.data.id) : undefined,
+    canChangeOwnerByProof: masterNFT.data.canChangeOwnerByProof,
+    canTransfer: masterNFT.data.canTransfer,
+    canApprove: masterNFT.data.canApprove,
+    canChangeMetadata: masterNFT.data.canChangeMetadata,
+    canChangeStorage: masterNFT.data.canChangeStorage,
+    canChangeName: masterNFT.data.canChangeName,
+    canChangeMetadataVerificationKeyHash:
+      masterNFT.data.canChangeMetadataVerificationKeyHash,
+    canPause: masterNFT.data.canPause,
+    isPaused: masterNFT.data.isPaused,
+    requireOwnerAuthorizationToUpgrade:
+      masterNFT.data.requireOwnerAuthorizationToUpgrade,
+  });
+
+  const mintParams = new MintParams({
+    name: fieldFromString(name),
+    address: collectionAddress,
+    tokenId: TokenId.derive(collectionAddress),
+    data: nftData,
+    fee: args.masterNFT.fee
+      ? UInt64.from(Math.round(args.masterNFT.fee * 1_000_000_000))
+      : UInt64.zero,
+    metadata: metadataRoot,
+    storage: Storage.fromString(ipfsHash),
+    metadataVerificationKeyHash,
+    expiry: masterNFT.expiry
+      ? UInt32.from(Math.round(masterNFT.expiry))
+      : expiry,
+  });
+
+  const collectionData = CollectionData.new(args.collectionData ?? {});
 
   const tx = await Mina.transaction(
     {
       sender,
       fee,
-      memo: memo ?? `NFT collection ${args.collectionName} launch`.slice(30),
+      memo:
+        memo ?? `${args.collectionName} NFT collection launch`.substring(0, 30),
       nonce,
     },
     async () => {
-      if (zkAdmin instanceof AdvancedAdmin) {
-        console.log("deploying bonding curve admin", {
-          verificationKey: adminVerificationKey.hash,
-          tokenAddress: tokenAddress.toBase58(),
-          feeMaster: provingKey.toBase58(),
-          adminContractAddress: adminContractAddress.toBase58(),
-        });
-        await zkAdmin.deploy({
-          verificationKey: adminVerificationKey,
-        });
-        zkAdmin.account.tokenSymbol.set("BC");
-        zkAdmin.account.zkappUri.set(uri);
-        await zkAdmin.initialize({
-          tokenAddress,
-          startPrice: UInt64.from(10_000),
-          curveK: UInt64.from(10_000),
-          feeMaster: provingKey,
-          fee: UInt32.from(1000), // 1000 = 1%
-          launchFee: UInt64.from(10_000_000_000),
-          numberOfNewAccounts: UInt64.from(4),
-        });
-      } else {
-        const feeAccountUpdate = AccountUpdate.createSigned(sender);
-        feeAccountUpdate.balance.subInPlace(
-          3_000_000_000 + (adminType === "advanced" ? 1_000_000_000 : 0)
-        );
+      const feeAccountUpdate = AccountUpdate.createSigned(sender);
+      feeAccountUpdate.balance.subInPlace(3_000_000_000);
 
-        if (provingFee && provingKey)
-          feeAccountUpdate.send({
-            to: provingKey,
-            amount: provingFee,
-          });
-        if (developerAddress && developerFee) {
-          feeAccountUpdate.send({
-            to: developerAddress,
-            amount: developerFee,
-          });
-        }
-
-        await zkAdmin.deploy({
-          adminPublicKey: sender,
-          tokenContract: tokenAddress,
-          verificationKey: adminVerificationKey,
-          whitelist,
-          totalSupply,
-          requireAdminSignatureForMint,
-          anyoneCanMint,
+      if (provingFee && provingKey)
+        feeAccountUpdate.send({
+          to: provingKey,
+          amount: provingFee,
         });
-        if (adminType === "advanced") {
-          const adminUpdate = AccountUpdate.create(
-            adminContractAddress,
-            TokenId.derive(adminContractAddress)
-          );
-          zkAdmin.approve(adminUpdate);
-        }
-        zkAdmin.account.zkappUri.set(uri);
+      if (developerAddress && developerFee) {
+        feeAccountUpdate.send({
+          to: developerAddress,
+          amount: developerFee,
+        });
       }
 
-      await zkToken.deploy({
-        symbol,
-        src: uri,
-        verificationKey: tokenVerificationKey,
-        allowUpdates: true,
-      });
-      await zkToken.initialize(
-        adminContractAddress,
-        decimals,
-        // We can set `startPaused` to `Bool(false)` here, because we are doing an atomic deployment
-        // If you are not deploying the admin and token contracts in the same transaction,
-        // it is safer to start the tokens paused, and resume them only after verifying that
-        // the admin contract has been deployed
-        Bool(false)
-      );
+      if (zkAdmin instanceof NFTAdvancedAdmin) {
+        throw new Error("Advanced admin is not supported");
+      } else if (zkAdmin instanceof NFTAdmin) {
+        await zkAdmin.deploy({
+          admin: sender,
+          uri: `NFT Admin`,
+        });
+        // deploy() and initialize() create 2 account updates for the same publicKey, it is intended
+        await zkCollection.deploy({
+          creator,
+          collectionName: fieldFromString(args.collectionName),
+          baseURL: fieldFromString(args.baseURL ?? "ipfs"),
+          admin: adminContractAddress,
+          symbol,
+          url,
+        });
+        await zkCollection.initialize(mintParams, collectionData);
+      }
     }
   );
   return {
@@ -273,37 +302,44 @@ export async function buildNftCollectionLaunchTransaction(params: {
         : args,
     tx,
     adminType,
+    name: args.collectionName,
     verificationKeyHashes: [
       adminVerificationKey.hash,
-      tokenVerificationKey.hash,
+      collectionVerificationKey.hash,
     ],
+    metadataRoot: metadataRoot.toJSON(),
+    storage: ipfsHash,
+    privateMetadata,
+    map: serializedMap,
   };
 }
 
-export async function buildTokenTransaction(params: {
+export async function buildNftTransaction(params: {
   chain: blockchain;
   args: Exclude<
-    TokenTransactionParams,
-    | LaunchTokenStandardAdminParams
-    | LaunchTokenAdvancedAdminParams
-    | LaunchTokenBondingCurveAdminParams
+    NftTransactionParams,
+    | LaunchNftCollectionStandardAdminParams
+    | LaunchNftCollectionAdvancedAdminParams
   >;
   developerAddress?: string;
   provingKey?: string;
   provingFee?: number;
 }): Promise<{
   request: Exclude<
-    TokenTransactionParams,
-    | LaunchTokenStandardAdminParams
-    | LaunchTokenAdvancedAdminParams
-    | LaunchTokenBondingCurveAdminParams
+    NftTransactionParams,
+    | LaunchNftCollectionStandardAdminParams
+    | LaunchNftCollectionAdvancedAdminParams
   >;
   tx: Transaction<false, false>;
-  adminType: AdminType;
+  adminType: NftAdminType;
   adminContractAddress: PublicKey;
-  adminAddress: PublicKey;
   symbol: string;
+  name: string;
   verificationKeyHashes: string[];
+  metadataRoot: string;
+  storage: string;
+  privateMetadata?: string;
+  map?: IndexedMapSerialized;
 }> {
   const { chain, args } = params;
   const { nonce, txType } = args;
@@ -312,57 +348,62 @@ export async function buildTokenTransaction(params: {
   if (txType === undefined) throw new Error("Tx type is required");
   if (typeof txType !== "string") throw new Error("Tx type must be a string");
   const sender = PublicKey.fromBase58(args.sender);
-  const tokenAddress = PublicKey.fromBase58(args.tokenAddress);
-  const offerAddress =
-    "offerAddress" in args && args.offerAddress
-      ? PublicKey.fromBase58(args.offerAddress)
-      : undefined;
-  if (
-    !offerAddress &&
-    (txType === "token:offer:create" ||
-      txType === "token:offer:buy" ||
-      txType === "token:offer:withdraw")
-  )
-    throw new Error("Offer address is required");
+  const collectionAddress = PublicKey.fromBase58(args.collectionAddress);
+  if (args.nftMintParams.address === undefined) {
+    throw new Error("NFT address is required");
+  }
+  const nftAddress = PublicKey.fromBase58(args.nftMintParams.address);
 
-  const bidAddress =
-    "bidAddress" in args && args.bidAddress
-      ? PublicKey.fromBase58(args.bidAddress)
-      : undefined;
-  if (
-    !bidAddress &&
-    (txType === "token:bid:create" ||
-      txType === "token:bid:sell" ||
-      txType === "token:bid:withdraw")
-  )
-    throw new Error("Bid address is required");
+  // const offerAddress =
+  //   "offerAddress" in args && args.offerAddress
+  //     ? PublicKey.fromBase58(args.offerAddress)
+  //     : undefined;
+  // if (
+  //   !offerAddress &&
+  //   (txType === "token:offer:create" ||
+  //     txType === "token:offer:buy" ||
+  //     txType === "token:offer:withdraw")
+  // )
+  //   throw new Error("Offer address is required");
 
-  const to =
-    "to" in args && args.to ? PublicKey.fromBase58(args.to) : undefined;
-  if (
-    !to &&
-    (txType === "token:transfer" ||
-      txType === "token:airdrop" ||
-      txType === "token:mint")
-  )
-    throw new Error("To address is required");
+  // const bidAddress =
+  //   "bidAddress" in args && args.bidAddress
+  //     ? PublicKey.fromBase58(args.bidAddress)
+  //     : undefined;
+  // if (
+  //   !bidAddress &&
+  //   (txType === "token:bid:create" ||
+  //     txType === "token:bid:sell" ||
+  //     txType === "token:bid:withdraw")
+  // )
+  //   throw new Error("Bid address is required");
 
-  const from =
-    "from" in args && args.from ? PublicKey.fromBase58(args.from) : undefined;
-  if (!from && txType === "token:burn")
-    throw new Error("From address is required for token:burn");
+  // const to =
+  //   "to" in args && args.to ? PublicKey.fromBase58(args.to) : undefined;
+  // if (
+  //   !to &&
+  //   (txType === "token:transfer" ||
+  //     txType === "token:airdrop" ||
+  //     txType === "token:mint")
+  // )
+  //   throw new Error("To address is required");
 
-  const amount =
-    "amount" in args ? UInt64.from(Math.round(args.amount)) : undefined;
-  const price =
-    "price" in args && args.price
-      ? UInt64.from(Math.round(args.price))
-      : undefined;
-  const slippage = UInt32.from(
-    Math.round(
-      "slippage" in args && args.slippage !== undefined ? args.slippage : 50
-    )
-  );
+  // const from =
+  //   "from" in args && args.from ? PublicKey.fromBase58(args.from) : undefined;
+  // if (!from && txType === "token:burn")
+  //   throw new Error("From address is required for token:burn");
+
+  // const amount =
+  //   "amount" in args ? UInt64.from(Math.round(args.amount)) : undefined;
+  // const price =
+  //   "price" in args && args.price
+  //     ? UInt64.from(Math.round(args.price))
+  //     : undefined;
+  // const slippage = UInt32.from(
+  //   Math.round(
+  //     "slippage" in args && args.slippage !== undefined ? args.slippage : 50
+  //   )
+  // );
 
   await fetchMinaAccount({
     publicKey: sender,
@@ -373,22 +414,14 @@ export async function buildTokenTransaction(params: {
     throw new Error("Sender does not have account");
   }
 
-  const {
-    symbol,
-    adminContractAddress,
-    adminAddress,
-    adminType,
-    isToNewAccount,
-    verificationKeyHashes,
-  } = await getTokenSymbolAndAdmin({
-    txType,
-    tokenAddress,
-    chain,
-    to,
-    offerAddress,
-    bidAddress,
-  });
-  const memo = args.memo ?? `${txType} ${symbol}`;
+  const { symbol, adminContractAddress, adminType, verificationKeyHashes } =
+    await getNftSymbolAndAdmin({
+      txType,
+      collectionAddress,
+      chain,
+      nftAddress: undefined, // TODO: add nft address
+    });
+  const memo = args.memo ?? `${txType} ${symbol} ${args.nftMintParams.name}`;
   const fee = 100_000_000;
   const provingKey = params.provingKey
     ? PublicKey.fromBase58(params.provingKey)
@@ -404,425 +437,321 @@ export async function buildTokenTransaction(params: {
     : undefined;
 
   //const adminContract = new FungibleTokenAdmin(adminContractAddress);
-  const advancedAdminContract = new FungibleTokenAdvancedAdmin(
-    adminContractAddress
-  );
-  const bondingCurveAdminContract = new FungibleTokenBondingCurveAdmin(
-    adminContractAddress
-  );
-  const tokenContract =
-    adminType === "advanced" && txType === "token:mint"
-      ? AdvancedFungibleToken
-      : adminType === "bondingCurve" &&
-        (txType === "token:mint" || txType === "token:redeem")
-      ? BondingCurveFungibleToken
-      : FungibleToken;
+  const advancedAdminContract = new NFTAdvancedAdmin(adminContractAddress);
+  const adminContract = new NFTAdmin(adminContractAddress);
+  const collectionContract =
+    adminType === "advanced" ? AdvancedCollection : Collection;
 
-  if (
-    (txType === "token:admin:whitelist" ||
-      txType === "token:bid:whitelist" ||
-      txType === "token:offer:whitelist") &&
-    !args.whitelist
-  ) {
-    throw new Error("Whitelist is required");
-  }
+  // if (
+  //   (txType === "token:admin:whitelist" ||
+  //     txType === "token:bid:whitelist" ||
+  //     txType === "token:offer:whitelist") &&
+  //   !args.whitelist
+  // ) {
+  //   throw new Error("Whitelist is required");
+  // }
 
-  const whitelist =
-    "whitelist" in args && args.whitelist
-      ? typeof args.whitelist === "string"
-        ? Whitelist.fromString(args.whitelist)
-        : (await Whitelist.create({ list: args.whitelist, name: symbol }))
-            .whitelist
-      : Whitelist.empty();
+  // const whitelist =
+  //   "whitelist" in args && args.whitelist
+  //     ? typeof args.whitelist === "string"
+  //       ? Whitelist.fromString(args.whitelist)
+  //       : (await Whitelist.create({ list: args.whitelist, name: symbol }))
+  //           .whitelist
+  //     : Whitelist.empty();
 
-  const zkToken = new tokenContract(tokenAddress);
-  const tokenId = zkToken.deriveTokenId();
+  const zkCollection = new collectionContract(collectionAddress);
+  const tokenId = zkCollection.deriveTokenId();
 
-  if (
-    txType === "token:mint" &&
-    adminType === "standard" &&
-    adminAddress.toBase58() !== sender.toBase58()
-  )
-    throw new Error(
-      "Invalid sender for FungibleToken mint with standard admin"
-    );
+  // if (
+  //   txType === "nft:mint" &&
+  //   adminType === "standard" &&
+  //   adminAddress.toBase58() !== sender.toBase58()
+  // )
+  //   throw new Error(
+  //     "Invalid sender for FungibleToken mint with standard admin"
+  //   );
 
   await fetchMinaAccount({
-    publicKey: sender,
+    publicKey: nftAddress,
     tokenId,
     force: (
-      [
-        "token:transfer",
-        "token:airdrop",
-      ] satisfies TokenTransactionType[] as TokenTransactionType[]
+      ["nft:transfer"] satisfies NftTransactionType[] as NftTransactionType[]
     ).includes(txType),
   });
 
-  if (to) {
-    await fetchMinaAccount({
-      publicKey: to,
-      tokenId,
-      force: false,
-    });
-  }
+  // if (to) {
+  //   await fetchMinaAccount({
+  //     publicKey: to,
+  //     tokenId,
+  //     force: false,
+  //   });
+  // }
 
-  if (from) {
-    await fetchMinaAccount({
-      publicKey: from,
-      tokenId,
-      force: false,
-    });
-  }
+  // if (from) {
+  //   await fetchMinaAccount({
+  //     publicKey: from,
+  //     tokenId,
+  //     force: false,
+  //   });
+  // }
 
-  if (offerAddress)
-    await fetchMinaAccount({
-      publicKey: offerAddress,
-      tokenId,
-      force: (
-        [
-          "token:offer:whitelist",
-          "token:offer:buy",
-          "token:offer:withdraw",
-        ] satisfies TokenTransactionType[] as TokenTransactionType[]
-      ).includes(txType),
-    });
-  if (bidAddress)
-    await fetchMinaAccount({
-      publicKey: bidAddress,
-      force: (
-        [
-          "token:bid:whitelist",
-          "token:bid:sell",
-          "token:bid:withdraw",
-        ] satisfies TokenTransactionType[] as TokenTransactionType[]
-      ).includes(txType),
-    });
+  // if (offerAddress)
+  //   await fetchMinaAccount({
+  //     publicKey: offerAddress,
+  //     tokenId,
+  //     force: (
+  //       [
+  //         "token:offer:whitelist",
+  //         "token:offer:buy",
+  //         "token:offer:withdraw",
+  //       ] satisfies TokenTransactionType[] as TokenTransactionType[]
+  //     ).includes(txType),
+  //   });
+  // if (bidAddress)
+  //   await fetchMinaAccount({
+  //     publicKey: bidAddress,
+  //     force: (
+  //       [
+  //         "token:bid:whitelist",
+  //         "token:bid:sell",
+  //         "token:bid:withdraw",
+  //       ] satisfies TokenTransactionType[] as TokenTransactionType[]
+  //     ).includes(txType),
+  //   });
 
-  const offerContract = offerAddress
-    ? new FungibleTokenOfferContract(offerAddress, tokenId)
-    : undefined;
+  // const offerContract = offerAddress
+  //   ? new FungibleTokenOfferContract(offerAddress, tokenId)
+  //   : undefined;
 
-  const bidContract = bidAddress
-    ? new FungibleTokenBidContract(bidAddress)
-    : undefined;
-  const offerContractDeployment = offerAddress
-    ? new FungibleTokenOfferContract(offerAddress, tokenId)
-    : undefined;
-  const bidContractDeployment = bidAddress
-    ? new FungibleTokenBidContract(bidAddress)
-    : undefined;
+  // const bidContract = bidAddress
+  //   ? new FungibleTokenBidContract(bidAddress)
+  //   : undefined;
+  // const offerContractDeployment = offerAddress
+  //   ? new FungibleTokenOfferContract(offerAddress, tokenId)
+  //   : undefined;
+  // const bidContractDeployment = bidAddress
+  //   ? new FungibleTokenBidContract(bidAddress)
+  //   : undefined;
   const vk =
     tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
   if (
     !vk ||
-    !vk.FungibleTokenOfferContract ||
-    !vk.FungibleTokenOfferContract.hash ||
-    !vk.FungibleTokenOfferContract.data ||
-    !vk.FungibleTokenBidContract ||
-    !vk.FungibleTokenBidContract.hash ||
-    !vk.FungibleTokenBidContract.data ||
-    !vk.FungibleTokenAdvancedAdmin ||
-    !vk.FungibleTokenAdvancedAdmin.hash ||
-    !vk.FungibleTokenAdvancedAdmin.data ||
-    !vk.FungibleTokenBondingCurveAdmin ||
-    !vk.FungibleTokenBondingCurveAdmin.hash ||
-    !vk.FungibleTokenBondingCurveAdmin.data ||
-    !vk.FungibleTokenAdmin ||
-    !vk.FungibleTokenAdmin.hash ||
-    !vk.FungibleTokenAdmin.data ||
-    !vk.AdvancedFungibleToken ||
-    !vk.AdvancedFungibleToken.hash ||
-    !vk.AdvancedFungibleToken.data ||
-    !vk.FungibleToken ||
-    !vk.FungibleToken.hash ||
-    !vk.FungibleToken.data
+    !vk.Collection ||
+    !vk.Collection.hash ||
+    !vk.Collection.data ||
+    !vk.AdvancedCollection ||
+    !vk.AdvancedCollection.hash ||
+    !vk.AdvancedCollection.data ||
+    !vk.NFT ||
+    !vk.NFT.hash ||
+    !vk.NFT.data ||
+    !vk.NFTAdmin ||
+    !vk.NFTAdmin.hash ||
+    !vk.NFTAdmin.data ||
+    !vk.NFTAdvancedAdmin ||
+    !vk.NFTAdvancedAdmin.hash ||
+    !vk.NFTAdvancedAdmin.data
   )
     throw new Error("Cannot get verification key from vk");
 
-  const offerVerificationKey = FungibleTokenOfferContract._verificationKey ?? {
-    hash: Field(vk.FungibleTokenOfferContract.hash),
-    data: vk.FungibleTokenOfferContract.data,
-  };
-  const bidVerificationKey = FungibleTokenBidContract._verificationKey ?? {
-    hash: Field(vk.FungibleTokenBidContract.hash),
-    data: vk.FungibleTokenBidContract.data,
-  };
+  // const offerVerificationKey = FungibleTokenOfferContract._verificationKey ?? {
+  //   hash: Field(vk.FungibleTokenOfferContract.hash),
+  //   data: vk.FungibleTokenOfferContract.data,
+  // };
+  // const bidVerificationKey = FungibleTokenBidContract._verificationKey ?? {
+  //   hash: Field(vk.FungibleTokenBidContract.hash),
+  //   data: vk.FungibleTokenBidContract.data,
+  // };
 
-  const isNewBidOfferAccount =
-    txType === "token:offer:create" && offerAddress
-      ? !Mina.hasAccount(offerAddress, tokenId)
-      : txType === "token:bid:create" && bidAddress
-      ? !Mina.hasAccount(bidAddress)
-      : false;
+  // const isNewBidOfferAccount =
+  //   txType === "token:offer:create" && offerAddress
+  //     ? !Mina.hasAccount(offerAddress, tokenId)
+  //     : txType === "token:bid:create" && bidAddress
+  //     ? !Mina.hasAccount(bidAddress)
+  //     : false;
 
-  const isNewBuyAccount =
-    txType === "token:offer:buy" ? !Mina.hasAccount(sender, tokenId) : false;
-  let isNewSellAccount: boolean = false;
-  if (txType === "token:bid:sell") {
-    if (!bidAddress || !bidContract) throw new Error("Bid address is required");
-    await fetchMinaAccount({
-      publicKey: bidAddress,
-      force: true,
-    });
-    const buyer = bidContract.buyer.get();
-    await fetchMinaAccount({
-      publicKey: buyer,
-      tokenId,
-      force: false,
-    });
-    isNewSellAccount = !Mina.hasAccount(buyer, tokenId);
-  }
+  // const isNewBuyAccount =
+  //   txType === "token:offer:buy" ? !Mina.hasAccount(sender, tokenId) : false;
+  // let isNewSellAccount: boolean = false;
+  // if (txType === "token:bid:sell") {
+  //   if (!bidAddress || !bidContract) throw new Error("Bid address is required");
+  //   await fetchMinaAccount({
+  //     publicKey: bidAddress,
+  //     force: true,
+  //   });
+  //   const buyer = bidContract.buyer.get();
+  //   await fetchMinaAccount({
+  //     publicKey: buyer,
+  //     tokenId,
+  //     force: false,
+  //   });
+  //   isNewSellAccount = !Mina.hasAccount(buyer, tokenId);
+  // }
 
-  if (txType === "token:burn") {
-    await fetchMinaAccount({
-      publicKey: sender,
-      force: true,
-    });
-    await fetchMinaAccount({
-      publicKey: sender,
-      tokenId,
-      force: false,
-    });
-    if (!Mina.hasAccount(sender, tokenId))
-      throw new Error("Sender does not have tokens to burn");
-  }
+  // if (txType === "token:burn") {
+  //   await fetchMinaAccount({
+  //     publicKey: sender,
+  //     force: true,
+  //   });
+  //   await fetchMinaAccount({
+  //     publicKey: sender,
+  //     tokenId,
+  //     force: false,
+  //   });
+  //   if (!Mina.hasAccount(sender, tokenId))
+  //     throw new Error("Sender does not have tokens to burn");
+  // }
 
-  const isNewTransferMintAccount =
-    (txType === "token:transfer" ||
-      txType === "token:airdrop" ||
-      txType === "token:mint") &&
-    to
-      ? !Mina.hasAccount(to, tokenId)
-      : false;
+  // const isNewTransferMintAccount =
+  //   (txType === "token:transfer" ||
+  //     txType === "token:airdrop" ||
+  //     txType === "token:mint") &&
+  //   to
+  //     ? !Mina.hasAccount(to, tokenId)
+  //     : false;
 
-  const accountCreationFee =
-    (isNewBidOfferAccount ? 1_000_000_000 : 0) +
-    (isNewBuyAccount ? 1_000_000_000 : 0) +
-    (isNewSellAccount ? 1_000_000_000 : 0) +
-    (isNewTransferMintAccount ? 1_000_000_000 : 0) +
-    (isToNewAccount &&
-    txType === "token:mint" &&
-    adminType === "advanced" &&
-    advancedAdminContract.whitelist.get().isSome().toBoolean()
-      ? 1_000_000_000
-      : 0);
-  console.log("accountCreationFee", accountCreationFee / 1_000_000_000);
+  // const accountCreationFee =
+  //   (isNewBidOfferAccount ? 1_000_000_000 : 0) +
+  //   (isNewBuyAccount ? 1_000_000_000 : 0) +
+  //   (isNewSellAccount ? 1_000_000_000 : 0) +
+  //   (isNewTransferMintAccount ? 1_000_000_000 : 0) +
+  //   (isToNewAccount &&
+  //   txType === "token:mint" &&
+  //   adminType === "advanced" &&
+  //   advancedAdminContract.whitelist.get().isSome().toBoolean()
+  //     ? 1_000_000_000
+  //     : 0);
+  // console.log("accountCreationFee", accountCreationFee / 1_000_000_000);
 
-  switch (txType) {
-    case "token:offer:buy":
-    case "token:offer:withdraw":
-    case "token:offer:whitelist":
-      if (offerContract === undefined)
-        throw new Error("Offer contract is required");
-      if (
-        Mina.getAccount(
-          offerContract.address,
-          tokenId
-        ).zkapp?.verificationKey?.hash.toJSON() !==
-        vk.FungibleTokenOfferContract.hash
-      )
-        throw new Error(
-          "Invalid offer verification key, offer contract has to be upgraded"
+  // switch (txType) {
+  //   case "token:offer:buy":
+  //   case "token:offer:withdraw":
+  //   case "token:offer:whitelist":
+  //     if (offerContract === undefined)
+  //       throw new Error("Offer contract is required");
+  //     if (
+  //       Mina.getAccount(
+  //         offerContract.address,
+  //         tokenId
+  //       ).zkapp?.verificationKey?.hash.toJSON() !==
+  //       vk.FungibleTokenOfferContract.hash
+  //     )
+  //       throw new Error(
+  //         "Invalid offer verification key, offer contract has to be upgraded"
+  //       );
+  //     break;
+  // }
+  // switch (txType) {
+  //   case "token:bid:sell":
+  //   case "token:bid:withdraw":
+  //   case "token:bid:whitelist":
+  //     if (bidContract === undefined)
+  //       throw new Error("Bid contract is required");
+  //     if (
+  //       Mina.getAccount(
+  //         bidContract.address
+  //       ).zkapp?.verificationKey?.hash.toJSON() !==
+  //       vk.FungibleTokenBidContract.hash
+  //     )
+  //       throw new Error(
+  //         "Invalid bid verification key, bid contract has to be upgraded"
+  //       );
+  //     break;
+  // }
+
+  // switch (txType) {
+  //   case "token:mint":
+  //   case "token:burn":
+  //   case "token:redeem":
+  //   case "token:transfer":
+  //   case "token:airdrop":
+  //   case "token:offer:create":
+  //   case "token:bid:create":
+  //   case "token:offer:buy":
+  //   case "token:offer:withdraw":
+  //   case "token:bid:sell":
+  //     if (
+  //       Mina.getAccount(
+  //         zkToken.address
+  //       ).zkapp?.verificationKey?.hash.toJSON() !== vk.FungibleToken.hash
+  //     )
+  //       throw new Error(
+  //         "Invalid token verification key, token contract has to be upgraded"
+  //       );
+  //     break;
+  // }
+
+  const { name, ipfsHash, metadataRoot, privateMetadata, serializedMap } =
+    typeof args.nftMintParams.metadata === "string"
+      ? {
+          name: args.nftMintParams.name,
+          ipfsHash: args.nftMintParams.storage,
+          metadataRoot: Field.fromJSON(args.nftMintParams.metadata),
+          privateMetadata: undefined,
+          serializedMap: undefined,
+        }
+      : await pinMetadata(
+          Metadata.fromOpenApiJSON({ json: args.nftMintParams.metadata })
         );
-      break;
-  }
-  switch (txType) {
-    case "token:bid:sell":
-    case "token:bid:withdraw":
-    case "token:bid:whitelist":
-      if (bidContract === undefined)
-        throw new Error("Bid contract is required");
-      if (
-        Mina.getAccount(
-          bidContract.address
-        ).zkapp?.verificationKey?.hash.toJSON() !==
-        vk.FungibleTokenBidContract.hash
-      )
-        throw new Error(
-          "Invalid bid verification key, bid contract has to be upgraded"
-        );
-      break;
-  }
 
-  switch (txType) {
-    case "token:mint":
-    case "token:burn":
-    case "token:redeem":
-    case "token:transfer":
-    case "token:airdrop":
-    case "token:offer:create":
-    case "token:bid:create":
-    case "token:offer:buy":
-    case "token:offer:withdraw":
-    case "token:bid:sell":
-      if (
-        Mina.getAccount(
-          zkToken.address
-        ).zkapp?.verificationKey?.hash.toJSON() !== vk.FungibleToken.hash
-      )
-        throw new Error(
-          "Invalid token verification key, token contract has to be upgraded"
-        );
-      break;
-  }
+  if (ipfsHash === undefined)
+    throw new Error("storage is required, but not provided");
+  if (metadataRoot === undefined) throw new Error("metadataRoot is required");
+
+  const slot =
+    chain === "local"
+      ? Mina.currentSlot()
+      : chain === "zeko"
+      ? UInt32.zero
+      : (await fetchLastBlock()).globalSlotSinceGenesis;
+  const expiry = slot.add(
+    UInt32.from(chain === "mainnet" || chain === "devnet" ? 20 : 100000)
+  );
+
+  const nftData = NFTData.new(args.nftMintParams.data);
+
+  if (!args.nftMintParams.address) throw new Error("NFT address is required");
+
+  const mintParams = new MintParams({
+    name: fieldFromString(name),
+    address: PublicKey.fromBase58(args.nftMintParams.address),
+    tokenId: TokenId.derive(collectionAddress),
+    data: nftData,
+    fee: args.nftMintParams.fee
+      ? UInt64.from(Math.round(args.nftMintParams.fee * 1_000_000_000))
+      : UInt64.zero,
+    metadata: metadataRoot,
+    storage: Storage.fromString(ipfsHash),
+    metadataVerificationKeyHash: args.nftMintParams.metadataVerificationKeyHash
+      ? Field.fromJSON(args.nftMintParams.metadataVerificationKeyHash)
+      : Field(0),
+    expiry: args.nftMintParams.expiry
+      ? UInt32.from(Math.round(args.nftMintParams.expiry))
+      : expiry,
+  });
+
+  const accountCreationFee = 1_000_000_000;
 
   const tx = await Mina.transaction({ sender, fee, memo, nonce }, async () => {
-    if (
-      adminType !== "bondingCurve" ||
-      (txType !== "token:mint" && txType !== "token:redeem")
-    ) {
-      const feeAccountUpdate = AccountUpdate.createSigned(sender);
-      if (accountCreationFee > 0) {
-        feeAccountUpdate.balance.subInPlace(accountCreationFee);
-      }
-      if (provingKey && provingFee)
-        feeAccountUpdate.send({
-          to: provingKey,
-          amount: provingFee,
-        });
-      if (developerAddress && developerFee) {
-        feeAccountUpdate.send({
-          to: developerAddress,
-          amount: developerFee,
-        });
-      }
+    const feeAccountUpdate = AccountUpdate.createSigned(sender);
+    if (accountCreationFee > 0) {
+      feeAccountUpdate.balance.subInPlace(accountCreationFee);
     }
+    if (provingKey && provingFee)
+      feeAccountUpdate.send({
+        to: provingKey,
+        amount: provingFee,
+      });
+    if (developerAddress && developerFee) {
+      feeAccountUpdate.send({
+        to: developerAddress,
+        amount: developerFee,
+      });
+    }
+
     switch (txType) {
-      case "token:mint":
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (to === undefined) throw new Error("Error: To address is required");
-        if (adminType === "bondingCurve") {
-          if (price === undefined)
-            throw new Error("Error: Price is required for bonding curve mint");
-          await bondingCurveAdminContract.mint(to, amount, price);
-        } else {
-          await zkToken.mint(to, amount);
-        }
-        break;
-
-      case "token:redeem":
-        if (adminType !== "bondingCurve")
-          throw new Error("Error: Invalid admin type for redeem");
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (price === undefined) throw new Error("Error: Price is required");
-        if (slippage === undefined)
-          throw new Error("Error: Slippage is required");
-
-        await bondingCurveAdminContract.redeem(amount, price, slippage);
-
-        break;
-
-      case "token:transfer":
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (to === undefined)
-          throw new Error("Error: From address is required");
-        await zkToken.transfer(sender, to, amount);
-        break;
-
-      case "token:burn":
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (from === undefined)
-          throw new Error("Error: From address is required");
-        await zkToken.burn(from, amount);
-        break;
-
-      case "token:offer:create":
-        if (price === undefined) throw new Error("Error: Price is required");
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (offerContract === undefined)
-          throw new Error("Error: Offer address is required");
-        if (offerContractDeployment === undefined)
-          throw new Error("Error: Offer address is required");
-        if (isNewBidOfferAccount) {
-          await offerContractDeployment.deploy({
-            verificationKey: offerVerificationKey,
-            whitelist: whitelist ?? Whitelist.empty(),
-          });
-          offerContract.account.zkappUri.set(`Offer for ${symbol}`);
-          await offerContract.initialize(sender, tokenAddress, amount, price);
-          await zkToken.approveAccountUpdates([
-            offerContractDeployment.self,
-            offerContract.self,
-          ]);
-        } else {
-          await offerContract.offer(amount, price);
-          await zkToken.approveAccountUpdate(offerContract.self);
-        }
-
-        break;
-
-      case "token:offer:buy":
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (offerContract === undefined)
-          throw new Error("Error: Offer address is required");
-        await offerContract.buy(amount);
-        await zkToken.approveAccountUpdate(offerContract.self);
-        break;
-
-      case "token:offer:withdraw":
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (offerContract === undefined)
-          throw new Error("Error: Offer address is required");
-        await offerContract.withdraw(amount);
-        await zkToken.approveAccountUpdate(offerContract.self);
-        break;
-
-      case "token:bid:create":
-        if (price === undefined) throw new Error("Error: Price is required");
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (bidContract === undefined)
-          throw new Error("Error: Bid address is required");
-        if (bidContractDeployment === undefined)
-          throw new Error("Error: Bid address is required");
-        if (isNewBidOfferAccount) {
-          await bidContractDeployment.deploy({
-            verificationKey: bidVerificationKey,
-            whitelist: whitelist ?? Whitelist.empty(),
-          });
-          bidContract.account.zkappUri.set(`Bid for ${symbol}`);
-          await bidContract.initialize(tokenAddress, amount, price);
-          await zkToken.approveAccountUpdates([
-            bidContractDeployment.self,
-            bidContract.self,
-          ]);
-        } else {
-          await bidContract.bid(amount, price);
-          await zkToken.approveAccountUpdate(bidContract.self);
-        }
-        break;
-
-      case "token:bid:sell":
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (bidContract === undefined)
-          throw new Error("Error: Bid address is required");
-        await bidContract.sell(amount);
-        await zkToken.approveAccountUpdate(bidContract.self);
-        break;
-
-      case "token:bid:withdraw":
-        if (amount === undefined) throw new Error("Error: Amount is required");
-        if (bidContract === undefined)
-          throw new Error("Error: Bid address is required");
-        await bidContract.withdraw(amount);
-        //await zkToken.approveAccountUpdate(bidContract.self);
-        break;
-
-      case "token:admin:whitelist":
-        if (adminType !== "advanced")
-          throw new Error("Invalid admin type for updateAdminWhitelist");
-        await advancedAdminContract.updateWhitelist(whitelist);
-        break;
-
-      case "token:bid:whitelist":
-        if (bidContract === undefined)
-          throw new Error("Error: Bid address is required");
-        await bidContract.updateWhitelist(whitelist);
-        break;
-
-      case "token:offer:whitelist":
-        if (offerContract === undefined)
-          throw new Error("Error: Offer address is required");
-        await offerContract.updateWhitelist(whitelist);
+      case "nft:mint":
+        await zkCollection.mintByCreator(mintParams);
         break;
 
       default:
@@ -830,90 +759,76 @@ export async function buildTokenTransaction(params: {
     }
   });
   return {
-    request:
-      txType === "token:offer:create" ||
-      txType === "token:bid:create" ||
-      txType === "token:offer:whitelist" ||
-      txType === "token:bid:whitelist" ||
-      txType === "token:admin:whitelist"
-        ? {
-            ...args,
-            whitelist: whitelist?.toString(),
-          }
-        : args,
+    request: args,
     tx,
     adminType,
     adminContractAddress,
-    adminAddress,
     symbol,
+    name,
     verificationKeyHashes,
+    metadataRoot: metadataRoot.toJSON(),
+    privateMetadata,
+    storage: ipfsHash,
+    map: serializedMap,
   };
 }
 
-export async function getTokenSymbolAndAdmin(params: {
-  txType: TokenTransactionType;
-  to?: PublicKey;
-  offerAddress?: PublicKey;
-  bidAddress?: PublicKey;
-  tokenAddress: PublicKey;
+export async function getNftSymbolAndAdmin(params: {
+  txType: NftTransactionType;
+  // to?: PublicKey;
+  // offerAddress?: PublicKey;
+  // bidAddress?: PublicKey;
+  nftAddress?: PublicKey;
+  collectionAddress: PublicKey;
   chain: blockchain;
 }): Promise<{
   adminContractAddress: PublicKey;
-  adminAddress: PublicKey;
   symbol: string;
-  adminType: AdminType;
-  isToNewAccount?: boolean;
+  adminType: NftAdminType;
   verificationKeyHashes: string[];
 }> {
-  const { txType, tokenAddress, chain, to, offerAddress, bidAddress } = params;
+  const { txType, collectionAddress, chain, nftAddress } = params;
   const vk =
     tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
   let verificationKeyHashes: string[] = [];
-  if (bidAddress) {
-    verificationKeyHashes.push(vk.FungibleTokenBidContract.hash);
+  // if (bidAddress) {
+  //   verificationKeyHashes.push(vk.FungibleTokenBidContract.hash);
+  // }
+  // if (offerAddress) {
+  //   verificationKeyHashes.push(vk.FungibleTokenOfferContract.hash);
+  // }
+
+  await fetchMinaAccount({ publicKey: collectionAddress, force: true });
+  if (!Mina.hasAccount(collectionAddress)) {
+    throw new Error("Collection contract account not found");
   }
-  if (offerAddress) {
-    verificationKeyHashes.push(vk.FungibleTokenOfferContract.hash);
+  const tokenId = TokenId.derive(collectionAddress);
+  if (nftAddress) {
+    await fetchMinaAccount({
+      publicKey: nftAddress,
+      tokenId,
+      force: true,
+    });
+    if (!Mina.hasAccount(nftAddress, tokenId)) {
+      throw new Error("NFT account not found");
+    }
   }
 
-  class FungibleTokenState extends Struct({
-    decimals: UInt8,
-    admin: PublicKey,
-    paused: Bool,
-  }) {}
-  const FungibleTokenStateSize = FungibleTokenState.sizeInFields();
-  class FungibleTokenAdminState extends Struct({
-    adminPublicKey: PublicKey,
-  }) {}
-  const FungibleTokenAdminStateSize = FungibleTokenAdminState.sizeInFields();
-
-  await fetchMinaAccount({ publicKey: tokenAddress, force: true });
-  if (!Mina.hasAccount(tokenAddress)) {
-    throw new Error("Token contract account not found");
-  }
-  const tokenId = TokenId.derive(tokenAddress);
-  await fetchMinaAccount({ publicKey: tokenAddress, tokenId, force: true });
-  if (!Mina.hasAccount(tokenAddress, tokenId)) {
-    throw new Error("Token contract totalSupply account not found");
-  }
-
-  const account = Mina.getAccount(tokenAddress);
+  const account = Mina.getAccount(collectionAddress);
   const verificationKey = account.zkapp?.verificationKey;
   if (!verificationKey) {
-    throw new Error("Token contract verification key not found");
+    throw new Error("Collection contract verification key not found");
   }
   if (!verificationKeyHashes.includes(verificationKey.hash.toJSON())) {
     verificationKeyHashes.push(verificationKey.hash.toJSON());
   }
   if (account.zkapp?.appState === undefined) {
-    throw new Error("Token contract state not found");
+    throw new Error("Collection contract state not found");
   }
 
-  const state = FungibleTokenState.fromFields(
-    account.zkapp?.appState.slice(0, FungibleTokenStateSize)
-  );
+  const collection = new Collection(collectionAddress);
   const symbol = account.tokenSymbol;
-  const adminContractPublicKey = state.admin;
+  const adminContractPublicKey = collection.admin.get();
   await fetchMinaAccount({
     publicKey: adminContractPublicKey,
     force: true,
@@ -931,7 +846,7 @@ export async function getTokenSymbolAndAdmin(params: {
   if (!verificationKeyHashes.includes(adminVerificationKey.hash.toJSON())) {
     verificationKeyHashes.push(adminVerificationKey.hash.toJSON());
   }
-  let adminType: AdminType = "unknown";
+  let adminType: NftAdminType = "unknown";
   if (
     vk.FungibleTokenAdvancedAdmin.hash === adminVerificationKey.hash.toJSON() &&
     vk.FungibleTokenAdvancedAdmin.data === adminVerificationKey.data
@@ -942,12 +857,6 @@ export async function getTokenSymbolAndAdmin(params: {
     vk.FungibleTokenAdmin.data === adminVerificationKey.data
   ) {
     adminType = "standard";
-  } else if (
-    vk.FungibleTokenBondingCurveAdmin.hash ===
-      adminVerificationKey.hash.toJSON() &&
-    vk.FungibleTokenBondingCurveAdmin.data === adminVerificationKey.data
-  ) {
-    adminType = "bondingCurve";
   } else {
     console.error("Unknown admin verification key", {
       hash: adminVerificationKey.hash.toJSON(),
@@ -955,32 +864,32 @@ export async function getTokenSymbolAndAdmin(params: {
       address: adminContractPublicKey.toBase58(),
     });
   }
-  let isToNewAccount: boolean | undefined = undefined;
-  if (to) {
-    if (adminType === "advanced") {
-      const adminTokenId = TokenId.derive(adminContractPublicKey);
-      await fetchMinaAccount({
-        publicKey: to,
-        tokenId: adminTokenId,
-        force: false,
-      });
-      isToNewAccount = !Mina.hasAccount(to, adminTokenId);
-    }
-    if (adminType === "bondingCurve") {
-      const adminTokenId = TokenId.derive(adminContractPublicKey);
-      await fetchMinaAccount({
-        publicKey: adminContractPublicKey,
-        tokenId: adminTokenId,
-        force: true,
-      });
-    }
-  }
-  const adminAddress0 = adminContract.zkapp?.appState[0];
-  const adminAddress1 = adminContract.zkapp?.appState[1];
-  if (adminAddress0 === undefined || adminAddress1 === undefined) {
-    throw new Error("Cannot fetch admin address from admin contract");
-  }
-  const adminAddress = PublicKey.fromFields([adminAddress0, adminAddress1]);
+  // let isToNewAccount: boolean | undefined = undefined;
+  // if (to) {
+  //   if (adminType === "advanced") {
+  //     const adminTokenId = TokenId.derive(adminContractPublicKey);
+  //     await fetchMinaAccount({
+  //       publicKey: to,
+  //       tokenId: adminTokenId,
+  //       force: false,
+  //     });
+  //     isToNewAccount = !Mina.hasAccount(to, adminTokenId);
+  //   }
+  //   if (adminType === "bondingCurve") {
+  //     const adminTokenId = TokenId.derive(adminContractPublicKey);
+  //     await fetchMinaAccount({
+  //       publicKey: adminContractPublicKey,
+  //       tokenId: adminTokenId,
+  //       force: true,
+  //     });
+  //   }
+  // }
+  // const adminAddress0 = adminContract.zkapp?.appState[0];
+  // const adminAddress1 = adminContract.zkapp?.appState[1];
+  // if (adminAddress0 === undefined || adminAddress1 === undefined) {
+  //   throw new Error("Cannot fetch admin address from admin contract");
+  // }
+  // const adminAddress = PublicKey.fromFields([adminAddress0, adminAddress1]);
 
   for (const hash of verificationKeyHashes) {
     const found = Object.values(vk).some((key) => key.hash === hash);
@@ -990,7 +899,7 @@ export async function getTokenSymbolAndAdmin(params: {
     }
   }
 
-  // Sort verification key hashes by type: upgrade -> admin -> token -> user
+  // Sort verification key hashes by type
   verificationKeyHashes.sort((a, b) => {
     const typeA = Object.values(vk).find((key) => key.hash === a)?.type;
     const typeB = Object.values(vk).find((key) => key.hash === b)?.type;
@@ -1011,10 +920,8 @@ export async function getTokenSymbolAndAdmin(params: {
 
   return {
     adminContractAddress: adminContractPublicKey,
-    adminAddress: adminAddress,
     symbol,
     adminType,
-    isToNewAccount,
     verificationKeyHashes,
   };
 }

@@ -13,7 +13,7 @@
     "@silvana-one/token": "0.1.2",
     "@silvana-one/upgradable": "0.1.2",
     "@types/node": "^22.10.2",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "o1js": "^2.2.0",
     "typescript": "^5.7.2"
   },
@@ -47,8 +47,8 @@
   "main": "dist/web/index.js",
   "peerDependencies": {
     "@silvana-one/storage": "0.1.2",
-    "@silvana-one/upgradable": "0.1.2",
     "@silvana-one/token": "0.1.2",
+    "@silvana-one/upgradable": "0.1.2",
     "o1js": "^2.2.0"
   },
   "publishConfig": {
