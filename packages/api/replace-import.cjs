@@ -11,13 +11,33 @@ fs.readFile(filePath, "utf8", (err, data) => {
   }
 
   // Replace all occurrences of from './types.gen' with from './types.gen.js'
+  const result = data
+    .replace(/from\s+'\.\/client\.gen'/g, "from './client.gen.js'")
+    .replace(/from\s+'\.\/types\.gen'/g, "from './types.gen.js'");
+
+  // Write the updated content back to the file
+  fs.writeFile(filePath, result, "utf8", (err) => {
+    if (err) return console.error(`Error writing the file: ${err}`);
+    console.log("Import paths updated successfully.");
+  });
+});
+
+const clientFilePath = path.join(__dirname, "src/client/client.gen.ts");
+
+// Read the file content
+fs.readFile(clientFilePath, "utf8", (err, data) => {
+  if (err) {
+    return console.error(`Error reading the file: ${err}`);
+  }
+
+  // Replace all occurrences of from './types.gen' with from './types.gen.js'
   const result = data.replace(
     /from\s+'\.\/types\.gen'/g,
     "from './types.gen.js'"
   );
 
   // Write the updated content back to the file
-  fs.writeFile(filePath, result, "utf8", (err) => {
+  fs.writeFile(clientFilePath, result, "utf8", (err) => {
     if (err) return console.error(`Error writing the file: ${err}`);
     console.log("Import paths updated successfully.");
   });
