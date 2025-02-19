@@ -141,7 +141,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
   const adminVerificationKey =
     adminType === "advanced" ? vk.NFTAdvancedAdmin : vk.NFTAdmin;
   const collectionVerificationKey =
-    adminType === "advanced" ? vk.NFTAdvancedCollection : vk.NFTCollection;
+    adminType === "advanced" ? vk.AdvancedCollection : vk.Collection;
 
   if (!adminVerificationKey || !collectionVerificationKey)
     throw new Error("Cannot get verification keys");
@@ -278,6 +278,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
         await zkAdmin.deploy({
           admin: sender,
           uri: `NFT Admin`,
+          verificationKey: adminVerificationKey,
         });
         // deploy() and initialize() create 2 account updates for the same publicKey, it is intended
         await zkCollection.deploy({
@@ -287,6 +288,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
           admin: adminContractAddress,
           symbol,
           url,
+          verificationKey: collectionVerificationKey,
         });
         await zkCollection.initialize(mintParams, collectionData);
       }
@@ -730,7 +732,7 @@ export async function buildNftTransaction(params: {
       : expiry,
   });
 
-  const accountCreationFee = 1_000_000_000;
+  const accountCreationFee = 0;
 
   const tx = await Mina.transaction({ sender, fee, memo, nonce }, async () => {
     const feeAccountUpdate = AccountUpdate.createSigned(sender);
@@ -848,13 +850,13 @@ export async function getNftSymbolAndAdmin(params: {
   }
   let adminType: NftAdminType = "unknown";
   if (
-    vk.FungibleTokenAdvancedAdmin.hash === adminVerificationKey.hash.toJSON() &&
-    vk.FungibleTokenAdvancedAdmin.data === adminVerificationKey.data
+    vk.NFTAdvancedAdmin.hash === adminVerificationKey.hash.toJSON() &&
+    vk.NFTAdvancedAdmin.data === adminVerificationKey.data
   ) {
     adminType = "advanced";
   } else if (
-    vk.FungibleTokenAdmin.hash === adminVerificationKey.hash.toJSON() &&
-    vk.FungibleTokenAdmin.data === adminVerificationKey.data
+    vk.NFTAdmin.hash === adminVerificationKey.hash.toJSON() &&
+    vk.NFTAdmin.data === adminVerificationKey.data
   ) {
     adminType = "standard";
   } else {

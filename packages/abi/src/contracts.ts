@@ -1,4 +1,3 @@
-import { Cache, Field } from "o1js";
 import {
   FungibleToken,
   AdvancedFungibleToken,
@@ -16,22 +15,7 @@ import {
   NFTAdvancedAdmin,
 } from "@silvana-one/nft";
 import { VerificationKeyUpgradeAuthority } from "@silvana-one/upgradable";
-
-export type Compilable = {
-  compile({ cache }?: { cache: Cache }): Promise<{
-    verificationKey: {
-      data: string;
-      hash: Field;
-    };
-  }>;
-};
-
-export type CompileDependencies = Record<
-  /** Transaction type */
-  string,
-  /** List of contract names */
-  string[] // TODO: add role
->;
+import { Compilable } from "./compile.js";
 
 export const contractList: Record<string, Compilable> = {
   FungibleToken: FungibleToken,
@@ -42,8 +26,8 @@ export const contractList: Record<string, Compilable> = {
   FungibleTokenOfferContract: FungibleTokenOfferContract,
   FungibleTokenClaimContract: FungibleTokenClaimContract,
   NFT: NFT,
-  Collection: Collection as unknown as Compilable, // TODO: better type
-  AdvancedCollection: AdvancedCollection as unknown as Compilable, // TODO: better type
+  Collection: Collection,
+  AdvancedCollection: AdvancedCollection,
   NFTAdmin: NFTAdmin,
   NFTAdvancedAdmin: NFTAdvancedAdmin,
   VerificationKeyUpgradeAuthority: VerificationKeyUpgradeAuthority,

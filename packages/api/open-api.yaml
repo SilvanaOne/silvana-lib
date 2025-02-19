@@ -2391,6 +2391,16 @@ components:
           items:
             $ref: "#/components/schemas/TokenTransaction"
           description: Array of token transactions.
+    NftTransactions:
+      type: object
+      required:
+        - txs
+      properties:
+        txs:
+          type: array
+          items:
+            $ref: "#/components/schemas/NftTransaction"
+          description: Array of NFT transactions.
     ProveTokenTransaction:
       type: object
       required:
@@ -2579,6 +2589,8 @@ components:
         - string
         - uri
         - symbol
+        - bondingCurveMintPrice
+        - bondingCurveRedeemPrice
     ContractProperty:
       type: object
       required:

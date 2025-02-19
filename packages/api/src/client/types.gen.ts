@@ -1114,6 +1114,13 @@ export type TokenTransactions = {
     txs: Array<TokenTransaction>;
 };
 
+export type NftTransactions = {
+    /**
+     * Array of NFT transactions.
+     */
+    txs: Array<NftTransaction>;
+};
+
 export type ProveTokenTransaction = {
     /**
      * The transaction object.
@@ -1269,7 +1276,7 @@ export type ContractInfoRequest = {
     tokenId?: string;
 };
 
-export type ContractPropertyType = 'name' | 'role' | 'address' | 'tokenId' | 'verificationKey' | 'verificationKeyHash' | 'zkappVersion' | 'bigint' | 'number' | 'field' | 'boolean' | 'ipfs' | 'string' | 'uri' | 'symbol';
+export type ContractPropertyType = 'name' | 'role' | 'address' | 'tokenId' | 'verificationKey' | 'verificationKeyHash' | 'zkappVersion' | 'bigint' | 'number' | 'field' | 'boolean' | 'ipfs' | 'string' | 'uri' | 'symbol' | 'bondingCurveMintPrice' | 'bondingCurveRedeemPrice';
 
 export type ContractProperty = {
     type: ContractPropertyType;
