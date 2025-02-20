@@ -6,6 +6,8 @@ import {
   FungibleTokenBidContract,
   FungibleTokenOfferContract,
   FungibleTokenClaimContract,
+  FungibleTokenBondingCurveAdmin,
+  BondingCurveFungibleToken,
 } from "@silvana-one/token";
 import {
   NFT,
@@ -25,6 +27,8 @@ export const contractList: Record<string, Compilable> = {
   FungibleTokenBidContract: FungibleTokenBidContract,
   FungibleTokenOfferContract: FungibleTokenOfferContract,
   FungibleTokenClaimContract: FungibleTokenClaimContract,
+  FungibleTokenBondingCurveAdmin: FungibleTokenBondingCurveAdmin,
+  BondingCurveFungibleToken: BondingCurveFungibleToken,
   NFT: NFT,
   Collection: Collection,
   AdvancedCollection: AdvancedCollection,
