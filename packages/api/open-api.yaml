@@ -382,6 +382,39 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /transaction/send:
+    post:
+      tags:
+        - Transaction
+      summary: Send a transaction to the Mina blockchain.
+      description: |
+        The `send` endpoint allows you to send a transaction to the Mina blockchain.
+      operationId: sendTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendTransactionParams"
+      responses:
+        "200":
+          description: Successfully sent transaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendTransactionReply"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /transaction/status:
     post:
       tags:
@@ -1216,6 +1249,31 @@ components:
         hash:
           type: string
           description: The transaction hash if broadcasted.
+    SendTransactionParams:
+      type: object
+      required:
+        - transaction
+      properties:
+        transaction:
+          type: string
+          description: The transaction to send.
+    SendTransactionReply:
+      type: object
+      required:
+        - success
+      properties:
+        hash:
+          type: string
+          description: The transaction hash if successful.
+        status:
+          type: string
+          description: The status of the transaction.
+        success:
+          type: boolean
+          description: Whether the transaction was sent to the network.
+        error:
+          type: object
+          description: Error details if the transaction failed.
     TransactionStatusParams:
       type: object
       required:
@@ -2366,10 +2424,30 @@ components:
           required:
             - request
             - symbol
+            - collectionName
+            - nftName
           properties:
             symbol:
               type: string
               description: The symbol of the NFT collection.
+            collectionName:
+              type: string
+              description: The name of the NFT collection.
+            nftName:
+              type: string
+              description: The name of the NFT.
+            storage:
+              type: string
+              description: The storage of the NFT (IPFS hash).
+            privateMetadata:
+              type: string
+              description: The private metadata of the NFT.
+            metadataRoot:
+              type: string
+              description: The metadata root of the NFT.
+            map:
+              type: object
+              description: The serialized metadata map of the NFT.
             request:
               allOf:
                 - $ref: "#/components/schemas/NftTransactionParams"
@@ -2391,6 +2469,16 @@ components:
           items:
             $ref: "#/components/schemas/TokenTransaction"
           description: Array of token transactions.
+    NftTransactions:
+      type: object
+      required:
+        - txs
+      properties:
+        txs:
+          type: array
+          items:
+            $ref: "#/components/schemas/NftTransaction"
+          description: Array of NFT transactions.
     ProveTokenTransaction:
       type: object
       required:
@@ -2579,6 +2667,8 @@ components:
         - string
         - uri
         - symbol
+        - bondingCurveMintPrice
+        - bondingCurveRedeemPrice
     ContractProperty:
       type: object
       required:

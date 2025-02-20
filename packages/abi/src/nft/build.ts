@@ -28,6 +28,7 @@ import {
   CollectionData,
   MintParams,
   NFTData,
+  fieldToString,
 } from "@silvana-one/nft";
 import { tokenVerificationKeys } from "../vk/index.js";
 import {
@@ -61,7 +62,8 @@ export async function buildNftCollectionLaunchTransaction(params: {
     | LaunchNftCollectionAdvancedAdminParams;
   tx: Transaction<false, false>;
   adminType: NftAdminType;
-  name: string;
+  collectionName: string;
+  nftName: string;
   verificationKeyHashes: string[];
   metadataRoot: string;
   storage: string;
@@ -107,6 +109,9 @@ export async function buildNftCollectionLaunchTransaction(params: {
   if (url && typeof url !== "string") throw new Error("Url must be a string");
   if (!args.collectionAddress || typeof args.collectionAddress !== "string")
     throw new Error("collectionAddress is required");
+  if (!args.collectionName || typeof args.collectionName !== "string")
+    throw new Error("collectionName is required");
+  const collectionName = args.collectionName;
   if (
     !args.adminContractAddress ||
     typeof args.adminContractAddress !== "string"
@@ -141,7 +146,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
   const adminVerificationKey =
     adminType === "advanced" ? vk.NFTAdvancedAdmin : vk.NFTAdmin;
   const collectionVerificationKey =
-    adminType === "advanced" ? vk.NFTAdvancedCollection : vk.NFTCollection;
+    adminType === "advanced" ? vk.AdvancedCollection : vk.Collection;
 
   if (!adminVerificationKey || !collectionVerificationKey)
     throw new Error("Cannot get verification keys");
@@ -278,15 +283,17 @@ export async function buildNftCollectionLaunchTransaction(params: {
         await zkAdmin.deploy({
           admin: sender,
           uri: `NFT Admin`,
+          verificationKey: adminVerificationKey,
         });
         // deploy() and initialize() create 2 account updates for the same publicKey, it is intended
         await zkCollection.deploy({
           creator,
-          collectionName: fieldFromString(args.collectionName),
+          collectionName: fieldFromString(collectionName),
           baseURL: fieldFromString(args.baseURL ?? "ipfs"),
           admin: adminContractAddress,
           symbol,
           url,
+          verificationKey: collectionVerificationKey,
         });
         await zkCollection.initialize(mintParams, collectionData);
       }
@@ -302,7 +309,8 @@ export async function buildNftCollectionLaunchTransaction(params: {
         : args,
     tx,
     adminType,
-    name: args.collectionName,
+    collectionName,
+    nftName: name,
     verificationKeyHashes: [
       adminVerificationKey.hash,
       collectionVerificationKey.hash,
@@ -334,7 +342,8 @@ export async function buildNftTransaction(params: {
   adminType: NftAdminType;
   adminContractAddress: PublicKey;
   symbol: string;
-  name: string;
+  collectionName: string;
+  nftName: string;
   verificationKeyHashes: string[];
   metadataRoot: string;
   storage: string;
@@ -414,14 +423,20 @@ export async function buildNftTransaction(params: {
     throw new Error("Sender does not have account");
   }
 
-  const { symbol, adminContractAddress, adminType, verificationKeyHashes } =
-    await getNftSymbolAndAdmin({
-      txType,
-      collectionAddress,
-      chain,
-      nftAddress: undefined, // TODO: add nft address
-    });
-  const memo = args.memo ?? `${txType} ${symbol} ${args.nftMintParams.name}`;
+  const {
+    symbol,
+    adminContractAddress,
+    adminType,
+    verificationKeyHashes,
+    collectionName,
+  } = await getNftSymbolAndAdmin({
+    txType,
+    collectionAddress,
+    chain,
+    nftAddress: undefined, // TODO: add nft address
+  });
+  const nftName = args.nftMintParams.name;
+  const memo = args.memo ?? `${txType.split(":")[1]} ${symbol} ${nftName}`;
   const fee = 100_000_000;
   const provingKey = params.provingKey
     ? PublicKey.fromBase58(params.provingKey)
@@ -730,7 +745,7 @@ export async function buildNftTransaction(params: {
       : expiry,
   });
 
-  const accountCreationFee = 1_000_000_000;
+  const accountCreationFee = 0;
 
   const tx = await Mina.transaction({ sender, fee, memo, nonce }, async () => {
     const feeAccountUpdate = AccountUpdate.createSigned(sender);
@@ -764,7 +779,8 @@ export async function buildNftTransaction(params: {
     adminType,
     adminContractAddress,
     symbol,
-    name,
+    collectionName,
+    nftName,
     verificationKeyHashes,
     metadataRoot: metadataRoot.toJSON(),
     privateMetadata,
@@ -784,6 +800,7 @@ export async function getNftSymbolAndAdmin(params: {
 }): Promise<{
   adminContractAddress: PublicKey;
   symbol: string;
+  collectionName: string;
   adminType: NftAdminType;
   verificationKeyHashes: string[];
 }> {
@@ -828,6 +845,7 @@ export async function getNftSymbolAndAdmin(params: {
 
   const collection = new Collection(collectionAddress);
   const symbol = account.tokenSymbol;
+  const collectionName = fieldToString(collection.collectionName.get());
   const adminContractPublicKey = collection.admin.get();
   await fetchMinaAccount({
     publicKey: adminContractPublicKey,
@@ -848,13 +866,13 @@ export async function getNftSymbolAndAdmin(params: {
   }
   let adminType: NftAdminType = "unknown";
   if (
-    vk.FungibleTokenAdvancedAdmin.hash === adminVerificationKey.hash.toJSON() &&
-    vk.FungibleTokenAdvancedAdmin.data === adminVerificationKey.data
+    vk.NFTAdvancedAdmin.hash === adminVerificationKey.hash.toJSON() &&
+    vk.NFTAdvancedAdmin.data === adminVerificationKey.data
   ) {
     adminType = "advanced";
   } else if (
-    vk.FungibleTokenAdmin.hash === adminVerificationKey.hash.toJSON() &&
-    vk.FungibleTokenAdmin.data === adminVerificationKey.data
+    vk.NFTAdmin.hash === adminVerificationKey.hash.toJSON() &&
+    vk.NFTAdmin.data === adminVerificationKey.data
   ) {
     adminType = "standard";
   } else {
@@ -921,6 +939,7 @@ export async function getNftSymbolAndAdmin(params: {
   return {
     adminContractAddress: adminContractPublicKey,
     symbol,
+    collectionName,
     adminType,
     verificationKeyHashes,
   };

@@ -120,6 +120,34 @@ export type JobResult = {
     hash?: string;
 };
 
+export type SendTransactionParams = {
+    /**
+     * The transaction to send.
+     */
+    transaction: string;
+};
+
+export type SendTransactionReply = {
+    /**
+     * The transaction hash if successful.
+     */
+    hash?: string;
+    /**
+     * The status of the transaction.
+     */
+    status?: string;
+    /**
+     * Whether the transaction was sent to the network.
+     */
+    success: boolean;
+    /**
+     * Error details if the transaction failed.
+     */
+    error?: {
+        [key: string]: unknown;
+    };
+};
+
 export type TransactionStatusParams = {
     /**
      * The transaction hash to check the status of.
@@ -1099,6 +1127,32 @@ export type NftTransaction = TransactionPayloads & {
      * The symbol of the NFT collection.
      */
     symbol: string;
+    /**
+     * The name of the NFT collection.
+     */
+    collectionName: string;
+    /**
+     * The name of the NFT.
+     */
+    nftName: string;
+    /**
+     * The storage of the NFT (IPFS hash).
+     */
+    storage?: string;
+    /**
+     * The private metadata of the NFT.
+     */
+    privateMetadata?: string;
+    /**
+     * The metadata root of the NFT.
+     */
+    metadataRoot?: string;
+    /**
+     * The serialized metadata map of the NFT.
+     */
+    map?: {
+        [key: string]: unknown;
+    };
     request: NftTransactionParams & {
         /**
          * The type of the NFT transaction.
@@ -1112,6 +1166,13 @@ export type TokenTransactions = {
      * Array of token transactions.
      */
     txs: Array<TokenTransaction>;
+};
+
+export type NftTransactions = {
+    /**
+     * Array of NFT transactions.
+     */
+    txs: Array<NftTransaction>;
 };
 
 export type ProveTokenTransaction = {
@@ -1269,7 +1330,7 @@ export type ContractInfoRequest = {
     tokenId?: string;
 };
 
-export type ContractPropertyType = 'name' | 'role' | 'address' | 'tokenId' | 'verificationKey' | 'verificationKeyHash' | 'zkappVersion' | 'bigint' | 'number' | 'field' | 'boolean' | 'ipfs' | 'string' | 'uri' | 'symbol';
+export type ContractPropertyType = 'name' | 'role' | 'address' | 'tokenId' | 'verificationKey' | 'verificationKeyHash' | 'zkappVersion' | 'bigint' | 'number' | 'field' | 'boolean' | 'ipfs' | 'string' | 'uri' | 'symbol' | 'bondingCurveMintPrice' | 'bondingCurveRedeemPrice';
 
 export type ContractProperty = {
     type: ContractPropertyType;
@@ -1730,6 +1791,51 @@ export type GetProofResponses = {
 };
 
 export type GetProofResponse = GetProofResponses[keyof GetProofResponses];
+
+export type SendTransactionData = {
+    body: SendTransactionParams;
+    path?: never;
+    query?: never;
+    url: '/transaction/send';
+};
+
+export type SendTransactionErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type SendTransactionError = SendTransactionErrors[keyof SendTransactionErrors];
+
+export type SendTransactionResponses = {
+    /**
+     * Successfully sent transaction.
+     */
+    200: SendTransactionReply;
+};
+
+export type SendTransactionResponse = SendTransactionResponses[keyof SendTransactionResponses];
 
 export type TxStatusData = {
     body: TransactionStatusParams;

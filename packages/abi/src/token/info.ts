@@ -159,6 +159,7 @@ export async function getContractInfo(params: {
         };
       }
       break;
+    // TODO: add NFT and Bonding Curve
   }
   info.push(info0);
   return info;
