@@ -131,6 +131,38 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /info/nft:
+    post:
+      tags:
+        - Information
+      summary: Retrieve NFT Info
+      description: Retrieves detailed information about a Mina NFT V3 (NFT standard).
+      operationId: getNftInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NFTRequestParams"
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NFTRequestAnswer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /info/nft-v2:
     post:
       tags:
@@ -150,7 +182,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NFTRequestAnswer"
+                $ref: "#/components/schemas/NftV2RequestAnswer"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1369,18 +1401,17 @@ components:
     NFTRequestParams:
       type: object
       properties:
-        contractAddress:
+        collectionAddress:
           type: string
           example: B62qs2NthDuxAT94tTFg6MtuaP1gaBxTZyNv9D3uQiQciy1VsaimNFT
-          description: Always set to this contract address for Mina NFT V2.
+          description: Always set to B62qs2NthDuxAT94tTFg6MtuaP1gaBxTZyNv9D3uQiQciy1VsaimNFT for Mina NFT V2.
         nftAddress:
           type: string
           example: B62qoT6jXebkJVmsUmxCxGJmvHJUXPNF417rms4PATi5R6Hw7e56CRt
           description: The unique NFT address.
       required:
-        - contractAddress
-        - nftAddress
-    NFTRequestAnswer:
+        - collectionAddress
+    NftV2RequestAnswer:
       type: object
       properties:
         contractAddress:
@@ -1427,6 +1458,163 @@ components:
         algolia:
           type: object
           nullable: true
+    NFTInfo:
+      type: object
+      required:
+        - type
+        - tokenAddress
+        - collectionName
+        - collectionAddress
+        - symbol
+        - uri
+        - tokenId
+        - adminAddress
+        - name
+        - image
+        - metadataRoot
+        - storage
+        - metadataVerificationKeyHash
+        - owner
+        - version
+        - id
+        - canChangeOwnerByProof
+        - canTransfer
+        - canApprove
+        - canChangeMetadata
+        - canChangeStorage
+        - canChangeName
+        - canChangeMetadataVerificationKeyHash
+        - canPause
+        - isPaused
+        - requireOwnerAuthorizationToUpgrade
+        - metadata
+        - status
+        - rating
+        - updated
+        - created
+        - chain
+      properties:
+        type:
+          type: string
+          enum: ["nft", "collection"]
+        tokenAddress:
+          type: string
+        collectionName:
+          type: string
+        collectionAddress:
+          type: string
+        symbol:
+          type: string
+        uri:
+          type: string
+        tokenId:
+          type: string
+        adminAddress:
+          type: string
+        name:
+          type: string
+        image:
+          type: string
+        description:
+          type: string
+        metadataRoot:
+          type: string
+        storage:
+          type: string
+        metadataVerificationKeyHash:
+          type: string
+        owner:
+          type: string
+        approved:
+          type: string
+        version:
+          type: number
+        id:
+          type: string
+        canChangeOwnerByProof:
+          type: boolean
+        canTransfer:
+          type: boolean
+        canApprove:
+          type: boolean
+        canChangeMetadata:
+          type: boolean
+        canChangeStorage:
+          type: boolean
+        canChangeName:
+          type: boolean
+        canChangeMetadataVerificationKeyHash:
+          type: boolean
+        canPause:
+          type: boolean
+        isPaused:
+          type: boolean
+        requireOwnerAuthorizationToUpgrade:
+          type: boolean
+        metadata:
+          type: object
+        status:
+          type: string
+        rating:
+          type: number
+        updated:
+          type: number
+        created:
+          type: number
+        chain:
+          type: string
+        price:
+          type: number
+        likes:
+          type: number
+        like:
+          type: boolean
+    CollectionInfo:
+      allOf:
+        - $ref: "#/components/schemas/NFTInfo"
+        - type: object
+          required:
+            - type
+            - creator
+            - adminAddress
+            - baseURL
+            - royaltyFee
+            - transferFee
+            - requireTransferApproval
+            - mintingIsLimited
+            - collectionIsPaused
+          properties:
+            type:
+              type: string
+              enum: ["collection"]
+            banner:
+              type: string
+            creator:
+              type: string
+            adminAddress:
+              type: string
+            baseURL:
+              type: string
+            royaltyFee:
+              type: number
+            transferFee:
+              type: string
+            requireTransferApproval:
+              type: boolean
+            mintingIsLimited:
+              type: boolean
+            collectionIsPaused:
+              type: boolean
+    NFTRequestAnswer:
+      type: object
+      required:
+        - collection
+        - nft
+      properties:
+        collection:
+          $ref: "#/components/schemas/CollectionInfo"
+        nft:
+          $ref: "#/components/schemas/NFTInfo"
     TokenTransactionType:
       type: string
       enum:

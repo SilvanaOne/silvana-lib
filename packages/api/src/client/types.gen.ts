@@ -250,16 +250,16 @@ export type FaucetResponse = {
 
 export type NftRequestParams = {
     /**
-     * Always set to this contract address for Mina NFT V2.
+     * Always set to B62qs2NthDuxAT94tTFg6MtuaP1gaBxTZyNv9D3uQiQciy1VsaimNFT for Mina NFT V2.
      */
-    contractAddress: string;
+    collectionAddress: string;
     /**
      * The unique NFT address.
      */
-    nftAddress: string;
+    nftAddress?: string;
 };
 
-export type NftRequestAnswer = {
+export type NftV2RequestAnswer = {
     contractAddress?: string;
     nftAddress?: string;
     tokenId?: string;
@@ -280,6 +280,66 @@ export type NftRequestAnswer = {
     algolia?: {
         [key: string]: unknown;
     };
+};
+
+export type NftInfo = {
+    type: 'nft' | 'collection';
+    tokenAddress: string;
+    collectionName: string;
+    collectionAddress: string;
+    symbol: string;
+    uri: string;
+    tokenId: string;
+    adminAddress: string;
+    name: string;
+    image: string;
+    description?: string;
+    metadataRoot: string;
+    storage: string;
+    metadataVerificationKeyHash: string;
+    owner: string;
+    approved?: string;
+    version: number;
+    id: string;
+    canChangeOwnerByProof: boolean;
+    canTransfer: boolean;
+    canApprove: boolean;
+    canChangeMetadata: boolean;
+    canChangeStorage: boolean;
+    canChangeName: boolean;
+    canChangeMetadataVerificationKeyHash: boolean;
+    canPause: boolean;
+    isPaused: boolean;
+    requireOwnerAuthorizationToUpgrade: boolean;
+    metadata: {
+        [key: string]: unknown;
+    };
+    status: string;
+    rating: number;
+    updated: number;
+    created: number;
+    chain: string;
+    price?: number;
+    likes?: number;
+    like?: boolean;
+};
+
+export type CollectionInfo = NftInfo & {
+    type: 'collection';
+    banner?: string;
+    creator: string;
+    adminAddress: string;
+    baseURL: string;
+    royaltyFee: number;
+    transferFee: string;
+    requireTransferApproval: boolean;
+    mintingIsLimited: boolean;
+    collectionIsPaused: boolean;
+};
+
+export type NftRequestAnswer = {
+    collection: CollectionInfo;
+    nft: NftInfo;
 };
 
 export type TokenTransactionType = 'token:launch' | 'token:mint' | 'token:burn' | 'token:redeem' | 'token:transfer' | 'token:bid:create' | 'token:offer:create' | 'token:offer:buy' | 'token:bid:sell' | 'token:airdrop' | 'token:bid:withdraw' | 'token:offer:withdraw' | 'token:bid:whitelist' | 'token:offer:whitelist' | 'token:admin:whitelist';
@@ -1522,6 +1582,51 @@ export type GetContractInfoResponses = {
 
 export type GetContractInfoResponse = GetContractInfoResponses[keyof GetContractInfoResponses];
 
+export type GetNftInfoData = {
+    body: NftRequestParams;
+    path?: never;
+    query?: never;
+    url: '/info/nft';
+};
+
+export type GetNftInfoErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type GetNftInfoError = GetNftInfoErrors[keyof GetNftInfoErrors];
+
+export type GetNftInfoResponses = {
+    /**
+     * Successful response
+     */
+    200: NftRequestAnswer;
+};
+
+export type GetNftInfoResponse = GetNftInfoResponses[keyof GetNftInfoResponses];
+
 export type GetNftV2InfoData = {
     body: NftRequestParams;
     path?: never;
@@ -1562,7 +1667,7 @@ export type GetNftV2InfoResponses = {
     /**
      * Successful response
      */
-    200: NftRequestAnswer;
+    200: NftV2RequestAnswer;
 };
 
 export type GetNftV2InfoResponse = GetNftV2InfoResponses[keyof GetNftV2InfoResponses];
