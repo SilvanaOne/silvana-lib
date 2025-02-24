@@ -1493,6 +1493,8 @@ components:
         - updated
         - created
         - chain
+        - contractVerificationKeyHash
+        - contractVersion
       properties:
         type:
           type: string
@@ -1569,42 +1571,58 @@ components:
           type: number
         like:
           type: boolean
+        contractVerificationKeyHash:
+          type: string
+          description: The verification key hash of the contract.
+        contractVersion:
+          type: integer
+          format: int32
+          description: The version number of the contract.
     CollectionInfo:
-      allOf:
-        - $ref: "#/components/schemas/NFTInfo"
-        - type: object
-          required:
-            - type
-            - creator
-            - adminAddress
-            - baseURL
-            - royaltyFee
-            - transferFee
-            - requireTransferApproval
-            - mintingIsLimited
-            - collectionIsPaused
-          properties:
-            type:
-              type: string
-              enum: ["collection"]
-            banner:
-              type: string
-            creator:
-              type: string
-            adminAddress:
-              type: string
-            baseURL:
-              type: string
-            royaltyFee:
-              type: number
-            transferFee:
-              type: string
-            requireTransferApproval:
-              type: boolean
-            mintingIsLimited:
-              type: boolean
-            collectionIsPaused:
-              type: boolean
+      type: object
+      required:
+        - creator
+        - adminAddress
+        - baseURL
+        - royaltyFee
+        - transferFee
+        - requireTransferApproval
+        - mintingIsLimited
+        - collectionIsPaused
+        - masterNFT
+        - contractVerificationKeyHash
+        - contractVersion
+        - chain
+      properties:
+        banner:
+          type: string
+        creator:
+          type: string
+        adminAddress:
+          type: string
+        baseURL:
+          type: string
+        royaltyFee:
+          type: number
+        transferFee:
+          type: string
+        requireTransferApproval:
+          type: boolean
+        mintingIsLimited:
+          type: boolean
+        collectionIsPaused:
+          type: boolean
+        masterNFT:
+          $ref: "#/components/schemas/NFTInfo"
+        contractVerificationKeyHash:
+          type: string
+          description: The verification key hash of the contract.
+        contractVersion:
+          type: integer
+          format: int32
+          description: The version number of the contract.
+        chain:
+          type: string
     NFTRequestAnswer:
       type: object
       required:

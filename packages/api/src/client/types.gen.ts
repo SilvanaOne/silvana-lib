@@ -322,10 +322,17 @@ export type NftInfo = {
     price?: number;
     likes?: number;
     like?: boolean;
+    /**
+     * The verification key hash of the contract.
+     */
+    contractVerificationKeyHash: string;
+    /**
+     * The version number of the contract.
+     */
+    contractVersion: number;
 };
 
-export type CollectionInfo = NftInfo & {
-    type: 'collection';
+export type CollectionInfo = {
     banner?: string;
     creator: string;
     adminAddress: string;
@@ -335,6 +342,16 @@ export type CollectionInfo = NftInfo & {
     requireTransferApproval: boolean;
     mintingIsLimited: boolean;
     collectionIsPaused: boolean;
+    masterNFT: NftInfo;
+    /**
+     * The verification key hash of the contract.
+     */
+    contractVerificationKeyHash: string;
+    /**
+     * The version number of the contract.
+     */
+    contractVersion: number;
+    chain: string;
 };
 
 export type NftRequestAnswer = {
