@@ -64,6 +64,28 @@ export type BalanceResponse = {
     hasAccount?: boolean;
 };
 
+export type NonceRequestParams = {
+    /**
+     * The Mina address for which to retrieve the nonce.
+     */
+    address: string;
+};
+
+export type NonceResponse = {
+    /**
+     * The Mina address for which the nonce was requested.
+     */
+    address: string;
+    /**
+     * The nonce for the specified address.
+     */
+    nonce?: number;
+    /**
+     * Indicates whether the account exists.
+     */
+    hasAccount?: boolean;
+};
+
 export type ErrorResponse = {
     /**
      * Error message detailing the issue.
@@ -284,13 +306,25 @@ export type NftV2RequestAnswer = {
 
 export type NftInfo = {
     type: 'nft' | 'collection';
+    contractType: 'nft';
     tokenAddress: string;
     collectionName: string;
     collectionAddress: string;
+    /**
+     * The URI of the collection.
+     */
+    collectionUri?: string;
+    /**
+     * The symbol of the collection.
+     */
+    collectionSymbol?: string;
+    /**
+     * The base URL of the collection.
+     */
+    collectionBaseURL?: string;
     symbol: string;
     uri: string;
     tokenId: string;
-    adminAddress: string;
     name: string;
     image: string;
     description?: string;
@@ -321,7 +355,6 @@ export type NftInfo = {
     chain: string;
     price?: number;
     likes?: number;
-    like?: boolean;
     /**
      * The verification key hash of the contract.
      */
@@ -333,6 +366,13 @@ export type NftInfo = {
 };
 
 export type CollectionInfo = {
+    contractType: 'collection';
+    collectionName: string;
+    collectionAddress: string;
+    tokenId: string;
+    symbol: string;
+    uri: string;
+    isPaused: boolean;
     banner?: string;
     creator: string;
     adminAddress: string;
@@ -352,6 +392,11 @@ export type CollectionInfo = {
      */
     contractVersion: number;
     chain: string;
+    updated: number;
+    created: number;
+    likes?: number;
+    status: string;
+    rating: number;
 };
 
 export type NftRequestAnswer = {
@@ -1823,6 +1868,51 @@ export type GetTokenBalanceResponses = {
 };
 
 export type GetTokenBalanceResponse = GetTokenBalanceResponses[keyof GetTokenBalanceResponses];
+
+export type GetNonceData = {
+    body: NonceRequestParams;
+    path?: never;
+    query?: never;
+    url: '/info/nonce';
+};
+
+export type GetNonceErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type GetNonceError = GetNonceErrors[keyof GetNonceErrors];
+
+export type GetNonceResponses = {
+    /**
+     * Successful retrieval of nonce.
+     */
+    200: NonceResponse;
+};
+
+export type GetNonceResponse = GetNonceResponses[keyof GetNonceResponses];
 
 export type ProveData = {
     body: ProveTokenTransaction | ProveTokenTransactions | ProveNftTransaction | ProveNftTransactions;

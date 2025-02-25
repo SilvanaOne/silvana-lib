@@ -300,6 +300,7 @@ paths:
                 value:
                   tokenAddress: B62qouKMtMcUxabk72vwZS7tY3XYEca1CPKgXPfznCHUiVjP9E6xxQz
                   address: B62qmoZqbXP3zRDFiVhczH6XXzHN2jhEq6dT9XqZ4trc1Y8oXyCAJgK
+                  hasAccount: true
       responses:
         "200":
           description: Successful retrieval of balance.
@@ -327,6 +328,52 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /info/nonce:
+    post:
+      tags:
+        - Information
+      summary: Retrieve the nonce for an address
+      description: |
+        The `nonce` endpoint retrieves the nonce for a given Mina address, taking into account the pending transactions.
+      operationId: getNonce
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NonceRequestParams"
+            examples:
+              getNonceRequest:
+                summary: Example of a nonce request
+                value:
+                  address: B62qouKMtMcUxabk72vwZS7tY3XYEca1CPKgXPfznCHUiVjP9E6xxQz
+      responses:
+        "200":
+          description: Successful retrieval of nonce.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonceResponse"
+              examples:
+                getNonceSuccess:
+                  summary: Example of a successful nonce response
+                  value:
+                    nonce: 1
+                    address: B62qouKMtMcUxabk72vwZS7tY3XYEca1CPKgXPfznCHUiVjP9E6xxQz
+                    hasAccount: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
   /transaction/prove:
     post:
       tags:
@@ -1223,6 +1270,28 @@ components:
         hasAccount:
           type: boolean
           description: Indicates whether the account exists.
+    NonceRequestParams:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+          description: The Mina address for which to retrieve the nonce.
+    NonceResponse:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+          description: The Mina address for which the nonce was requested.
+        nonce:
+          type: number
+          description: The nonce for the specified address.
+        hasAccount:
+          type: boolean
+          description: Indicates whether the account exists.
     ErrorResponse:
       type: object
       properties:
@@ -1462,13 +1531,13 @@ components:
       type: object
       required:
         - type
+        - contractType
         - tokenAddress
         - collectionName
         - collectionAddress
         - symbol
         - uri
         - tokenId
-        - adminAddress
         - name
         - image
         - metadataRoot
@@ -1499,19 +1568,29 @@ components:
         type:
           type: string
           enum: ["nft", "collection"]
+        contractType:
+          type: string
+          enum: ["nft"]
         tokenAddress:
           type: string
         collectionName:
           type: string
         collectionAddress:
           type: string
+        collectionUri:
+          type: string
+          description: The URI of the collection.
+        collectionSymbol:
+          type: string
+          description: The symbol of the collection.
+        collectionBaseURL:
+          type: string
+          description: The base URL of the collection.
         symbol:
           type: string
         uri:
           type: string
         tokenId:
-          type: string
-        adminAddress:
           type: string
         name:
           type: string
@@ -1569,8 +1648,6 @@ components:
           type: number
         likes:
           type: number
-        like:
-          type: boolean
         contractVerificationKeyHash:
           type: string
           description: The verification key hash of the contract.
@@ -1581,6 +1658,12 @@ components:
     CollectionInfo:
       type: object
       required:
+        - contractType
+        - collectionName
+        - collectionAddress
+        - symbol
+        - uri
+        - tokenId
         - creator
         - adminAddress
         - baseURL
@@ -1593,7 +1676,27 @@ components:
         - contractVerificationKeyHash
         - contractVersion
         - chain
+        - isPaused
+        - status
+        - rating
+        - updated
+        - created
       properties:
+        contractType:
+          type: string
+          enum: ["collection"]
+        collectionName:
+          type: string
+        collectionAddress:
+          type: string
+        tokenId:
+          type: string
+        symbol:
+          type: string
+        uri:
+          type: string
+        isPaused:
+          type: boolean
         banner:
           type: string
         creator:
@@ -1623,6 +1726,16 @@ components:
           description: The version number of the contract.
         chain:
           type: string
+        updated:
+          type: number
+        created:
+          type: number
+        likes:
+          type: number
+        status:
+          type: string
+        rating:
+          type: number
     NFTRequestAnswer:
       type: object
       required:
