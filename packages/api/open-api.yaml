@@ -1770,6 +1770,9 @@ components:
         - "nft:launch"
         - "nft:mint"
         - "nft:transfer"
+        - "nft:approve"
+        - "nft:sell"
+        - "nft:buy"
     TokenTransactionBaseParams:
       type: object
       required:
@@ -1809,6 +1812,9 @@ components:
         collectionAddress:
           type: string
           description: Optional. The address of the NFT collection.
+        nftAddress:
+          type: string
+          description: Optional. The address of the NFT.
         sender:
           type: string
           description: The address (public key) of the sender.
@@ -1846,6 +1852,20 @@ components:
             collectionAddress:
               type: string
               description: The address of the NFT collection.
+    DeployedNftTransactionBaseParams:
+      allOf:
+        - $ref: "#/components/schemas/NftTransactionBaseParams"
+        - type: object
+          required:
+            - collectionAddress
+            - nftAddress
+          properties:
+            collectionAddress:
+              type: string
+              description: The address of the NFT collection.
+            nftAddress:
+              type: string
+              description: The address of the NFT.
     LaunchTokenTransactionBaseParams:
       allOf:
         - $ref: "#/components/schemas/TokenTransactionBaseParams"
@@ -2011,6 +2031,58 @@ components:
         requireOwnerAuthorizationToUpgrade:
           type: boolean
           description: Determines whether the owner's authorization is required to upgrade the NFT's verification key (readonly)
+    NftTransferParams:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          description: The address of the owner or approved
+        to:
+          type: string
+          description: The address of the recipient
+        price:
+          type: number
+          description: The price of the NFT being transferred
+        requireApproval:
+          type: boolean
+          description: If true, the transfer requires approval from the admin contract
+        context:
+          type: object
+          description: The custom context for the transfer
+          properties:
+            custom:
+              type: array
+              size: 3
+              items:
+                type: string
+              description: The custom context for the transfer, 3 Fields
+
+    NftApproveParams:
+      type: object
+      required:
+        - to
+      properties:
+        to:
+          type: string
+          description: The address of the recipient
+    NftSellParams:
+      type: object
+      required:
+        - price
+      properties:
+        price:
+          type: number
+          description: The price of the NFT
+    NftBuyParams:
+      type: object
+      properties:
+        buyer:
+          type: string
+          description: The address of the buyer
+
     NftMintParams:
       type: object
       required:
@@ -2105,7 +2177,6 @@ components:
             adminContractPrivateKey:
               type: string
               description: Optional. Private key for the admin contract.
-
     TokenMintTransactionParams:
       allOf:
         - $ref: "#/components/schemas/DeployedTokenTransactionBaseParams"
@@ -2145,6 +2216,67 @@ components:
               description: Must be "nft:mint"
             nftMintParams:
               $ref: "#/components/schemas/NftMintParams"
+    NftTransferTransactionParams:
+      allOf:
+        - $ref: "#/components/schemas/DeployedNftTransactionBaseParams"
+        - type: object
+          required:
+            - txType
+            - nftTransferParams
+          properties:
+            txType:
+              type: string
+              enum:
+                - "nft:transfer"
+              description: Must be "nft:transfer"
+            nftTransferParams:
+              $ref: "#/components/schemas/NftTransferParams"
+    NftApproveTransactionParams:
+      allOf:
+        - $ref: "#/components/schemas/DeployedNftTransactionBaseParams"
+        - type: object
+          required:
+            - txType
+            - nftTransferParams
+          properties:
+            txType:
+              type: string
+              enum:
+                - "nft:approve"
+              description: Must be "nft:approve"
+            nftTransferParams:
+              $ref: "#/components/schemas/NftTransferParams"
+    NftSellTransactionParams:
+      allOf:
+        - $ref: "#/components/schemas/DeployedNftTransactionBaseParams"
+        - type: object
+          required:
+            - txType
+            - nftSellParams
+          properties:
+            txType:
+              type: string
+              enum:
+                - "nft:sell"
+              description: Must be "nft:sell"
+            nftSellParams:
+              $ref: "#/components/schemas/NftSellParams"
+    NftBuyTransactionParams:
+      allOf:
+        - $ref: "#/components/schemas/DeployedNftTransactionBaseParams"
+        - type: object
+          required:
+            - txType
+            - nftBuyParams
+          properties:
+            txType:
+              type: string
+              enum:
+                - "nft:buy"
+              description: Must be "nft:buy"
+            nftBuyParams:
+              $ref: "#/components/schemas/NftBuyParams"
+
     TokenBurnTransactionParams:
       allOf:
         - $ref: "#/components/schemas/DeployedTokenTransactionBaseParams"
@@ -2712,7 +2844,10 @@ components:
         - $ref: "#/components/schemas/LaunchNftCollectionStandardAdminParams"
         - $ref: "#/components/schemas/LaunchNftCollectionAdvancedAdminParams"
         - $ref: "#/components/schemas/NftMintTransactionParams"
-
+        - $ref: "#/components/schemas/NftSellTransactionParams"
+        - $ref: "#/components/schemas/NftBuyTransactionParams"
+        - $ref: "#/components/schemas/NftTransferTransactionParams"
+        - $ref: "#/components/schemas/NftApproveTransactionParams"
     TokenTransaction:
       type: object
       allOf:

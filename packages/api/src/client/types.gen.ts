@@ -406,7 +406,7 @@ export type NftRequestAnswer = {
 
 export type TokenTransactionType = 'token:launch' | 'token:mint' | 'token:burn' | 'token:redeem' | 'token:transfer' | 'token:bid:create' | 'token:offer:create' | 'token:offer:buy' | 'token:bid:sell' | 'token:airdrop' | 'token:bid:withdraw' | 'token:offer:withdraw' | 'token:bid:whitelist' | 'token:offer:whitelist' | 'token:admin:whitelist';
 
-export type NftTransactionType = 'nft:launch' | 'nft:mint' | 'nft:transfer';
+export type NftTransactionType = 'nft:launch' | 'nft:mint' | 'nft:transfer' | 'nft:approve' | 'nft:sell' | 'nft:buy';
 
 export type TokenTransactionBaseParams = {
     /**
@@ -449,6 +449,10 @@ export type NftTransactionBaseParams = {
      */
     collectionAddress?: string;
     /**
+     * Optional. The address of the NFT.
+     */
+    nftAddress?: string;
+    /**
      * The address (public key) of the sender.
      */
     sender: string;
@@ -482,6 +486,17 @@ export type DeployedNftCollectionTransactionBaseParams = NftTransactionBaseParam
      * The address of the NFT collection.
      */
     collectionAddress: string;
+};
+
+export type DeployedNftTransactionBaseParams = NftTransactionBaseParams & {
+    /**
+     * The address of the NFT collection.
+     */
+    collectionAddress: string;
+    /**
+     * The address of the NFT.
+     */
+    nftAddress: string;
 };
 
 export type LaunchTokenTransactionBaseParams = TokenTransactionBaseParams & {
@@ -644,6 +659,55 @@ export type NftData = {
     requireOwnerAuthorizationToUpgrade?: boolean;
 };
 
+export type NftTransferParams = {
+    /**
+     * The address of the owner or approved
+     */
+    from: string;
+    /**
+     * The address of the recipient
+     */
+    to: string;
+    /**
+     * The price of the NFT being transferred
+     */
+    price?: number;
+    /**
+     * If true, the transfer requires approval from the admin contract
+     */
+    requireApproval?: boolean;
+    /**
+     * The custom context for the transfer
+     */
+    context?: {
+        /**
+         * The custom context for the transfer, 3 Fields
+         */
+        custom?: Array<string>;
+    };
+};
+
+export type NftApproveParams = {
+    /**
+     * The address of the recipient
+     */
+    to: string;
+};
+
+export type NftSellParams = {
+    /**
+     * The price of the NFT
+     */
+    price: number;
+};
+
+export type NftBuyParams = {
+    /**
+     * The address of the buyer
+     */
+    buyer?: string;
+};
+
 export type NftMintParams = {
     /**
      * The name of the NFT
@@ -761,6 +825,38 @@ export type NftMintTransactionParams = DeployedNftCollectionTransactionBaseParam
      */
     txType: 'nft:mint';
     nftMintParams: NftMintParams;
+};
+
+export type NftTransferTransactionParams = DeployedNftTransactionBaseParams & {
+    /**
+     * Must be "nft:transfer"
+     */
+    txType: 'nft:transfer';
+    nftTransferParams: NftTransferParams;
+};
+
+export type NftApproveTransactionParams = DeployedNftTransactionBaseParams & {
+    /**
+     * Must be "nft:approve"
+     */
+    txType: 'nft:approve';
+    nftTransferParams: NftTransferParams;
+};
+
+export type NftSellTransactionParams = DeployedNftTransactionBaseParams & {
+    /**
+     * Must be "nft:sell"
+     */
+    txType: 'nft:sell';
+    nftSellParams: NftSellParams;
+};
+
+export type NftBuyTransactionParams = DeployedNftTransactionBaseParams & {
+    /**
+     * Must be "nft:buy"
+     */
+    txType: 'nft:buy';
+    nftBuyParams: NftBuyParams;
 };
 
 export type TokenBurnTransactionParams = DeployedTokenTransactionBaseParams & {
@@ -1229,7 +1325,7 @@ export type TransactionPayloads = {
 
 export type TokenTransactionParams = LaunchTokenStandardAdminParams | LaunchTokenAdvancedAdminParams | TokenMintTransactionParams | TokenBurnTransactionParams | TokenRedeemTransactionParams | TokenTransferTransactionParams | TokenAirdropTransactionParams | TokenOfferTransactionParams | TokenBidTransactionParams | TokenBuyTransactionParams | TokenSellTransactionParams | TokenWithdrawBidTransactionParams | TokenWithdrawOfferTransactionParams | TokenUpdateBidWhitelistTransactionParams | TokenUpdateOfferWhitelistTransactionParams | TokenUpdateAdminWhitelistTransactionParams;
 
-export type NftTransactionParams = LaunchNftCollectionStandardAdminParams | LaunchNftCollectionAdvancedAdminParams | NftMintTransactionParams;
+export type NftTransactionParams = LaunchNftCollectionStandardAdminParams | LaunchNftCollectionAdvancedAdminParams | NftMintTransactionParams | NftSellTransactionParams | NftBuyTransactionParams | NftTransferTransactionParams | NftApproveTransactionParams;
 
 export type TokenTransaction = TransactionPayloads & {
     /**
