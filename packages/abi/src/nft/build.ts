@@ -12,6 +12,14 @@ import {
   LaunchNftCollectionStandardAdminParams,
   LaunchNftCollectionAdvancedAdminParams,
   NftMintTransactionParams,
+  NftSellTransactionParams,
+  NftBuyTransactionParams,
+  NftTransferTransactionParams,
+  NftApproveTransactionParams,
+  NftMintParams,
+  NftSellParams,
+  NftBuyParams,
+  NftTransferParams,
 } from "@silvana-one/api";
 import { blockchain } from "../types.js";
 import { fetchMinaAccount } from "../fetch.js";
@@ -29,6 +37,9 @@ import {
   MintParams,
   NFTData,
   fieldToString,
+  TransferParams,
+  UInt64Option,
+  NFTTransactionContext,
 } from "@silvana-one/nft";
 import { tokenVerificationKeys } from "../vk/index.js";
 import {
@@ -328,6 +339,7 @@ export async function buildNftTransaction(params: {
     NftTransactionParams,
     | LaunchNftCollectionStandardAdminParams
     | LaunchNftCollectionAdvancedAdminParams
+    | NftMintTransactionParams
   >;
   developerAddress?: string;
   provingKey?: string;
@@ -337,7 +349,486 @@ export async function buildNftTransaction(params: {
     NftTransactionParams,
     | LaunchNftCollectionStandardAdminParams
     | LaunchNftCollectionAdvancedAdminParams
+    | NftMintTransactionParams
   >;
+  tx: Transaction<false, false>;
+  adminType: NftAdminType;
+  adminContractAddress: PublicKey;
+  symbol: string;
+  collectionName: string;
+  nftName: string;
+  verificationKeyHashes: string[];
+  metadataRoot: string;
+  storage: string;
+  privateMetadata?: string;
+  map?: IndexedMapSerialized;
+}> {
+  const { chain, args } = params;
+  const { nonce, txType } = args;
+  if (nonce === undefined) throw new Error("Nonce is required");
+  if (typeof nonce !== "number") throw new Error("Nonce must be a number");
+  if (txType === undefined) throw new Error("Tx type is required");
+  if (typeof txType !== "string") throw new Error("Tx type must be a string");
+  if (args.sender === undefined || typeof args.sender !== "string")
+    throw new Error("Sender is required");
+  if (
+    args.collectionAddress === undefined ||
+    typeof args.collectionAddress !== "string"
+  )
+    throw new Error("Collection address is required");
+  if (args.nftAddress === undefined || typeof args.nftAddress !== "string")
+    throw new Error("NFT address is required");
+  const sender = PublicKey.fromBase58(args.sender);
+  const collectionAddress = PublicKey.fromBase58(args.collectionAddress);
+  if (txType === "nft:transfer" && args.nftTransferParams === undefined) {
+    throw new Error("NFT transfer params are required");
+  }
+  if (txType === "nft:sell" && args.nftSellParams === undefined) {
+    throw new Error("NFT sell params are required");
+  }
+  if (txType === "nft:buy" && args.nftBuyParams === undefined) {
+    throw new Error("NFT buy params are required");
+  }
+  const nftAddress = PublicKey.fromBase58(args.nftAddress);
+
+  // const offerAddress =
+  //   "offerAddress" in args && args.offerAddress
+  //     ? PublicKey.fromBase58(args.offerAddress)
+  //     : undefined;
+  // if (
+  //   !offerAddress &&
+  //   (txType === "token:offer:create" ||
+  //     txType === "token:offer:buy" ||
+  //     txType === "token:offer:withdraw")
+  // )
+  //   throw new Error("Offer address is required");
+
+  // const bidAddress =
+  //   "bidAddress" in args && args.bidAddress
+  //     ? PublicKey.fromBase58(args.bidAddress)
+  //     : undefined;
+  // if (
+  //   !bidAddress &&
+  //   (txType === "token:bid:create" ||
+  //     txType === "token:bid:sell" ||
+  //     txType === "token:bid:withdraw")
+  // )
+  //   throw new Error("Bid address is required");
+
+  const to =
+    "nftTransferParams" in args &&
+    args.nftTransferParams &&
+    args.nftTransferParams.to &&
+    typeof args.nftTransferParams.to === "string"
+      ? PublicKey.fromBase58(args.nftTransferParams.to)
+      : undefined;
+  if (!to && txType === "nft:transfer")
+    throw new Error("To address is required");
+
+  let buyer =
+    "nftBuyParams" in args &&
+    args.nftBuyParams &&
+    args.nftBuyParams.buyer &&
+    typeof args.nftBuyParams.buyer === "string"
+      ? PublicKey.fromBase58(args.nftBuyParams.buyer)
+      : undefined;
+  if (!buyer && txType === "nft:buy") buyer = sender;
+
+  const from =
+    "nftTransferParams" in args &&
+    args.nftTransferParams &&
+    args.nftTransferParams.from &&
+    typeof args.nftTransferParams.from === "string"
+      ? PublicKey.fromBase58(args.nftTransferParams.from)
+      : undefined;
+  if (!from && txType === "nft:transfer")
+    throw new Error("From address is required for nft:transfer");
+
+  const price =
+    "nftSellParams" in args
+      ? args.nftSellParams &&
+        args.nftSellParams.price &&
+        typeof args.nftSellParams.price === "number"
+        ? UInt64.from(Math.round(args.nftSellParams.price * 1_000_000_000))
+        : undefined
+      : "nftTransferParams" in args &&
+        args.nftTransferParams &&
+        args.nftTransferParams.price &&
+        typeof args.nftTransferParams.price === "number"
+      ? UInt64.from(Math.round(args.nftTransferParams.price * 1_000_000_000))
+      : undefined;
+
+  if (price === undefined && txType === "nft:sell")
+    throw new Error("Price is required for nft:sell");
+
+  await fetchMinaAccount({
+    publicKey: sender,
+    force: true,
+  });
+
+  if (!Mina.hasAccount(sender)) {
+    throw new Error("Sender does not have account");
+  }
+
+  const {
+    symbol,
+    adminContractAddress,
+    adminType,
+    verificationKeyHashes,
+    collectionName,
+    nftName,
+    storage,
+    metadataRoot,
+  } = await getNftSymbolAndAdmin({
+    txType,
+    collectionAddress,
+    chain,
+    nftAddress,
+  });
+
+  if (storage === undefined)
+    throw new Error("storage is required, but not provided");
+  if (metadataRoot === undefined) throw new Error("metadataRoot is required");
+  if (nftName === undefined) throw new Error("nftName is required");
+
+  const memo = args.memo ?? `${txType.split(":")[1]} ${symbol} ${nftName}`;
+  const fee = 100_000_000;
+  const provingKey = params.provingKey
+    ? PublicKey.fromBase58(params.provingKey)
+    : sender;
+  const provingFee = params.provingFee
+    ? UInt64.from(Math.round(params.provingFee))
+    : undefined;
+  const developerFee = args.developerFee
+    ? UInt64.from(Math.round(args.developerFee))
+    : undefined;
+  const developerAddress = params.developerAddress
+    ? PublicKey.fromBase58(params.developerAddress)
+    : undefined;
+
+  //const adminContract = new FungibleTokenAdmin(adminContractAddress);
+  const advancedAdminContract = new NFTAdvancedAdmin(adminContractAddress);
+  const adminContract = new NFTAdmin(adminContractAddress);
+  const collectionContract =
+    adminType === "advanced" ? AdvancedCollection : Collection;
+
+  // if (
+  //   (txType === "token:admin:whitelist" ||
+  //     txType === "token:bid:whitelist" ||
+  //     txType === "token:offer:whitelist") &&
+  //   !args.whitelist
+  // ) {
+  //   throw new Error("Whitelist is required");
+  // }
+
+  // const whitelist =
+  //   "whitelist" in args && args.whitelist
+  //     ? typeof args.whitelist === "string"
+  //       ? Whitelist.fromString(args.whitelist)
+  //       : (await Whitelist.create({ list: args.whitelist, name: symbol }))
+  //           .whitelist
+  //     : Whitelist.empty();
+
+  const zkCollection = new collectionContract(collectionAddress);
+  const tokenId = zkCollection.deriveTokenId();
+
+  // if (
+  //   txType === "nft:mint" &&
+  //   adminType === "standard" &&
+  //   adminAddress.toBase58() !== sender.toBase58()
+  // )
+  //   throw new Error(
+  //     "Invalid sender for FungibleToken mint with standard admin"
+  //   );
+
+  // await fetchMinaAccount({
+  //   publicKey: nftAddress,
+  //   tokenId,
+  //   force: (
+  //     ["nft:transfer"] satisfies NftTransactionType[] as NftTransactionType[]
+  //   ).includes(txType),
+  // });
+
+  // if (to) {
+  //   await fetchMinaAccount({
+  //     publicKey: to,
+  //     force: false,
+  //   });
+  // }
+
+  // if (from) {
+  //   await fetchMinaAccount({
+  //     publicKey: from,
+  //     tokenId,
+  //     force: false,
+  //   });
+  // }
+
+  // if (offerAddress)
+  //   await fetchMinaAccount({
+  //     publicKey: offerAddress,
+  //     tokenId,
+  //     force: (
+  //       [
+  //         "token:offer:whitelist",
+  //         "token:offer:buy",
+  //         "token:offer:withdraw",
+  //       ] satisfies TokenTransactionType[] as TokenTransactionType[]
+  //     ).includes(txType),
+  //   });
+  // if (bidAddress)
+  //   await fetchMinaAccount({
+  //     publicKey: bidAddress,
+  //     force: (
+  //       [
+  //         "token:bid:whitelist",
+  //         "token:bid:sell",
+  //         "token:bid:withdraw",
+  //       ] satisfies TokenTransactionType[] as TokenTransactionType[]
+  //     ).includes(txType),
+  //   });
+
+  // const offerContract = offerAddress
+  //   ? new FungibleTokenOfferContract(offerAddress, tokenId)
+  //   : undefined;
+
+  // const bidContract = bidAddress
+  //   ? new FungibleTokenBidContract(bidAddress)
+  //   : undefined;
+  // const offerContractDeployment = offerAddress
+  //   ? new FungibleTokenOfferContract(offerAddress, tokenId)
+  //   : undefined;
+  // const bidContractDeployment = bidAddress
+  //   ? new FungibleTokenBidContract(bidAddress)
+  //   : undefined;
+  const vk =
+    tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
+  if (
+    !vk ||
+    !vk.Collection ||
+    !vk.Collection.hash ||
+    !vk.Collection.data ||
+    !vk.AdvancedCollection ||
+    !vk.AdvancedCollection.hash ||
+    !vk.AdvancedCollection.data ||
+    !vk.NFT ||
+    !vk.NFT.hash ||
+    !vk.NFT.data ||
+    !vk.NFTAdmin ||
+    !vk.NFTAdmin.hash ||
+    !vk.NFTAdmin.data ||
+    !vk.NFTAdvancedAdmin ||
+    !vk.NFTAdvancedAdmin.hash ||
+    !vk.NFTAdvancedAdmin.data
+  )
+    throw new Error("Cannot get verification key from vk");
+
+  // const offerVerificationKey = FungibleTokenOfferContract._verificationKey ?? {
+  //   hash: Field(vk.FungibleTokenOfferContract.hash),
+  //   data: vk.FungibleTokenOfferContract.data,
+  // };
+  // const bidVerificationKey = FungibleTokenBidContract._verificationKey ?? {
+  //   hash: Field(vk.FungibleTokenBidContract.hash),
+  //   data: vk.FungibleTokenBidContract.data,
+  // };
+
+  // const isNewBidOfferAccount =
+  //   txType === "token:offer:create" && offerAddress
+  //     ? !Mina.hasAccount(offerAddress, tokenId)
+  //     : txType === "token:bid:create" && bidAddress
+  //     ? !Mina.hasAccount(bidAddress)
+  //     : false;
+
+  // const isNewBuyAccount =
+  //   txType === "token:offer:buy" ? !Mina.hasAccount(sender, tokenId) : false;
+  // let isNewSellAccount: boolean = false;
+  // if (txType === "token:bid:sell") {
+  //   if (!bidAddress || !bidContract) throw new Error("Bid address is required");
+  //   await fetchMinaAccount({
+  //     publicKey: bidAddress,
+  //     force: true,
+  //   });
+  //   const buyer = bidContract.buyer.get();
+  //   await fetchMinaAccount({
+  //     publicKey: buyer,
+  //     tokenId,
+  //     force: false,
+  //   });
+  //   isNewSellAccount = !Mina.hasAccount(buyer, tokenId);
+  // }
+
+  // if (txType === "token:burn") {
+  //   await fetchMinaAccount({
+  //     publicKey: sender,
+  //     force: true,
+  //   });
+  //   await fetchMinaAccount({
+  //     publicKey: sender,
+  //     tokenId,
+  //     force: false,
+  //   });
+  //   if (!Mina.hasAccount(sender, tokenId))
+  //     throw new Error("Sender does not have tokens to burn");
+  // }
+
+  // const isNewTransferMintAccount =
+  //   (txType === "token:transfer" ||
+  //     txType === "token:airdrop" ||
+  //     txType === "token:mint") &&
+  //   to
+  //     ? !Mina.hasAccount(to, tokenId)
+  //     : false;
+
+  // const accountCreationFee =
+  //   (isNewBidOfferAccount ? 1_000_000_000 : 0) +
+  //   (isNewBuyAccount ? 1_000_000_000 : 0) +
+  //   (isNewSellAccount ? 1_000_000_000 : 0) +
+  //   (isNewTransferMintAccount ? 1_000_000_000 : 0) +
+  //   (isToNewAccount &&
+  //   txType === "token:mint" &&
+  //   adminType === "advanced" &&
+  //   advancedAdminContract.whitelist.get().isSome().toBoolean()
+  //     ? 1_000_000_000
+  //     : 0);
+  // console.log("accountCreationFee", accountCreationFee / 1_000_000_000);
+
+  // switch (txType) {
+  //   case "token:offer:buy":
+  //   case "token:offer:withdraw":
+  //   case "token:offer:whitelist":
+  //     if (offerContract === undefined)
+  //       throw new Error("Offer contract is required");
+  //     if (
+  //       Mina.getAccount(
+  //         offerContract.address,
+  //         tokenId
+  //       ).zkapp?.verificationKey?.hash.toJSON() !==
+  //       vk.FungibleTokenOfferContract.hash
+  //     )
+  //       throw new Error(
+  //         "Invalid offer verification key, offer contract has to be upgraded"
+  //       );
+  //     break;
+  // }
+  // switch (txType) {
+  //   case "token:bid:sell":
+  //   case "token:bid:withdraw":
+  //   case "token:bid:whitelist":
+  //     if (bidContract === undefined)
+  //       throw new Error("Bid contract is required");
+  //     if (
+  //       Mina.getAccount(
+  //         bidContract.address
+  //       ).zkapp?.verificationKey?.hash.toJSON() !==
+  //       vk.FungibleTokenBidContract.hash
+  //     )
+  //       throw new Error(
+  //         "Invalid bid verification key, bid contract has to be upgraded"
+  //       );
+  //     break;
+  // }
+
+  // switch (txType) {
+  //   case "token:mint":
+  //   case "token:burn":
+  //   case "token:redeem":
+  //   case "token:transfer":
+  //   case "token:airdrop":
+  //   case "token:offer:create":
+  //   case "token:bid:create":
+  //   case "token:offer:buy":
+  //   case "token:offer:withdraw":
+  //   case "token:bid:sell":
+  //     if (
+  //       Mina.getAccount(
+  //         zkToken.address
+  //       ).zkapp?.verificationKey?.hash.toJSON() !== vk.FungibleToken.hash
+  //     )
+  //       throw new Error(
+  //         "Invalid token verification key, token contract has to be upgraded"
+  //       );
+  //     break;
+  // }
+
+  const accountCreationFee = 0;
+
+  const tx = await Mina.transaction({ sender, fee, memo, nonce }, async () => {
+    const feeAccountUpdate = AccountUpdate.createSigned(sender);
+    if (accountCreationFee > 0) {
+      feeAccountUpdate.balance.subInPlace(accountCreationFee);
+    }
+    if (provingKey && provingFee)
+      feeAccountUpdate.send({
+        to: provingKey,
+        amount: provingFee,
+      });
+    if (developerAddress && developerFee) {
+      feeAccountUpdate.send({
+        to: developerAddress,
+        amount: developerFee,
+      });
+    }
+
+    switch (txType) {
+      case "nft:transfer":
+        if (!from || !to)
+          throw new Error("From and to are required for nft:transfer");
+        const context = args.nftTransferParams?.context?.custom
+          ? new NFTTransactionContext({
+              custom: args.nftTransferParams.context.custom.map((x) =>
+                Field.fromJSON(x)
+              ),
+            })
+          : new NFTTransactionContext({
+              custom: [Field(0), Field(0), Field(0)],
+            });
+
+        const transferParams: TransferParams = {
+          address: nftAddress,
+          from,
+          to,
+          price: price ? UInt64Option.from(price) : UInt64Option.none(),
+          context,
+        };
+        if (args.nftTransferParams.requireApproval === true)
+          await zkCollection.approvedTransferBySignature(transferParams);
+        else await zkCollection.transferBySignature(transferParams);
+        break;
+
+      case "nft:approve":
+        if (!to) throw new Error("To address is required for nft:approve");
+
+        await zkCollection.approveAddress(nftAddress, to);
+        break;
+
+      default:
+        throw new Error(`Unknown transaction type: ${txType}`);
+    }
+  });
+  return {
+    request: args,
+    tx,
+    adminType,
+    adminContractAddress,
+    symbol,
+    collectionName,
+    nftName,
+    verificationKeyHashes,
+    metadataRoot,
+    privateMetadata: undefined,
+    storage,
+    map: undefined,
+  };
+}
+
+export async function buildNftMintTransaction(params: {
+  chain: blockchain;
+  args: NftMintTransactionParams;
+  developerAddress?: string;
+  provingKey?: string;
+  provingFee?: number;
+}): Promise<{
+  request: NftMintTransactionParams;
   tx: Transaction<false, false>;
   adminType: NftAdminType;
   adminContractAddress: PublicKey;
@@ -803,11 +1294,17 @@ export async function getNftSymbolAndAdmin(params: {
   collectionName: string;
   adminType: NftAdminType;
   verificationKeyHashes: string[];
+  nftName?: string;
+  storage?: string;
+  metadataRoot?: string;
 }> {
   const { txType, collectionAddress, chain, nftAddress } = params;
   const vk =
     tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
   let verificationKeyHashes: string[] = [];
+  let nftName: string | undefined = undefined;
+  let storage: string | undefined = undefined;
+  let metadataRoot: string | undefined = undefined;
   // if (bidAddress) {
   //   verificationKeyHashes.push(vk.FungibleTokenBidContract.hash);
   // }
@@ -829,6 +1326,21 @@ export async function getNftSymbolAndAdmin(params: {
     if (!Mina.hasAccount(nftAddress, tokenId)) {
       throw new Error("NFT account not found");
     }
+    const nftAccount = Mina.getAccount(nftAddress, tokenId);
+    const verificationKey = nftAccount.zkapp?.verificationKey;
+    if (!verificationKey) {
+      throw new Error("NFT contract verification key not found");
+    }
+    if (!verificationKeyHashes.includes(verificationKey.hash.toJSON())) {
+      verificationKeyHashes.push(verificationKey.hash.toJSON());
+    }
+    if (nftAccount.zkapp?.appState === undefined) {
+      throw new Error("NFT contract state not found");
+    }
+    const nft = new NFT(nftAddress, tokenId);
+    nftName = fieldToString(nft.name.get());
+    storage = nft.storage.get().toString();
+    metadataRoot = nft.metadata.get().toJSON();
   }
 
   const account = Mina.getAccount(collectionAddress);
@@ -942,5 +1454,8 @@ export async function getNftSymbolAndAdmin(params: {
     collectionName,
     adminType,
     verificationKeyHashes,
+    nftName,
+    storage,
+    metadataRoot,
   };
 }
