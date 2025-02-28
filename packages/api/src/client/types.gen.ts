@@ -840,7 +840,7 @@ export type NftApproveTransactionParams = DeployedNftTransactionBaseParams & {
      * Must be "nft:approve"
      */
     txType: 'nft:approve';
-    nftTransferParams: NftTransferParams;
+    nftApproveParams: NftApproveParams;
 };
 
 export type NftSellTransactionParams = DeployedNftTransactionBaseParams & {
@@ -2279,6 +2279,186 @@ export type MintNftResponses = {
 };
 
 export type MintNftResponse = MintNftResponses[keyof MintNftResponses];
+
+export type TransferNftData = {
+    body: NftTransferTransactionParams;
+    path?: never;
+    query?: never;
+    url: '/nft/transfer';
+};
+
+export type TransferNftErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type TransferNftError = TransferNftErrors[keyof TransferNftErrors];
+
+export type TransferNftResponses = {
+    /**
+     * Successfully built transfer transaction.
+     */
+    200: NftTransaction;
+};
+
+export type TransferNftResponse = TransferNftResponses[keyof TransferNftResponses];
+
+export type ApproveNftData = {
+    body: NftApproveParams;
+    path?: never;
+    query?: never;
+    url: '/nft/approve';
+};
+
+export type ApproveNftErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type ApproveNftError = ApproveNftErrors[keyof ApproveNftErrors];
+
+export type ApproveNftResponses = {
+    /**
+     * Successfully built approve transaction.
+     */
+    200: NftTransaction;
+};
+
+export type ApproveNftResponse = ApproveNftResponses[keyof ApproveNftResponses];
+
+export type SellNftData = {
+    body: NftSellTransactionParams;
+    path?: never;
+    query?: never;
+    url: '/nft/sell';
+};
+
+export type SellNftErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type SellNftError = SellNftErrors[keyof SellNftErrors];
+
+export type SellNftResponses = {
+    /**
+     * Successfully built sell transaction.
+     */
+    200: NftTransaction;
+};
+
+export type SellNftResponse = SellNftResponses[keyof SellNftResponses];
+
+export type BuyNftData = {
+    body: NftBuyTransactionParams;
+    path?: never;
+    query?: never;
+    url: '/nft/buy';
+};
+
+export type BuyNftErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type BuyNftError = BuyNftErrors[keyof BuyNftErrors];
+
+export type BuyNftResponses = {
+    /**
+     * Successfully built buy transaction.
+     */
+    200: NftTransaction;
+};
+
+export type BuyNftResponse = BuyNftResponses[keyof BuyNftResponses];
 
 export type TransferTokensData = {
     body: TokenTransferTransactionParams;

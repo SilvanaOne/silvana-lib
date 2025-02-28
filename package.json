@@ -1,7 +1,7 @@
 {
   "name": "silvana-lib",
   "description": "Silvana Library",
-  "version": "0.1.20",
+  "version": "0.1.22",
   "author": "DFST",
   "devDependencies": {
     "@types/node": "^22.10.3",
