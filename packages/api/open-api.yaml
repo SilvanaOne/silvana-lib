@@ -629,6 +629,141 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /nft/transfer:
+    post:
+      tags:
+        - NFT
+      summary: Transfer NFT to a specified address.
+      description: |
+        The `transfer` endpoint allows authorized users to transfer NFT on the Mina blockchain.
+        The sender must have the authority to transfer NFTs, being the owner or approved address of the NFT.
+      operationId: transferNFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NftTransferTransactionParams"
+      responses:
+        "200":
+          description: Successfully built transfer transaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NftTransaction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /nft/approve:
+    post:
+      tags:
+        - NFT
+      summary: Approve a specified address to transfer NFT.
+      description: |
+        The `approve` endpoint allows authorized users to approve a specified address to transfer NFT.
+        The sender must have the authority to approve NFTs, being the owner of the NFT.
+      operationId: approveNFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NftApproveParams"
+      responses:
+        "200":
+          description: Successfully built approve transaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NftTransaction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /nft/sell:
+    post:
+      tags:
+        - NFT
+      summary: Sell NFT at a specified price by creating a Offer contract.
+      description: |
+        The `sell` endpoint allows authorized users to sell NFT on the Mina blockchain.
+        The sender must have the authority to sell NFTs, being the owner of the NFT or approved address.
+      operationId: sellNFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NftSellTransactionParams"
+      responses:
+        "200":
+          description: Successfully built sell transaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NftTransaction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /nft/buy:
+    post:
+      tags:
+        - NFT
+      summary: Buy NFT.
+      description: |
+        The `buy` endpoint allows authorized users to buy NFT on the Mina blockchain.
+      operationId: buyNFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NftBuyTransactionParams"
+      responses:
+        "200":
+          description: Successfully built buy transaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NftTransaction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /token/transfer:
     post:
       tags:
@@ -2237,15 +2372,15 @@ components:
         - type: object
           required:
             - txType
-            - nftTransferParams
+            - nftApproveParams
           properties:
             txType:
               type: string
               enum:
                 - "nft:approve"
               description: Must be "nft:approve"
-            nftTransferParams:
-              $ref: "#/components/schemas/NftTransferParams"
+            nftApproveParams:
+              $ref: "#/components/schemas/NftApproveParams"
     NftSellTransactionParams:
       allOf:
         - $ref: "#/components/schemas/DeployedNftTransactionBaseParams"
