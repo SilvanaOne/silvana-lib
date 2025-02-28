@@ -1743,6 +1743,10 @@ components:
           type: string
         approved:
           type: string
+        approvedVerificationKeyHash:
+          type: string
+        approvedType:
+          type: string
         version:
           type: number
         id:
@@ -2211,13 +2215,18 @@ components:
         price:
           type: number
           description: The price of the NFT
+        offerAddress:
+          type: string
+          description: The address of the offer contract
+        offerPrivateKey:
+          type: string
+          description: The private key of the offer contract
     NftBuyParams:
       type: object
       properties:
         buyer:
           type: string
           description: The address of the buyer
-
     NftMintParams:
       type: object
       required:

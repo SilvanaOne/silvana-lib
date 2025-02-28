@@ -96,6 +96,7 @@ export function NonFungibleTokenContractsFactory(params: {
 
 export const { Collection, Approval, Owner, Admin, Update } =
   NonFungibleTokenContractsFactory({});
+export const Offer = Approval as unknown as ReturnType<typeof OfferFactory>;
 
 export const {
   Collection: AdvancedCollection,
@@ -105,3 +106,7 @@ export const {
 } = NonFungibleTokenContractsFactory({
   adminContract: NFTAdvancedAdmin,
 });
+
+export const AdvancedOffer = AdvancedApproval as unknown as ReturnType<
+  typeof OfferFactory
+>;

@@ -84,7 +84,7 @@ export function OfferFactory(params: {
       return new CollectionContract(address);
     }
 
-    @method async buy() {
+    @method async buy(buyer: PublicKey) {
       const insideBuy = this.insideBuy.getAndRequireEquals();
       insideBuy.assertFalse("Already inside buy method");
       this.insideBuy.set(Bool(true));
@@ -95,7 +95,7 @@ export function OfferFactory(params: {
       await collection.transferByProof({
         address: nftAddress,
         from: this.address,
-        to: this.sender.getUnconstrained(),
+        to: buyer,
         price: UInt64Option.fromValue(price),
         context: new NFTTransactionContext({
           custom: [Field(0), Field(0), Field(0)],
