@@ -333,6 +333,8 @@ export type NftInfo = {
     metadataVerificationKeyHash: string;
     owner: string;
     approved?: string;
+    approvedVerificationKeyHash?: string;
+    approvedType?: string;
     version: number;
     id: string;
     canChangeOwnerByProof: boolean;
@@ -699,6 +701,14 @@ export type NftSellParams = {
      * The price of the NFT
      */
     price: number;
+    /**
+     * The address of the offer contract
+     */
+    offerAddress?: string;
+    /**
+     * The private key of the offer contract
+     */
+    offerPrivateKey?: string;
 };
 
 export type NftBuyParams = {

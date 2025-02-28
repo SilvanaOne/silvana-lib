@@ -30,6 +30,8 @@ import {
   AdvancedCollection,
   NFTAdmin,
   NFTAdvancedAdmin,
+  Offer,
+  AdvancedOffer,
   Metadata,
   pinMetadata,
   fieldFromString,
@@ -391,17 +393,14 @@ export async function buildNftTransaction(params: {
   }
   const nftAddress = PublicKey.fromBase58(args.nftAddress);
 
-  // const offerAddress =
-  //   "offerAddress" in args && args.offerAddress
-  //     ? PublicKey.fromBase58(args.offerAddress)
-  //     : undefined;
-  // if (
-  //   !offerAddress &&
-  //   (txType === "token:offer:create" ||
-  //     txType === "token:offer:buy" ||
-  //     txType === "token:offer:withdraw")
-  // )
-  //   throw new Error("Offer address is required");
+  let offerAddress =
+    "nftSellParams" in args &&
+    args.nftSellParams &&
+    args.nftSellParams.offerAddress
+      ? PublicKey.fromBase58(args.nftSellParams.offerAddress)
+      : undefined;
+  if (!offerAddress && txType === "nft:sell")
+    throw new Error("Offer address is required");
 
   // const bidAddress =
   //   "bidAddress" in args && args.bidAddress
@@ -479,6 +478,7 @@ export async function buildNftTransaction(params: {
     nftName,
     storage,
     metadataRoot,
+    approved,
   } = await getNftSymbolAndAdmin({
     txType,
     collectionAddress,
@@ -490,6 +490,26 @@ export async function buildNftTransaction(params: {
     throw new Error("storage is required, but not provided");
   if (metadataRoot === undefined) throw new Error("metadataRoot is required");
   if (nftName === undefined) throw new Error("nftName is required");
+  if (approved === undefined) throw new Error("approved is required");
+  if (txType === "nft:buy" && approved.equals(PublicKey.empty()).toBoolean())
+    throw new Error("approved is required to be non-empty for nft:buy");
+  if (
+    txType === "nft:buy" &&
+    offerAddress !== undefined &&
+    !offerAddress.equals(approved).toBoolean()
+  )
+    throw new Error(
+      "offerAddress is required to be the same as approved for nft:buy"
+    );
+  if (txType === "nft:buy" && offerAddress === undefined)
+    offerAddress = approved;
+
+  if (offerAddress !== undefined) {
+    await fetchMinaAccount({
+      publicKey: offerAddress,
+      force: txType === "nft:buy",
+    });
+  }
 
   const memo = args.memo ?? `${txType.split(":")[1]} ${symbol} ${nftName}`;
   const fee = 100_000_000;
@@ -530,6 +550,7 @@ export async function buildNftTransaction(params: {
   //     : Whitelist.empty();
 
   const zkCollection = new collectionContract(collectionAddress);
+
   const tokenId = zkCollection.deriveTokenId();
 
   // if (
@@ -619,9 +640,19 @@ export async function buildNftTransaction(params: {
     !vk.NFTAdmin.data ||
     !vk.NFTAdvancedAdmin ||
     !vk.NFTAdvancedAdmin.hash ||
-    !vk.NFTAdvancedAdmin.data
+    !vk.NFTAdvancedAdmin.data ||
+    !vk.NonFungibleTokenOfferContract ||
+    !vk.NonFungibleTokenOfferContract.hash ||
+    !vk.NonFungibleTokenOfferContract.data ||
+    !vk.NonFungibleTokenAdvancedOfferContract ||
+    !vk.NonFungibleTokenAdvancedOfferContract.hash ||
+    !vk.NonFungibleTokenAdvancedOfferContract.data
   )
     throw new Error("Cannot get verification key from vk");
+
+  if (txType === "nft:sell" || txType === "nft:buy") {
+    verificationKeyHashes.push(vk.NonFungibleTokenOfferContract.hash);
+  }
 
   // const offerVerificationKey = FungibleTokenOfferContract._verificationKey ?? {
   //   hash: Field(vk.FungibleTokenOfferContract.hash),
@@ -750,23 +781,26 @@ export async function buildNftTransaction(params: {
   //     break;
   // }
 
-  const accountCreationFee = 0;
+  const accountCreationFee = txType === "nft:sell" ? 1_000_000_000 : 0;
+  const zkOffer = offerAddress ? new Offer(offerAddress) : undefined;
 
   const tx = await Mina.transaction({ sender, fee, memo, nonce }, async () => {
-    const feeAccountUpdate = AccountUpdate.createSigned(sender);
-    if (accountCreationFee > 0) {
-      feeAccountUpdate.balance.subInPlace(accountCreationFee);
-    }
-    if (provingKey && provingFee)
-      feeAccountUpdate.send({
-        to: provingKey,
-        amount: provingFee,
-      });
-    if (developerAddress && developerFee) {
-      feeAccountUpdate.send({
-        to: developerAddress,
-        amount: developerFee,
-      });
+    if (txType !== "nft:buy") {
+      const feeAccountUpdate = AccountUpdate.createSigned(sender);
+      if (accountCreationFee > 0) {
+        feeAccountUpdate.balance.subInPlace(accountCreationFee);
+      }
+      if (provingKey && provingFee)
+        feeAccountUpdate.send({
+          to: provingKey,
+          amount: provingFee,
+        });
+      if (developerAddress && developerFee) {
+        feeAccountUpdate.send({
+          to: developerAddress,
+          amount: developerFee,
+        });
+      }
     }
 
     switch (txType) {
@@ -799,6 +833,32 @@ export async function buildNftTransaction(params: {
         if (!to) throw new Error("To address is required for nft:approve");
 
         await zkCollection.approveAddress(nftAddress, to);
+        break;
+
+      case "nft:sell":
+        if (!price) throw new Error("Price is required for nft:sell");
+        if (!offerAddress)
+          throw new Error("Offer address is required for nft:sell");
+        if (zkOffer === undefined)
+          throw new Error("Offer contract is required for nft:sell");
+
+        await zkCollection.approveAddress(nftAddress, offerAddress);
+        await zkOffer.deploy({
+          verificationKey: vk.NonFungibleTokenOfferContract,
+          collection: zkCollection.address,
+          nft: nftAddress,
+          owner: sender,
+          price,
+        });
+        break;
+
+      case "nft:buy":
+        if (!offerAddress)
+          throw new Error("Offer address is required for nft:buy");
+        if (zkOffer === undefined)
+          throw new Error("Offer contract is required for nft:buy");
+        if (!buyer) throw new Error("Buyer is required for nft:buy");
+        await zkOffer.buy(buyer);
         break;
 
       default:
@@ -1296,6 +1356,7 @@ export async function getNftSymbolAndAdmin(params: {
   verificationKeyHashes: string[];
   nftName?: string;
   storage?: string;
+  approved?: PublicKey;
   metadataRoot?: string;
 }> {
   const { txType, collectionAddress, chain, nftAddress } = params;
@@ -1305,6 +1366,7 @@ export async function getNftSymbolAndAdmin(params: {
   let nftName: string | undefined = undefined;
   let storage: string | undefined = undefined;
   let metadataRoot: string | undefined = undefined;
+  let approved: PublicKey | undefined = undefined;
   // if (bidAddress) {
   //   verificationKeyHashes.push(vk.FungibleTokenBidContract.hash);
   // }
@@ -1341,6 +1403,8 @@ export async function getNftSymbolAndAdmin(params: {
     nftName = fieldToString(nft.name.get());
     storage = nft.storage.get().toString();
     metadataRoot = nft.metadata.get().toJSON();
+    const data = NFTData.unpack(nft.packedData.get());
+    approved = data.approved;
   }
 
   const account = Mina.getAccount(collectionAddress);
@@ -1457,5 +1521,6 @@ export async function getNftSymbolAndAdmin(params: {
     nftName,
     storage,
     metadataRoot,
+    approved,
   };
 }

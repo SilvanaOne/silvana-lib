@@ -19,7 +19,9 @@ import {
   AdvancedCollection,
   NFTAdmin,
   NFTAdvancedAdmin,
-  Approval,
+  Offer,
+  AdvancedOffer,
+  BulletinBoard,
 } from "@silvana-one/nft";
 import {
   tokenVerificationKeys,
@@ -57,6 +59,7 @@ const contracts: {
   contract: CompilableInternal;
   type: "token" | "admin" | "upgrade" | "user" | "check" | "nft" | "collection";
 }[] = [
+  { name: "BulletinBoard", contract: BulletinBoard, type: "user" },
   { name: "NFT", contract: NFT, type: "nft" },
   {
     name: "Collection",
@@ -65,7 +68,12 @@ const contracts: {
   },
   {
     name: "NonFungibleTokenOfferContract",
-    contract: Approval as unknown as CompilableInternal,
+    contract: Offer as unknown as CompilableInternal,
+    type: "user",
+  },
+  {
+    name: "NonFungibleTokenAdvancedOfferContract",
+    contract: AdvancedOffer as unknown as CompilableInternal,
     type: "user",
   },
   { name: "NFTAdmin", contract: NFTAdmin, type: "admin" },

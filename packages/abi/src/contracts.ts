@@ -15,6 +15,8 @@ import {
   AdvancedCollection,
   NFTAdmin,
   NFTAdvancedAdmin,
+  Offer,
+  AdvancedOffer,
 } from "@silvana-one/nft";
 import { VerificationKeyUpgradeAuthority } from "@silvana-one/upgradable";
 import { Compilable } from "./compile.js";
@@ -34,5 +36,7 @@ export const contractList: Record<string, Compilable> = {
   AdvancedCollection: AdvancedCollection,
   NFTAdmin: NFTAdmin,
   NFTAdvancedAdmin: NFTAdvancedAdmin,
+  NonFungibleTokenOfferContract: Offer,
+  NonFungibleTokenAdvancedOfferContract: AdvancedOffer,
   VerificationKeyUpgradeAuthority: VerificationKeyUpgradeAuthority,
 };

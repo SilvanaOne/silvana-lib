@@ -3,3 +3,4 @@ export * from "./offer.js";
 export * from "./auction.js";
 export * from "./types.js";
 export * from "./nft-shares.js";
+export * from "./bb.js";
