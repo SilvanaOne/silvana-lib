@@ -23,6 +23,9 @@ import path from "path";
     "upgradable",
     "nft",
     "abi",
+    "mina-utils",
+    "mina-prover",
+    "prover",
   ];
 
   for (const pkg of packages) {

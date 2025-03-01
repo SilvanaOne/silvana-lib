@@ -26,6 +26,9 @@ import readline from "readline";
     "@silvana-one/upgradable",
     "@silvana-one/nft",
     "@silvana-one/abi",
+    "@silvana-one/mina-utils",
+    "@silvana-one/mina-prover",
+    "@silvana-one/prover",
   ];
 
   // Run the release command for each package
