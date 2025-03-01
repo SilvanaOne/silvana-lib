@@ -1,21 +1,25 @@
 {
   "name": "@silvana-one/nft",
-  "description": "Silvana - Mina NFT library",
-  "version": "0.1.31",
+  "description": "Mina NFT library",
+  "version": "0.2.0",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "mina-signer": "^3.0.7",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@silvana-one/storage": "0.1.31",
-    "@silvana-one/token": "0.1.31",
-    "@silvana-one/upgradable": "0.1.31",
-    "@types/node": "^22.10.2",
+    "@silvana-one/mina-utils": "0.2.0",
+    "@silvana-one/storage": "0.2.0",
+    "@silvana-one/token": "0.2.0",
+    "@silvana-one/upgradable": "0.2.0",
+    "@types/node": "^22.13.8",
+    "c8": "^10.1.3",
+    "dotenv": "^16.4.7",
     "esbuild": "^0.25.0",
     "o1js": "^2.2.0",
-    "typescript": "^5.7.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2",
+    "unique-names-generator": "^4.7.1"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -46,9 +50,9 @@
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
   "peerDependencies": {
-    "@silvana-one/storage": "0.1.31",
-    "@silvana-one/token": "0.1.31",
-    "@silvana-one/upgradable": "0.1.31",
+    "@silvana-one/storage": "0.2.0",
+    "@silvana-one/token": "0.2.0",
+    "@silvana-one/upgradable": "0.2.0",
     "o1js": "^2.2.0"
   },
   "publishConfig": {
@@ -56,10 +60,80 @@
   },
   "repository": "SilvanaOne/silvana-lib.git",
   "scripts": {
-    "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
+    "build": "rm -rf dist && tsc --build tsconfig.node.json && tsc --build tsconfig.web.json && node build-cjs.js",
     "login": "npm login",
-    "release": "npm publish --access public"
+    "release": "npm publish --access public",
+    "coverage": "rm -rf coverage && c8 npm run local:all",
+    "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test",
+    "local:agent": "CHAIN=local CLOUD=local DEPLOY=true MINT=true TRANSFER=true SELL=true BUY=true npm run test test/agent.test.ts",
+    "devnet:agent": "CHAIN=devnet DEPLOY=true MINT=true TRANSFER=true SELL=true BUY=true npm run test test/agent.test.ts",
+    "local:contract": "CHAIN=local CLOUD=local ADVANCED=false npm run test test/contract.test.ts",
+    "devnet:contract": "CHAIN=devnet CLOUD=local ADVANCED=false npm run test test/contract.test.ts",
+    "lightnet:contract": "CHAIN=lightnet CLOUD=local ADVANCED=false npm run test test/contract.test.ts",
+    "zeko:contract": "CHAIN=zeko CLOUD=local ADVANCED=false npm run test test/contract.test.ts",
+    "local:bb": "CHAIN=local CLOUD=local npm run test test/bb.test.ts",
+    "devnet:bb": "CHAIN=devnet CLOUD=local npm run test test/bb.test.ts",
+    "lightnet:bb": "CHAIN=lightnet CLOUD=local npm run test test/bb.test.ts",
+    "zeko:bb": "CHAIN=zeko CLOUD=local npm run test test/bb.test.ts",
+    "local:auction": "CHAIN=local CLOUD=local SHARES=true WITHDRAW=false APPROVE_TRANSFER=true ADVANCED=true NO_LOG=false npm run test test/auction.test.ts",
+    "devnet:auction": "CHAIN=devnet CLOUD=local SHARES=true WITHDRAW=false APPROVE_TRANSFER=true ADVANCED=true NO_LOG=false npm run test test/auction.test.ts",
+    "zeko:auction": "CHAIN=zeko CLOUD=local SHARES=true WITHDRAW=false APPROVE_TRANSFER=true ADVANCED=true NO_LOG=false npm run test test/auction.test.ts",
+    "lightnet:auction": "CHAIN=lightnet CLOUD=local SHARES=true WITHDRAW=false APPROVE_TRANSFER=true ADVANCED=true NO_LOG=false npm run test test/auction.test.ts",
+    "local:mint": "CHAIN=local CLOUD=local npm run test test/mint.test.ts",
+    "devnet:mint": "CHAIN=devnet CLOUD=local npm run test test/mint.test.ts",
+    "lightnet:mint": "CHAIN=lightnet CLOUD=local npm run test test/mint.test.ts",
+    "devnet:algolia": "CHAIN=devnet npm run test test/algolia.test.ts",
+    "local:zkprogram": "CHAIN=local CLOUD=local READ_ONLY=false npm run test test/zkprogram.test.ts",
+    "devnet:zkprogram": "CHAIN=devnet CLOUD=local READ_ONLY=false npm run test test/zkprogram.test.ts",
+    "lightnet:zkprogram": "CHAIN=lightnet CLOUD=local READ_ONLY=false npm run test test/zkprogram.test.ts",
+    "local:auction:matrix": "CHAIN=local sh ./scripts/auction.zsh",
+    "devnet:auction:matrix": "CHAIN=devnet sh ./scripts/auction.zsh",
+    "zeko:auction:matrix": "CHAIN=zeko sh ./scripts/auction.zsh",
+    "devnet:auction:rerun": "CHAIN=devnet RERUN=6 sh ./scripts/auction.zsh",
+    "lightnet:auction:matrix": "CHAIN=lightnet sh ./scripts/auction.zsh",
+    "local:contract:matrix": "CHAIN=local sh ./scripts/contract.zsh",
+    "devnet:contract:matrix": "CHAIN=devnet sh ./scripts/contract.zsh",
+    "lightnet:contract:matrix": "CHAIN=lightnet sh ./scripts/contract.zsh",
+    "zeko:contract:matrix": "CHAIN=zeko sh ./scripts/contract.zsh",
+    "local:zkprogram:matrix": "CHAIN=local sh ./scripts/zkprogram.zsh",
+    "devnet:zkprogram:matrix": "CHAIN=devnet sh ./scripts/zkprogram.zsh",
+    "lightnet:zkprogram:matrix": "CHAIN=lightnet sh ./scripts/zkprogram.zsh",
+    "zeko:zkprogram:matrix": "CHAIN=zeko sh ./scripts/zkprogram.zsh",
+    "packed": "npm run test test/pack.test.ts",
+    "div": "npm run test test/div.test.ts",
+    "metadata": "npm run test test/metadata.test.ts",
+    "local:all": "npm run packed && npm run div && npm run metadata && NO_LOG=true npm run local:mint && npm run local:contract:matrix && npm run local:auction:matrix && npm run local:zkprogram:matrix && NO_LOG=true npm run local:bb",
+    "devnet:all": "npm run packed && npm run div && npm run metadata && NO_LOG=true npm run devnet:mint && npm run devnet:contract:matrix && npm run devnet:auction:matrix && npm run devnet:zkprogram:matrix && NO_LOG=true npm run devnet:bb",
+    "zeko:all": "npm run packed && npm run div && npm run metadata && NO_LOG=true npm run zeko:mint && npm run zeko:contract:matrix && npm run zeko:auction:matrix && npm run zeko:zkprogram:matrix && NO_LOG=true npm run zeko:bb",
+    "lightnet:all": "npm run packed && npm run div && NO_LOG=true npm run metadata && NO_LOG=true npm run lightnet:mint && npm run lightnet:contract:matrix && npm run lightnet:auction:matrix && npm run lightnet:zkprogram:matrix && NO_LOG=true npm run lightnet:bb"
   },
   "type": "module",
-  "types": "./dist/node/index.d.ts"
+  "types": "./dist/node/index.d.ts",
+  "c8": {
+    "extension": [
+      ".ts"
+    ],
+    "include": [
+      "src/**",
+      "../packages/upgradable/src/**",
+      "../packages/storage/src/**"
+    ],
+    "exclude": [
+      "test/**",
+      "dist/**",
+      "coverage/**",
+      "scripts/**",
+      "**/*.d.ts"
+    ],
+    "reporter": [
+      "text",
+      "lcov",
+      "html",
+      "json"
+    ],
+    "all": true,
+    "instrument": true,
+    "source-map": true,
+    "produce-source-map": true
+  }
 }

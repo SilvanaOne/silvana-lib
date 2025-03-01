@@ -5,7 +5,7 @@ import { platform } from "node:process";
 const entry = "./src/index.ts";
 
 let jsEntry = path.resolve(
-  "dist/node",
+  "dist/node/",
   path.basename(entry).replace(".ts", ".js")
 );
 let outfile = jsEntry.replace(".js", ".cjs");

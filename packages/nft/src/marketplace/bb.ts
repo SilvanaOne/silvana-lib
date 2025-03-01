@@ -111,6 +111,8 @@ class BB_ChangeAdminEvent extends Struct({
 interface BulletinBoardDeployProps extends Exclude<DeployArgs, undefined> {
   /** The admin. */
   admin: PublicKey;
+  /** The fee. */
+  fee?: UInt64;
 }
 /**
  * The BulletinBoard contract serves as a centralized event emitter for NFT marketplace activities.
@@ -128,10 +130,12 @@ interface BulletinBoardDeployProps extends Exclude<DeployArgs, undefined> {
  */
 class BulletinBoard extends SmartContract {
   @state(PublicKey) admin = State<PublicKey>();
+  @state(UInt64) fee = State<UInt64>();
 
   async deploy(args: BulletinBoardDeployProps) {
     await super.deploy(args);
     this.admin.set(args.admin);
+    this.fee.set(args.fee ?? UInt64.from(100_000_000));
     this.account.permissions.set({
       ...Permissions.default(),
       send: Permissions.proof(),
@@ -150,13 +154,29 @@ class BulletinBoard extends SmartContract {
     sale: BB_SaleEvent,
     upgradeVerificationKey: BB_UpgradeVerificationKeyEvent,
     changeAdmin: BB_ChangeAdminEvent,
+    withdraw: UInt64,
+    setFee: UInt64,
   };
+
+  /**
+   * Pays the fee to prevent spamming the BulletinBoard with fake events.
+   */
+  async payFee() {
+    const fee = this.fee.getAndRequireEquals();
+    const sender = this.sender.getUnconstrained();
+    const feeUpdate = AccountUpdate.createSigned(sender);
+    feeUpdate.body.useFullCommitment = Bool(true); // Prevent memo and fee change
+    feeUpdate.balance.subInPlace(fee);
+    this.balance.addInPlace(fee);
+    return feeUpdate;
+  }
 
   /**
    * Emits a new collection event.
    * @param collection - The collection address.
    */
   @method async newCollection(collection: PublicKey) {
+    await this.payFee();
     this.emitEvent(
       "newCollection",
       new BB_NewCollectionEvent({
@@ -178,6 +198,7 @@ class BulletinBoard extends SmartContract {
     offer: PublicKey,
     price: UInt64
   ) {
+    await this.payFee();
     this.emitEvent(
       "offer",
       new BB_OfferEvent({ collection, nft, offer, price })
@@ -190,6 +211,7 @@ class BulletinBoard extends SmartContract {
    * @param nft - The NFT address.
    */
   @method async cancelOffer(collection: PublicKey, nft: PublicKey) {
+    await this.payFee();
     this.emitEvent("cancelOffer", new BB_CancelOfferEvent({ collection, nft }));
   }
 
@@ -206,6 +228,7 @@ class BulletinBoard extends SmartContract {
     bid: PublicKey,
     price: UInt64
   ) {
+    await this.payFee();
     this.emitEvent("bid", new BB_BidEvent({ collection, nft, bid, price }));
   }
 
@@ -220,6 +243,7 @@ class BulletinBoard extends SmartContract {
     nft: PublicKey,
     bid: PublicKey
   ) {
+    await this.payFee();
     this.emitEvent(
       "cancelBid",
       new BB_CancelBidEvent({ collection, nft, bid })
@@ -239,6 +263,7 @@ class BulletinBoard extends SmartContract {
     buyer: PublicKey,
     price: UInt64
   ) {
+    await this.payFee();
     this.emitEvent("sale", new BB_SaleEvent({ collection, nft, buyer, price }));
   }
 
@@ -269,6 +294,21 @@ class BulletinBoard extends SmartContract {
   }
 
   /**
+   * Changes the contract's fee
+   * @param fee - The new fee.
+   */
+  @method
+  async setFee(fee: UInt64) {
+    await this.ensureOwnerSignature();
+
+    // Set the new fee
+    this.fee.set(fee);
+
+    // Emit the change fee event
+    this.emitEvent("setFee", fee);
+  }
+
+  /**
    * Upgrades the contract's verification key after validating with the upgrade authority.
    * @param vk - The new verification key to upgrade to.
    */
@@ -284,5 +324,16 @@ class BulletinBoard extends SmartContract {
       "upgradeVerificationKey",
       new BB_UpgradeVerificationKeyEvent({ vk: vk.hash })
     );
+  }
+
+  /**
+   * Withdraws the fee by admin
+   */
+  @method
+  async withdraw(amount: UInt64) {
+    const adminUpdate = await this.ensureOwnerSignature();
+    adminUpdate.balance.addInPlace(amount);
+    this.balance.subInPlace(amount);
+    this.emitEvent("withdraw", amount);
   }
 }

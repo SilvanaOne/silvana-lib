@@ -22,6 +22,8 @@ node_modules/
 .zkcloudworker/
 packages/abi/dist-scripts/
 packages/abi/cache/
+packages/nft/cache/
+packages/*/.env
 cache/
 dist/
 
