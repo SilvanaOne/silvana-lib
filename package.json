@@ -23,6 +23,7 @@
     "generate": "npm run generate -w @silvana-one/api",
     "nft:coverage": "npm run coverage -w @silvana-one/nft",
     "nft:coverage:report": "npm run coverage:report -w @silvana-one/nft",
+    "nft:local:contract": "npm run local:contract -w @silvana-one/nft",
     "nft:local": "npm run local:all -w @silvana-one/nft",
     "nft:devnet": "npm run devnet:all -w @silvana-one/nft",
     "nft:zeko": "npm run zeko:all -w @silvana-one/nft",

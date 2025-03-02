@@ -33,61 +33,33 @@ TEST_ACCOUNT_2_PRIVATE_KEY=EK...
 TEST_ACCOUNT_2_PUBLIC_KEY=B62...
 ```
 
-## From the root folder
+## Running tests
 
-Run the tests from / folder of the repo:
-
-### Local network
-
-```sh
-yarn nft:local
-```
-
-The test will take approximately 2 hours to complete on Mac M2 Max
-
-### Devnet network
-
-```sh
-yarn nft:devnet
-```
-
-See notes below on running the devnet tests
-
-### Lightnet network
-
-```sh
-yarn nft:ligntnet
-```
-
-The test will take approximately 7 hours to complete on Mac M2 Max
-
-### Zeko network
-
-```sh
-yarn nft:zeko
-```
-
-## Running coverage tests
-
-```sh
-yarn nft:coverage
-```
-
-## From the packages/nft folder
+Run the tests from root folder of the repo:
 
 ### Local network
 
+Run one test:
+
 ```sh
-yarn local:all
+npm run nft:local:contract
 ```
 
-The test will take approximately 2 hours to complete on Mac M2 Max. If you run on the memory issues during first three compilations of all contracts, just restart the test. As soon as prover keys are stored in the cache, memory requirements of o1js will be decreased and the test will go thru.
+It will take 10-20 min depending on your CPU
+
+Run all tests:
+
+```sh
+npm run nft:local
+```
+
+The test will take approximately 2 hours to complete on Mac M2 Max. If you run out of memory during first three compilations of all contracts, just restart the test. As soon as prover keys are stored in the cache, memory requirements of o1js will be decreased and the test will go thru.
 
 ### Lightnet network
 
 ```sh
 zk lightnet start
-yarn lightnet:all
+npm run nft:lightnet
 ```
 
 The test will take approximately 7 hours to complete on Mac M2 Max
@@ -95,13 +67,37 @@ The test will take approximately 7 hours to complete on Mac M2 Max
 ### Devnet network
 
 ```sh
-yarn devnet:all
+npm run nft:devnet
 ```
 
-The test will take approximately one day to complete on Mac M2 Max. In case of the devnet node instability, some tests can fail and can be rerun by
-`yarn devnet:auction:rerun`, setting the `RERUN` environment variable to the number of the test to rerun (1-16)
-`yarn devnet:contract:matrix`
-`yarn devnet:zkprogram:matrix`
+The test will take approximately one day to complete on Mac M2 Max. In case of the devnet node instability, some tests can fail and can be rerun by running from packages/nft folder
+`npm run devnet:auction:rerun`, setting the `RERUN` environment variable to the number of the test to rerun (1-16)
+`npm run devnet:contract:matrix`
+`npm run devnet:zkprogram:matrix`
+
+### Test coverage
+
+Test coverage results:
+
+https://docs.minanft.io/coverage/
+
+| **Contract**   | **Test Statements Coverage** |
+| -------------- | ---------------------------- |
+| NFT            | 100%                         |
+| Collection     | 99.65%                       |
+| Standard Admin | 100%                         |
+| Advanced Admin | 98.33%                       |
+| Auction        | 100%                         |
+| Offer          | 100%                         |
+| Bid            | 98.97%                       |
+
+To rerun:
+
+```sh
+npm run nft:coverage
+```
+
+It takes few hours to rerun
 
 ## Examples
 
