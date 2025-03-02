@@ -1,7 +1,7 @@
 {
   "name": "silvana-lib",
   "description": "Silvana Library",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "author": "DFST",
   "devDependencies": {
     "@types/node": "^22.13.8",
@@ -22,6 +22,7 @@
     "format": "syncpack format",
     "generate": "npm run generate -w @silvana-one/api",
     "nft:coverage": "npm run coverage -w @silvana-one/nft",
+    "nft:coverage:report": "npm run coverage:report -w @silvana-one/nft",
     "nft:local": "npm run local:all -w @silvana-one/nft",
     "nft:devnet": "npm run devnet:all -w @silvana-one/nft",
     "nft:zeko": "npm run zeko:all -w @silvana-one/nft",

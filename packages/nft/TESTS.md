@@ -81,7 +81,7 @@ yarn nft:coverage
 yarn local:all
 ```
 
-The test will take approximately 2 hours to complete on Mac M2 Max
+The test will take approximately 2 hours to complete on Mac M2 Max. If you run on the memory issues during first three compilations of all contracts, just restart the test. As soon as prover keys are stored in the cache, memory requirements of o1js will be decreased and the test will go thru.
 
 ### Lightnet network
 
