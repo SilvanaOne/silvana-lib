@@ -1,8 +1,14 @@
 openapi: 3.1.0
 info:
   title: Silvana OpenAPI
-  description: API for interacting with Mina Fungible Tokens and NFTs.
-  version: "0.1.0"
+  description: |
+    API for interacting with Mina Fungible Tokens and NFTs.
+    Mina mainnet endpoint: https://minatokens.com/api/v1/
+    Mina devnet endpoint: https://devnet.minatokens.com/api/v1/
+    Zeko devnet endpoint: https://zekotokens.com/api/v1/
+    Docs: https://docs.minatokens.com/
+    Get your API key: https://minatokens.com/api
+  version: "0.2.2"
 servers:
   - url: https://minatokens.com/api/v1/
     description: Mina Mainnet
