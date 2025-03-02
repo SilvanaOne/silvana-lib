@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/mina-utils",
   "description": "Silvana Mina Utils",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {

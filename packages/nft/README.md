@@ -36,7 +36,9 @@ UpgradeAuthority: packages/upgradable
 
 ### Tests
 
-Test are available at https://github.com/dfstio/nft-standard-worker/tree/audit
+Tests are available at packages/nft/test
+
+See [TESTS.md](TESTS.md) for more information how to run tests
 
 ## Project Background
 
