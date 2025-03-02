@@ -23,6 +23,7 @@ node_modules/
 packages/abi/dist-scripts/
 packages/abi/cache/
 packages/nft/cache/
+packages/nft/coverage/tmp/
 packages/*/.env
 cache/
 dist/
