@@ -391,6 +391,78 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
 
+  /info/holders:
+    post:
+      tags:
+        - Information
+      summary: Retrieve the holders of a token
+      description: |
+        The `holders` endpoint retrieves the holders of a token.
+      operationId: getTokenHolders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenHoldersRequestParams"
+            examples:
+              getTokenHoldersRequest:
+                summary: Example of a token holders request
+                value:
+                  address: B62qouKMtMcUxabk72vwZS7tY3XYEca1CPKgXPfznCHUiVjP9E6xxQz
+      responses:
+        "200":
+          description: Successful retrieval of token holders.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenHoldersResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /info/transactions:
+    post:
+      tags:
+        - Information
+      summary: Retrieve the transactions of a address
+      description: |
+        The `transactions` endpoint retrieves the transactions of a address.
+      operationId: getTransactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionsListRequestParams"
+      responses:
+        "200":
+          description: Successful retrieval of transactions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionsListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /transaction/prove:
     post:
       tags:
@@ -694,7 +766,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NftApproveParams"
+              $ref: "#/components/schemas/NftApproveTransactionParams"
       responses:
         "200":
           description: Successfully built approve transaction.
@@ -1402,6 +1474,18 @@ components:
         address:
           type: string
           description: The Mina address for which to retrieve the balance.
+    TransactionsListRequestParams:
+      type: object
+      properties:
+        tokenAddress:
+          type: string
+          description: The address of the token contract (optional). One of tokenAddress or tokenId is required.
+        tokenId:
+          type: string
+          description: The token ID (optional). One of tokenAddress or tokenId is required.
+        address:
+          type: string
+          description: The Mina address for which to retrieve the transactions. Optional
     BalanceResponse:
       type: object
       required:
@@ -1444,6 +1528,108 @@ components:
         hasAccount:
           type: boolean
           description: Indicates whether the account exists.
+    TokenHolder:
+      type: object
+      required:
+        - address
+        - balance
+        - percentage
+        - isZkappAccount
+      properties:
+        address:
+          type: string
+          description: The address of the token holder
+        balance:
+          type: number
+          description: The total token balance held by this address
+        percentage:
+          type: number
+          description: The percentage of total token supply held by this address
+        isZkappAccount:
+          type: boolean
+          description: Whether this holder is a zkApp account
+    TokenHoldersRequestParams:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+          description: The Mina address for which to retrieve the holders
+    TokenHoldersResponse:
+      type: object
+      required:
+        - holders
+      properties:
+        holders:
+          type: array
+          items:
+            $ref: "#/components/schemas/TokenHolder"
+          description: Array of token holders and their balances
+    TransactionData:
+      type: object
+      required:
+        - timestamp
+        - status
+        - updatedAccounts
+        - accountUpdatesCount
+        - proverAddress
+        - isZkappAccount
+        - hash
+        - fee
+        - memo
+      properties:
+        timestamp:
+          type: number
+          description: Timestamp of the transaction
+        status:
+          type: string
+          description: Status of the transaction
+        updatedAccounts:
+          type: array
+          items:
+            type: object
+            required:
+              - accountAddress
+              - isZkappAccount
+            properties:
+              accountAddress:
+                type: string
+                description: Address of the updated account
+              isZkappAccount:
+                type: boolean
+                description: Whether this is a zkApp account
+              verificationKeyHash:
+                type: string
+                description: Hash of the verification key
+        accountUpdatesCount:
+          type: number
+          description: Number of account updates in the transaction
+        proverAddress:
+          type: string
+          description: Address of the prover
+        isZkappAccount:
+          type: boolean
+          description: Whether this is a zkApp account
+        hash:
+          type: string
+          description: Transaction hash
+        fee:
+          type: number
+          description: Transaction fee
+        memo:
+          type: string
+          description: Transaction memo
+    TransactionsListResponse:
+      type: object
+      required:
+        - transactions
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransactionData"
+          description: Array of transactions
     ErrorResponse:
       type: object
       properties:
@@ -2218,12 +2404,10 @@ components:
 
     NftApproveParams:
       type: object
-      required:
-        - to
       properties:
         to:
           type: string
-          description: The address of the recipient
+          description: The address of the recipient. If not provided, the existing approval will be removed.
     NftSellParams:
       type: object
       required:
