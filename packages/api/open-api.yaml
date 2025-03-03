@@ -694,7 +694,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NftApproveParams"
+              $ref: "#/components/schemas/NftApproveTransactionParams"
       responses:
         "200":
           description: Successfully built approve transaction.
@@ -2218,12 +2218,10 @@ components:
 
     NftApproveParams:
       type: object
-      required:
-        - to
       properties:
         to:
           type: string
-          description: The address of the recipient
+          description: The address of the recipient. If not provided, the existing approval will be removed.
     NftSellParams:
       type: object
       required:

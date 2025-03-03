@@ -691,9 +691,9 @@ export type NftTransferParams = {
 
 export type NftApproveParams = {
     /**
-     * The address of the recipient
+     * The address of the recipient. If not provided, the existing approval will be removed.
      */
-    to: string;
+    to?: string;
 };
 
 export type NftSellParams = {
@@ -2336,7 +2336,7 @@ export type TransferNftResponses = {
 export type TransferNftResponse = TransferNftResponses[keyof TransferNftResponses];
 
 export type ApproveNftData = {
-    body: NftApproveParams;
+    body: NftApproveTransactionParams;
     path?: never;
     query?: never;
     url: '/nft/approve';
