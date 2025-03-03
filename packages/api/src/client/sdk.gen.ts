@@ -87,7 +87,7 @@ export const getContractInfo = <ThrowOnError extends boolean = false>(options: O
 };
 
 /**
- * Retrieve NFT Info
+ * Retrieve NFT Info for Mina NFT V3
  * Retrieves detailed information about a Mina NFT V3 (NFT standard).
  */
 export const getNftInfo = <ThrowOnError extends boolean = false>(options: Options<GetNftInfoData, ThrowOnError>) => {
@@ -108,7 +108,7 @@ export const getNftInfo = <ThrowOnError extends boolean = false>(options: Option
 };
 
 /**
- * Retrieve NFT Info
+ * Retrieve NFT Info for Mina NFT V2
  * Retrieves detailed information about a Mina NFT V2.
  */
 export const getNftV2Info = <ThrowOnError extends boolean = false>(options: Options<GetNftV2InfoData, ThrowOnError>) => {
