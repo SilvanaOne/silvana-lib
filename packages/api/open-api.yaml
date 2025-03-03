@@ -152,7 +152,7 @@ paths:
     post:
       tags:
         - Information
-      summary: Retrieve NFT Info
+      summary: Retrieve NFT Info for Mina NFT V3
       description: Retrieves detailed information about a Mina NFT V3 (NFT standard).
       operationId: getNftInfo
       requestBody:
@@ -184,7 +184,7 @@ paths:
     post:
       tags:
         - Information
-      summary: Retrieve NFT Info
+      summary: Retrieve NFT Info for Mina NFT V2
       description: Retrieves detailed information about a Mina NFT V2.
       operationId: getNftV2Info
       requestBody:
