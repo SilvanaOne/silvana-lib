@@ -44,7 +44,7 @@ export class TokenAPI {
 
     const answer = await this.client.execute({
       developer: "DFST",
-      repo: "token-launchpad",
+      repo: "token-agent",
       transactions,
       task: "prove",
       args: JSON.stringify({ tokenAddress: params[0].request.tokenAddress }),

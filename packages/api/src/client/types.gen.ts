@@ -41,6 +41,21 @@ export type BalanceRequestParams = {
     address: string;
 };
 
+export type TransactionsListRequestParams = {
+    /**
+     * The address of the token contract (optional). One of tokenAddress or tokenId is required.
+     */
+    tokenAddress?: string;
+    /**
+     * The token ID (optional). One of tokenAddress or tokenId is required.
+     */
+    tokenId?: string;
+    /**
+     * The Mina address for which to retrieve the transactions. Optional
+     */
+    address?: string;
+};
+
 export type BalanceResponse = {
     /**
      * The address of the token contract (optional).
@@ -84,6 +99,95 @@ export type NonceResponse = {
      * Indicates whether the account exists.
      */
     hasAccount?: boolean;
+};
+
+export type TokenHolder = {
+    /**
+     * The address of the token holder
+     */
+    address: string;
+    /**
+     * The total token balance held by this address
+     */
+    balance: number;
+    /**
+     * The percentage of total token supply held by this address
+     */
+    percentage: number;
+    /**
+     * Whether this holder is a zkApp account
+     */
+    isZkappAccount: boolean;
+};
+
+export type TokenHoldersRequestParams = {
+    /**
+     * The Mina address for which to retrieve the holders
+     */
+    address: string;
+};
+
+export type TokenHoldersResponse = {
+    /**
+     * Array of token holders and their balances
+     */
+    holders: Array<TokenHolder>;
+};
+
+export type TransactionData = {
+    /**
+     * Timestamp of the transaction
+     */
+    timestamp: number;
+    /**
+     * Status of the transaction
+     */
+    status: string;
+    updatedAccounts: Array<{
+        /**
+         * Address of the updated account
+         */
+        accountAddress: string;
+        /**
+         * Whether this is a zkApp account
+         */
+        isZkappAccount: boolean;
+        /**
+         * Hash of the verification key
+         */
+        verificationKeyHash?: string;
+    }>;
+    /**
+     * Number of account updates in the transaction
+     */
+    accountUpdatesCount: number;
+    /**
+     * Address of the prover
+     */
+    proverAddress: string;
+    /**
+     * Whether this is a zkApp account
+     */
+    isZkappAccount: boolean;
+    /**
+     * Transaction hash
+     */
+    hash: string;
+    /**
+     * Transaction fee
+     */
+    fee: number;
+    /**
+     * Transaction memo
+     */
+    memo: string;
+};
+
+export type TransactionsListResponse = {
+    /**
+     * Array of transactions
+     */
+    transactions: Array<TransactionData>;
 };
 
 export type ErrorResponse = {
@@ -691,9 +795,9 @@ export type NftTransferParams = {
 
 export type NftApproveParams = {
     /**
-     * The address of the recipient
+     * The address of the recipient. If not provided, the existing approval will be removed.
      */
-    to: string;
+    to?: string;
 };
 
 export type NftSellParams = {
@@ -2020,6 +2124,96 @@ export type GetNonceResponses = {
 
 export type GetNonceResponse = GetNonceResponses[keyof GetNonceResponses];
 
+export type GetTokenHoldersData = {
+    body: TokenHoldersRequestParams;
+    path?: never;
+    query?: never;
+    url: '/info/holders';
+};
+
+export type GetTokenHoldersErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type GetTokenHoldersError = GetTokenHoldersErrors[keyof GetTokenHoldersErrors];
+
+export type GetTokenHoldersResponses = {
+    /**
+     * Successful retrieval of token holders.
+     */
+    200: TokenHoldersResponse;
+};
+
+export type GetTokenHoldersResponse = GetTokenHoldersResponses[keyof GetTokenHoldersResponses];
+
+export type GetTransactionsData = {
+    body: TransactionsListRequestParams;
+    path?: never;
+    query?: never;
+    url: '/info/transactions';
+};
+
+export type GetTransactionsErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type GetTransactionsError = GetTransactionsErrors[keyof GetTransactionsErrors];
+
+export type GetTransactionsResponses = {
+    /**
+     * Successful retrieval of transactions.
+     */
+    200: TransactionsListResponse;
+};
+
+export type GetTransactionsResponse = GetTransactionsResponses[keyof GetTransactionsResponses];
+
 export type ProveData = {
     body: ProveTokenTransaction | ProveTokenTransactions | ProveNftTransaction | ProveNftTransactions;
     path?: never;
@@ -2336,7 +2530,7 @@ export type TransferNftResponses = {
 export type TransferNftResponse = TransferNftResponses[keyof TransferNftResponses];
 
 export type ApproveNftData = {
-    body: NftApproveParams;
+    body: NftApproveTransactionParams;
     path?: never;
     query?: never;
     url: '/nft/approve';

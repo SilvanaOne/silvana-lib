@@ -414,15 +414,26 @@ export async function buildNftTransaction(params: {
   // )
   //   throw new Error("Bid address is required");
 
-  const to =
-    "nftTransferParams" in args &&
-    args.nftTransferParams &&
-    args.nftTransferParams.to &&
-    typeof args.nftTransferParams.to === "string"
-      ? PublicKey.fromBase58(args.nftTransferParams.to)
+  let to =
+    txType === "nft:transfer"
+      ? "nftTransferParams" in args &&
+        args.nftTransferParams &&
+        args.nftTransferParams.to &&
+        typeof args.nftTransferParams.to === "string"
+        ? PublicKey.fromBase58(args.nftTransferParams.to)
+        : undefined
+      : txType === "nft:approve"
+      ? "nftApproveParams" in args &&
+        args.nftApproveParams &&
+        args.nftApproveParams.to &&
+        typeof args.nftApproveParams.to === "string"
+        ? PublicKey.fromBase58(args.nftApproveParams.to)
+        : undefined
       : undefined;
   if (!to && txType === "nft:transfer")
-    throw new Error("To address is required");
+    throw new Error("To address is required for nft:transfer");
+
+  if (!to && txType === "nft:approve") to = PublicKey.empty();
 
   let buyer =
     "nftBuyParams" in args &&

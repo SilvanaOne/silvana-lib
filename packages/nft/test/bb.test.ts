@@ -62,12 +62,12 @@ describe(`Bulletin Board contract tests: ${chain} ${
       user = TestPublicKey.fromBase58(TEST_ACCOUNTS[1].privateKey);
     } else if (chain === "local") {
       const { keys } = await initBlockchain(chain, 2);
-      admin = TestPublicKey(keys[1].key);
-      user = TestPublicKey(keys[2].key);
+      admin = TestPublicKey(keys[0].key);
+      user = TestPublicKey(keys[1].key);
     } else if (chain === "lightnet") {
       const { keys } = await initBlockchain(chain, 2);
-      admin = TestPublicKey(keys[1].key);
-      user = TestPublicKey(keys[2].key);
+      admin = TestPublicKey(keys[0].key);
+      user = TestPublicKey(keys[1].key);
     }
     console.log("chain:", chain);
     console.log("networkId:", Mina.getNetworkId());
