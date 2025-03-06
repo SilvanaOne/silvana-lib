@@ -25,6 +25,7 @@ import path from "path";
     "abi",
     "mina-utils",
     "mina-prover",
+    "mina-curves",
     "prover",
   ];
 

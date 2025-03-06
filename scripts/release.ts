@@ -28,6 +28,7 @@ import readline from "readline";
     "@silvana-one/abi",
     "@silvana-one/mina-utils",
     "@silvana-one/mina-prover",
+    "@silvana-one/mina-curves",
     "@silvana-one/prover",
   ];
 

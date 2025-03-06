@@ -1,0 +1,59 @@
+{
+  "name": "@silvana-one/mina-curves",
+  "description": "Mina Curves - Poseidon hash and Signature",
+  "version": "0.3.0",
+  "author": "DFST",
+  "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
+  "dependencies": {
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.8",
+    "dotenv": "^16.4.7",
+    "esbuild": "^0.25.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "exports": {
+    "types": "./dist/node/index.d.ts",
+    "node": {
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.cjs"
+    },
+    "browser": "./dist/web/index.js",
+    "default": "./dist/web/index.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://docs.silvana.one",
+  "keywords": [
+    "mina-protocol",
+    "Silvana",
+    "typescript"
+  ],
+  "license": "Apache-2.0",
+  "main": "dist/web/index.js",
+  "peerDependencies": {
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": "SilvanaOne/silvana-lib.git",
+  "scripts": {
+    "build": "rm -rf dist && tsc --build tsconfig.node.json && tsc --build tsconfig.web.json && node build-cjs.js",
+    "login": "npm login",
+    "release": "npm publish --access public",
+    "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test",
+    "signature": "npm run test ./test/signature.test.ts"
+  },
+  "type": "module",
+  "types": "./dist/node/index.d.ts"
+}
