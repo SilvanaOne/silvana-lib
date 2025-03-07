@@ -99,6 +99,7 @@
     "lightnet:zkprogram:matrix": "CHAIN=lightnet sh ./scripts/zkprogram.zsh",
     "zeko:zkprogram:matrix": "CHAIN=zeko sh ./scripts/zkprogram.zsh",
     "packed": "npm run test test/pack.test.ts",
+    "pack-versions": "npm run test test/pack-versions.test.ts",
     "div": "npm run test test/div.test.ts",
     "metadata": "npm run test test/metadata.test.ts",
     "local:all": "npm run packed && npm run div && npm run metadata && NO_LOG=true npm run local:mint && npm run local:contract:matrix && npm run local:auction:matrix && npm run local:zkprogram:matrix && NO_LOG=true npm run local:bb",
