@@ -152,6 +152,7 @@ function CollectionFactory(params: {
           isPaused: true,
         }).pack()
       );
+      this.pendingCreatorX.set(PublicKey.empty().x);
       this.account.zkappUri.set(props.url);
       this.account.tokenSymbol.set(props.symbol);
       this.account.permissions.set({
