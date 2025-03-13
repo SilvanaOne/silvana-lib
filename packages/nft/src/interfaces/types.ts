@@ -462,6 +462,8 @@ class CollectionData extends Struct({
   mintingIsLimited: Bool,
   /** Indicates whether the collection is currently paused. */
   isPaused: Bool,
+  /** The public key part (isOdd) of the pending creator. The x field is written to the contract state as pendingCreatorX */
+  pendingCreatorIsOdd: Bool,
 }) {
   /**
    * Creates a new CollectionData instance with specified parameters.
@@ -488,6 +490,7 @@ class CollectionData extends Struct({
       requireTransferApproval: Bool(requireTransferApproval ?? false),
       mintingIsLimited: Bool(mintingIsLimited ?? false),
       isPaused: Bool(isPaused ?? false),
+      pendingCreatorIsOdd: Bool(PublicKey.empty().isOdd),
     });
   }
 
@@ -500,6 +503,7 @@ class CollectionData extends Struct({
       this.isPaused,
       this.requireTransferApproval,
       this.mintingIsLimited,
+      this.pendingCreatorIsOdd,
       ...this.royaltyFee.value.toBits(32),
       ...this.transferFee.value.toBits(64),
     ]);
@@ -511,18 +515,19 @@ class CollectionData extends Struct({
    * @returns A new CollectionData instance.
    */
   static unpack(packed: Field) {
-    const bits = packed.toBits(3 + 32 + 64);
+    const bits = packed.toBits(4 + 32 + 64);
     const royaltyFee = UInt32.Unsafe.fromField(
-      Field.fromBits(bits.slice(3, 3 + 32))
+      Field.fromBits(bits.slice(4, 4 + 32))
     );
     const transferFee = UInt64.Unsafe.fromField(
-      Field.fromBits(bits.slice(3 + 32, 3 + 32 + 64))
+      Field.fromBits(bits.slice(4 + 32, 4 + 32 + 64))
     );
 
     return new CollectionData({
       isPaused: bits[0],
       requireTransferApproval: bits[1],
       mintingIsLimited: bits[2],
+      pendingCreatorIsOdd: bits[3],
       royaltyFee,
       transferFee,
     });

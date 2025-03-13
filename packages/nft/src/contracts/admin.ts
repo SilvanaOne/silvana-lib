@@ -52,6 +52,11 @@ class NFTAdmin
   @state(PublicKey) admin = State<PublicKey>();
 
   /**
+   * The public key of the contract's pending administrator.
+   */
+  @state(PublicKey) pendingAdmin = State<PublicKey>();
+
+  /**
    * A boolean flag indicating whether the contract is currently paused.
    * When `true`, certain operations are disabled.
    */
@@ -80,6 +85,7 @@ class NFTAdmin
   async deploy(props: NFTAdminDeployProps) {
     await super.deploy(props);
     this.admin.set(props.admin);
+    this.pendingAdmin.set(PublicKey.empty());
     this.isPaused.set(props.isPaused ?? Bool(false));
     this.canBePaused.set(props.canBePaused ?? Bool(true));
     this.allowChangeRoyalty.set(props.allowChangeRoyalty ?? Bool(false));
@@ -96,8 +102,8 @@ class NFTAdmin
       setPermissions: Permissions.impossible(),
       access: Permissions.proof(),
       send: Permissions.proof(),
-      setZkappUri: Permissions.none(),
-      setTokenSymbol: Permissions.none(),
+      setZkappUri: Permissions.proof(),
+      setTokenSymbol: Permissions.proof(),
     });
   }
 
@@ -112,7 +118,9 @@ class NFTAdmin
     /** Emitted when the contract is resumed. */
     resume: PauseEvent,
     /** Emitted when ownership of the contract changes. */
-    ownershipChange: OwnershipChangeEvent,
+    ownershipTransfer: OwnershipChangeEvent,
+    /** Emitted when ownership of the contract is accepted. */
+    ownershipAccepted: OwnershipChangeEvent,
   };
 
   /**
@@ -149,6 +157,8 @@ class NFTAdmin
    */
   @method.returns(MintParamsOption)
   async canMint(mintRequest: MintRequest): Promise<MintParamsOption> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     // Only the creator can mint by default
     return MintParamsOption.none();
   }
@@ -162,6 +172,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canUpdate(input: NFTState, output: NFTState): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     return Bool(true);
   }
 
@@ -172,6 +184,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canTransfer(transferEvent: TransferEvent): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     return Bool(true);
   }
 
@@ -202,23 +216,49 @@ class NFTAdmin
   /**
    * Transfers ownership of the contract to a new admin.
    * @param to - The public key of the new owner.
-   * @returns The public key of the previous owner.
+   * @returns The public key of the previous admin.
    */
   @method.returns(PublicKey)
   async transferOwnership(to: PublicKey): Promise<PublicKey> {
     const isPaused = this.isPaused.getAndRequireEquals();
-    isPaused.assertTrue("Contract is paused");
+    isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
     const from = this.admin.getAndRequireEquals();
-    this.admin.set(to);
+    // Pending admin public key can be empty, it cancels the transfer
+    this.pendingAdmin.set(to);
     this.emitEvent(
-      "ownershipChange",
+      "ownershipTransfer",
       new OwnershipChangeEvent({
         from,
         to,
       })
     );
     return from;
+  }
+
+  /**
+   * Accept transfer of the ownership of the contract.
+   * @returns The public key of the previous admin.
+   */
+  @method.returns(PublicKey)
+  async acceptOwnership(): Promise<PublicKey> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
+    const admin = this.admin.getAndRequireEquals();
+    const pendingAdmin = this.pendingAdmin.getAndRequireEquals();
+    // pendingAdmin can be different from the sender, but it should sign the tx
+    const pendingAminUpdate = AccountUpdate.createSigned(pendingAdmin);
+    pendingAminUpdate.body.useFullCommitment = Bool(true); // Prevent memo and fee change
+    this.admin.set(pendingAdmin);
+    this.pendingAdmin.set(PublicKey.empty());
+    this.emitEvent(
+      "ownershipAccepted",
+      new OwnershipChangeEvent({
+        from: admin,
+        to: pendingAdmin,
+      })
+    );
+    return admin;
   }
 
   @method.returns(Bool)
@@ -236,6 +276,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canChangeName(name: Field): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     return Bool(false);
   }
 
@@ -244,6 +286,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canChangeCreator(creator: PublicKey): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     return Bool(false);
   }
 
@@ -252,6 +296,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canChangeBaseUri(baseUri: Field): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     return Bool(false);
   }
 
@@ -260,6 +306,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canChangeRoyalty(royaltyFee: UInt32): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
     return this.allowChangeRoyalty.getAndRequireEquals();
   }
@@ -269,6 +317,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canChangeTransferFee(transferFee: UInt64): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
     return this.allowChangeTransferFee.getAndRequireEquals();
   }
@@ -278,6 +328,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canSetAdmin(admin: PublicKey): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     return Bool(false);
   }
 
@@ -286,6 +338,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canPause(): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
     return this.canBePaused.getAndRequireEquals();
   }
@@ -295,6 +349,8 @@ class NFTAdmin
    */
   @method.returns(Bool)
   async canResume(): Promise<Bool> {
+    const isPaused = this.isPaused.getAndRequireEquals();
+    isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
     return this.canBePaused.getAndRequireEquals();
   }
