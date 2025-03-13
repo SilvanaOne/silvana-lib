@@ -629,6 +629,9 @@ function CollectionFactory(params: {
         this.packedData.getAndRequireEquals()
       );
       collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      collectionData.requireTransferApproval.assertFalse(
+        CollectionErrors.transferApprovalRequired
+      );
 
       const transferEventDraft = new TransferExtendedParams({
         from,
