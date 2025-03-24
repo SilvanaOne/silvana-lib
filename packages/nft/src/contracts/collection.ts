@@ -330,6 +330,8 @@ function CollectionFactory(params: {
       const mintParams = (await adminContract.canMint(mintRequest)).assertSome(
         CollectionErrors.cannotMint
       );
+      mintParams.address.assertEquals(mintRequest.address);
+      mintParams.data.owner.assertEquals(mintRequest.owner);
 
       // Prevent minting the Master NFT using this method
       mintParams.address
