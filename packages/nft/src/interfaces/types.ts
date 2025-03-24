@@ -223,6 +223,7 @@ class NFTState extends Struct({
     a.metadataVerificationKeyHash.assertEquals(b.metadataVerificationKeyHash);
     a.creator.assertEquals(b.creator);
     NFTTransactionContext.assertEqual(a.context, b.context);
+    a.oracleAddress.assertEquals(b.oracleAddress);
   }
 
   /**
