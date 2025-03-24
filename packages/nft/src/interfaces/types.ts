@@ -109,7 +109,10 @@ class NFTImmutableState extends Struct({
   address: PublicKey, // readonly
   /** The token ID associated with the NFT (readonly). */
   tokenId: Field, // readonly
-  /** The unique identifier of the NFT within the collection (readonly). */
+  /** The identifier of the NFT within the collection to be used off-chain(readonly).
+   * It can be set to any value chosen by the creator for the new NFTs
+   * and by default is set to 0. To uniquely identify the NFT, use the pair (NFT address, tokenId) or (collection address, NFT address)
+   */
   id: UInt64, // readonly
 }) {
   /**
@@ -286,11 +289,19 @@ class NFTData extends Struct({
   version: UInt32,
   /** The unique identifier of the NFT within the collection. */
   id: UInt64,
-  /** Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly). */
+  /** Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly).
+   *
+   * It can be used only with update() and updateWithOracle() methods and
+   * in this case overrides both canTransfer and canApprove flags used in the transfer methods
+   */
   canChangeOwnerByProof: Bool, // readonly
-  /** Specifies if the NFT's ownership can be transferred (readonly). */
+  /** Specifies if the NFT's ownership can be transferred (readonly). Applies
+   * to transfer methods and can be bypassed by the update() and updateWithOracle() methods
+   */
   canTransfer: Bool, // readonly
-  /** Specifies if the NFT's approved address can be changed (readonly). */
+  /** Specifies if the NFT's approved address can be changed (readonly). Transfer methods reset approved address to PublicKey.empty()
+   *  on transfer independently from the canApprove flag value
+   */
   canApprove: Bool, // readonly
   /** Indicates whether the NFT's metadata can be updated (readonly). */
   canChangeMetadata: Bool, // readonly
