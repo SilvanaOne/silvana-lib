@@ -21,7 +21,6 @@ import {
   VerificationKey,
   UInt32,
   UInt64,
-  SmartContract,
   Mina,
   Provable,
 } from "o1js";
