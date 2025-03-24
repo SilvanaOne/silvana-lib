@@ -285,10 +285,12 @@ function CollectionFactory(params: {
      *
      * @returns The packed data of the collection.
      */
-    async ensureNotPaused(): Promise<void> {
-      CollectionData.isPaused(
+    async ensureNotPaused(): Promise<CollectionData> {
+      const collectionData = CollectionData.unpack(
         this.packedData.getAndRequireEquals()
-      ).assertFalse(CollectionErrors.collectionPaused);
+      );
+      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      return collectionData;
     }
 
     /**
@@ -307,9 +309,8 @@ function CollectionFactory(params: {
      */
 
     @method async mintByCreator(params: MintParams): Promise<void> {
-      CollectionData.mintingIsLimited(
-        this.packedData.getAndRequireEquals()
-      ).assertFalse(CollectionErrors.cannotMint);
+      const collectionData = await this.ensureNotPaused();
+      collectionData.mintingIsLimited.assertFalse(CollectionErrors.cannotMint);
       const creatorUpdate = await this.ensureCreatorSignature();
       // Pay 1 MINA fee for a new account
       creatorUpdate.balance.subInPlace(1_000_000_000);
@@ -322,9 +323,8 @@ function CollectionFactory(params: {
      * @param mintRequest - The minting request containing parameters and proofs.
      */
     @method async mint(mintRequest: MintRequest): Promise<void> {
-      CollectionData.mintingIsLimited(
-        this.packedData.getAndRequireEquals()
-      ).assertFalse(CollectionErrors.cannotMint);
+      const collectionData = await this.ensureNotPaused();
+      collectionData.mintingIsLimited.assertFalse(CollectionErrors.cannotMint);
       const adminContract = this.getAdminContract();
       // The admin contract checks that the sender is allowed to mint
       const mintParams = (await adminContract.canMint(mintRequest)).assertSome(
@@ -572,6 +572,7 @@ function CollectionFactory(params: {
       nftAddress: PublicKey,
       approved: PublicKey
     ): Promise<void> {
+      await this.ensureNotPaused();
       const tokenId = this.deriveTokenId();
       const nft = new NFT(nftAddress, tokenId);
       const owner = await nft.approveAddress(approved);
@@ -596,10 +597,7 @@ function CollectionFactory(params: {
      */
     @method async transferBySignature(params: TransferParams): Promise<void> {
       const { address, to, price, context } = params;
-      const collectionData = CollectionData.unpack(
-        this.packedData.getAndRequireEquals()
-      );
-      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      const collectionData = await this.ensureNotPaused();
       collectionData.requireTransferApproval.assertFalse(
         CollectionErrors.transferApprovalRequired
       );
@@ -631,10 +629,7 @@ function CollectionFactory(params: {
      */
     @method async transferByProof(params: TransferParams): Promise<void> {
       const { address, from, to, price, context } = params;
-      const collectionData = CollectionData.unpack(
-        this.packedData.getAndRequireEquals()
-      );
-      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      const collectionData = await this.ensureNotPaused();
       collectionData.requireTransferApproval.assertFalse(
         CollectionErrors.transferApprovalRequired
       );
@@ -679,10 +674,7 @@ function CollectionFactory(params: {
       params: TransferParams
     ): Promise<void> {
       const { address, from, to, price, context } = params;
-      const collectionData = CollectionData.unpack(
-        this.packedData.getAndRequireEquals()
-      );
-      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      const collectionData = await this.ensureNotPaused();
 
       const transferEventDraft = new TransferExtendedParams({
         from,
@@ -731,10 +723,7 @@ function CollectionFactory(params: {
       params: TransferParams
     ): Promise<void> {
       const { address, to, price, context } = params;
-      const collectionData = CollectionData.unpack(
-        this.packedData.getAndRequireEquals()
-      );
-      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      const collectionData = await this.ensureNotPaused();
 
       const transferEventDraft = new TransferExtendedParams({
         from: PublicKey.empty(), // will be added later
@@ -843,6 +832,7 @@ function CollectionFactory(params: {
       address: PublicKey,
       vk: VerificationKey
     ): Promise<void> {
+      await this.ensureNotPaused();
       const sender = this.sender.getAndRequireSignature();
       const data = await this._upgrade(address, vk);
       data.owner
@@ -862,6 +852,7 @@ function CollectionFactory(params: {
       address: PublicKey,
       vk: VerificationKey
     ): Promise<void> {
+      await this.ensureNotPaused();
       const data = await this._upgrade(address, vk);
       const ownerContract = this.getOwnerContract(data.owner);
       const canUpgrade = await ownerContract.canChangeVerificationKey(
@@ -904,6 +895,7 @@ function CollectionFactory(params: {
      */
     @method
     async upgradeVerificationKey(vk: VerificationKey): Promise<void> {
+      await this.ensureNotPaused();
       const adminContract = this.getAdminContract();
       const canUpgrade = await adminContract.canChangeVerificationKey(
         vk,
@@ -922,10 +914,7 @@ function CollectionFactory(params: {
     @method
     async limitMinting(): Promise<void> {
       await this.ensureCreatorSignature();
-      const collectionData = CollectionData.unpack(
-        this.packedData.getAndRequireEquals()
-      );
-      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      const collectionData = await this.ensureNotPaused();
       collectionData.mintingIsLimited = Bool(true);
       this.packedData.set(collectionData.pack());
       this.emitEvent(
@@ -939,10 +928,7 @@ function CollectionFactory(params: {
      */
     @method
     async pause(): Promise<void> {
-      const collectionData = CollectionData.unpack(
-        this.packedData.getAndRequireEquals()
-      );
-      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      const collectionData = await this.ensureNotPaused();
       const adminContract = this.getAdminContract();
       const canPause = await adminContract.canPause();
       canPause.assertTrue(CollectionErrors.noPermissionToPause);
@@ -975,6 +961,7 @@ function CollectionFactory(params: {
      */
     @method
     async pauseNFTBySignature(address: PublicKey): Promise<void> {
+      await this.ensureNotPaused();
       const tokenId = this.deriveTokenId();
       const nft = new NFT(address, tokenId);
       const owner = await nft.pause();
@@ -992,6 +979,7 @@ function CollectionFactory(params: {
      */
     @method
     async pauseNFTByProof(address: PublicKey): Promise<void> {
+      await this.ensureNotPaused();
       const tokenId = this.deriveTokenId();
       const nft = new NFT(address, tokenId);
       const owner = await nft.pause();
@@ -1011,6 +999,7 @@ function CollectionFactory(params: {
      */
     @method
     async resumeNFT(address: PublicKey): Promise<void> {
+      await this.ensureNotPaused();
       const tokenId = this.deriveTokenId();
       const nft = new NFT(address, tokenId);
       const owner = await nft.resume();
@@ -1028,6 +1017,7 @@ function CollectionFactory(params: {
      */
     @method
     async resumeNFTByProof(address: PublicKey): Promise<void> {
+      await this.ensureNotPaused();
       const tokenId = this.deriveTokenId();
       const nft = new NFT(address, tokenId);
       const owner = await nft.resume();
@@ -1104,10 +1094,7 @@ function CollectionFactory(params: {
      */
     @method
     async setRoyaltyFee(royaltyFee: UInt32): Promise<void> {
-      const collectionData = CollectionData.unpack(
-        this.packedData.getAndRequireEquals()
-      );
-      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      const collectionData = await this.ensureNotPaused();
       royaltyFee.assertLessThanOrEqual(
         UInt32.from(MAX_ROYALTY_FEE),
         CollectionErrors.invalidRoyaltyFee
@@ -1130,10 +1117,7 @@ function CollectionFactory(params: {
      */
     @method
     async setTransferFee(transferFee: UInt64): Promise<void> {
-      const collectionData = CollectionData.unpack(
-        this.packedData.getAndRequireEquals()
-      );
-      collectionData.isPaused.assertFalse(CollectionErrors.collectionPaused);
+      const collectionData = await this.ensureNotPaused();
       const adminContract = this.getAdminContract();
       const canChangeTransferFee = await adminContract.canChangeTransferFee(
         transferFee
