@@ -358,6 +358,10 @@ function CollectionFactory(params: {
 
       this.network.globalSlotSinceGenesis.requireBetween(UInt32.zero, expiry);
       data.version.assertEquals(UInt32.zero);
+      data.isPaused
+        .equals(Bool(false))
+        .or(data.canPause.equals(Bool(true)))
+        .assertTrue(CollectionErrors.cannotMint);
       const packedData = data.pack();
       const tokenId = this.deriveTokenId();
 
