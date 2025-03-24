@@ -411,23 +411,13 @@ function CollectionFactory(params: {
       const devnetVerificationKeyHash = Field(
         nftVerificationKeys.devnet.vk.NFT.hash
       );
-      const isMainnet = Provable.witness(Bool, () => {
-        // This check does NOT create a constraint on the verification key
-        // as this witness can be replaced during runtime
-        // and is useful only for making sure that the verification key
-        // of the NFT will match the compiled verification key of the NFT
-        // at the time of the deployment of the Collection Contract
-        return Bool(Mina.getNetworkId() === "mainnet");
-      });
       // We check that the verification key hash is the same as the one
-      // that was compiled at the time of the deployment
-      verificationKey.hash.assertEquals(
-        Provable.if(
-          isMainnet,
-          mainnetVerificationKeyHash,
-          devnetVerificationKeyHash
-        )
-      );
+      // that was compiled at the time of the collection deployment
+      if (Mina.getNetworkId() === "mainnet") {
+        verificationKey.hash.assertEquals(mainnetVerificationKeyHash);
+      } else {
+        verificationKey.hash.assertEquals(devnetVerificationKeyHash);
+      }
       update.body.update.verificationKey = {
         isSome: Bool(true),
         value: verificationKey,
