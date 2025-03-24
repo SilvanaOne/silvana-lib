@@ -34,22 +34,18 @@ import {
   NFTData,
   MintParams,
   nftVerificationKeys,
-  BidFactory,
   UInt64Option,
   AuctionFactory,
   Auction,
   AdminData,
   NFTCollectionContractConstructor,
-  TransferParams,
+  TransferByProofParams,
+  TransferBySignatureParams,
   NFTTransactionContext,
   NFTSharesFactory,
   NFTOwnerContractConstructor,
   NFTAdminContractConstructor,
   NFTApprovalContractConstructor,
-  NFTStandardOwner,
-  DefineApprovalFactory,
-  DefineOwnerFactory,
-  OfferFactory,
   CollectionFactory,
   NFTStandardUpdate,
   NFTUpdateContractConstructor,
@@ -824,10 +820,9 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
       },
       async () => {
         if (requireTransferApproval) {
-          await collectionContract.approvedTransferBySignature(
-            new TransferParams({
+          await collectionContract.adminApprovedTransferBySignature(
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -835,9 +830,8 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
           );
         } else {
           await collectionContract.transferBySignature(
-            new TransferParams({
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -899,10 +893,9 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
       async () => {
         AccountUpdate.fundNewAccount(seller, 1);
         if (withdraw) {
-          await collectionContract.approvedTransferBySignature(
-            new TransferParams({
+          await collectionContract.adminApprovedTransferBySignature(
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: seller,
               to: zkAuctionKey,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -1629,10 +1622,9 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
       },
       async () => {
         if (requireTransferApproval) {
-          await collectionContract.approvedTransferBySignature(
-            new TransferParams({
+          await collectionContract.adminApprovedTransferBySignature(
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -1640,9 +1632,8 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
           );
         } else {
           await collectionContract.transferBySignature(
-            new TransferParams({
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -1703,8 +1694,8 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
         },
         async () => {
           if (requireTransferApproval) {
-            await sharesCollectionContract.approvedTransferByProof(
-              new TransferParams({
+            await sharesCollectionContract.adminApprovedTransferByProof(
+              new TransferByProofParams({
                 address: zkNFTKey,
                 from: zkSharesKey,
                 to,
@@ -1714,7 +1705,7 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
             );
           } else {
             await sharesCollectionContract.transferByProof(
-              new TransferParams({
+              new TransferByProofParams({
                 address: zkNFTKey,
                 from: zkSharesKey,
                 to,

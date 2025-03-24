@@ -24,7 +24,8 @@ export {
   NFTUpdateProof,
   NFTStateStruct,
   UInt64Option,
-  TransferParams,
+  TransferBySignatureParams,
+  TransferByProofParams,
   MAX_ROYALTY_FEE,
   NFTTransactionContext,
   TransferExtendedParams,
@@ -587,9 +588,23 @@ class MintRequest extends Struct({
 }) {}
 
 /**
- * Represents the parameters required for transferring an NFT.
+ * Represents the parameters required for transferring an NFT using a signature.
  */
-class TransferParams extends Struct({
+class TransferBySignatureParams extends Struct({
+  /** The address of the NFT contract. */
+  address: PublicKey,
+  /** The receiver's public key. */
+  to: PublicKey,
+  /** Optional price for the transfer. */
+  price: UInt64Option,
+  /** Custom value that can be interpreted by the owner or approved contract. */
+  context: NFTTransactionContext,
+}) {}
+
+/**
+ * Represents the parameters required for transferring an NFT using a proof.
+ */
+class TransferByProofParams extends Struct({
   /** The address of the NFT contract. */
   address: PublicKey,
   /** The sender's public key. */

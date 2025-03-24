@@ -1,5 +1,9 @@
 import { PublicKey, TokenContract } from "o1js";
-import { TransferParams, NFTStateStruct } from "./types.js";
+import {
+  TransferBySignatureParams,
+  TransferByProofParams,
+  NFTStateStruct,
+} from "./types.js";
 import { NFTOwnerContractConstructor } from "./owner.js";
 import { NFTApprovalContractConstructor } from "./approval.js";
 import { NFTUpdateContractConstructor } from "./update.js";
@@ -20,26 +24,28 @@ type NFTCollectionBase = TokenContract & {
    *
    * @param params - The transfer details.
    */
-  transferByProof(params: TransferParams): Promise<void>;
+  transferByProof(params: TransferByProofParams): Promise<void>;
   /**
    * Transfers ownership of an NFT from contract without admin approval.
    *
    * @param params - The transfer details.
    */
-  transferBySignature(params: TransferParams): Promise<void>;
+  transferBySignature(params: TransferBySignatureParams): Promise<void>;
 
   /**
    * Transfers ownership of an NFT from contract without admin approval using a proof.
    *
    * @param params - The transfer details.
    */
-  approvedTransferByProof(params: TransferParams): Promise<void>;
+  adminApprovedTransferByProof(params: TransferByProofParams): Promise<void>;
   /**
    * Transfers ownership of an NFT from contract without admin approval.
    *
    * @param params - The transfer details.
    */
-  approvedTransferBySignature(params: TransferParams): Promise<void>;
+  adminApprovedTransferBySignature(
+    params: TransferBySignatureParams
+  ): Promise<void>;
 
   /**
    * Returns the state of an NFT.

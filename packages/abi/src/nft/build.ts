@@ -39,7 +39,7 @@ import {
   MintParams,
   NFTData,
   fieldToString,
-  TransferParams,
+  TransferBySignatureParams,
   UInt64Option,
   NFTTransactionContext,
 } from "@silvana-one/nft";
@@ -828,15 +828,14 @@ export async function buildNftTransaction(params: {
               custom: [Field(0), Field(0), Field(0)],
             });
 
-        const transferParams: TransferParams = {
+        const transferParams: TransferBySignatureParams = {
           address: nftAddress,
-          from,
           to,
           price: price ? UInt64Option.from(price) : UInt64Option.none(),
           context,
         };
         if (args.nftTransferParams.requireApproval === true)
-          await zkCollection.approvedTransferBySignature(transferParams);
+          await zkCollection.adminApprovedTransferBySignature(transferParams);
         else await zkCollection.transferBySignature(transferParams);
         break;
 
