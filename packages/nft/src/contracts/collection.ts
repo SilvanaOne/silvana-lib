@@ -755,7 +755,6 @@ function CollectionFactory(params: {
       const adminContract = this.getAdminContract();
       const canTransfer = await adminContract.canTransfer(transferEvent);
       canTransfer.assertTrue();
-      this.emitEvent("transfer", transferEvent);
     }
 
     /**
