@@ -32,6 +32,7 @@ interface NFTAdminDeployProps extends Exclude<DeployArgs, undefined> {
   canBePaused?: Bool;
   allowChangeRoyalty?: Bool;
   allowChangeTransferFee?: Bool;
+  allowPauseCollection?: Bool;
   isPaused?: Bool;
 }
 
@@ -64,14 +65,19 @@ class NFTAdmin
   @state(Bool) canBePaused = State<Bool>();
 
   /**
-   * A boolean flag indicating whether the contract has the ability to change the royalty fee.
+   * A boolean flag indicating whether the collection is allowed to change the royalty fee.
    */
   @state(Bool) allowChangeRoyalty = State<Bool>();
 
   /**
-   * A boolean flag indicating whether the contract has the ability to change the transfer fee.
+   * A boolean flag indicating whether the collection is allowed to change the transfer fee.
    */
   @state(Bool) allowChangeTransferFee = State<Bool>();
+
+  /**
+   * A boolean flag indicating whether the collection is allowed to be paused.
+   */
+  @state(Bool) allowPauseCollection = State<Bool>();
 
   /**
    * Deploys the contract with initial settings.
@@ -86,6 +92,7 @@ class NFTAdmin
     this.allowChangeTransferFee.set(
       props.allowChangeTransferFee ?? Bool(false)
     );
+    this.allowPauseCollection.set(props.allowPauseCollection ?? Bool(true));
     this.account.zkappUri.set(props.uri);
     this.account.permissions.set({
       ...Permissions.default(),
@@ -287,7 +294,7 @@ class NFTAdmin
   @method.returns(Bool)
   async canPause(): Promise<Bool> {
     await this.ensureOwnerSignature();
-    return this.canBePaused.getAndRequireEquals();
+    return this.allowPauseCollection.getAndRequireEquals();
   }
 
   /**
@@ -296,6 +303,6 @@ class NFTAdmin
   @method.returns(Bool)
   async canResume(): Promise<Bool> {
     await this.ensureOwnerSignature();
-    return this.canBePaused.getAndRequireEquals();
+    return this.allowPauseCollection.getAndRequireEquals();
   }
 }
