@@ -480,6 +480,12 @@ function CollectionFactory(params: {
       proof: NFTUpdateProof,
       vk: VerificationKey
     ): Promise<void> {
+      // The oracle address is optional and can be empty, NFT ZkProgram can verify the address
+      // as it can be different for different NFTs. It should be empty for the update() call
+      const oracleAddress = proof.publicInput.oracleAddress;
+      oracleAddress
+        .equals(PublicKey.empty())
+        .assertTrue(CollectionErrors.invalidOracleAddress);
       await this._update(proof, vk);
     }
 
@@ -494,7 +500,7 @@ function CollectionFactory(params: {
       vk: VerificationKey
     ): Promise<void> {
       // The oracle address is optional and can be empty, NFT ZkProgram can verify the address
-      // as it can be different for different NFTs
+      // as it can be different for different NFTs. It should be non-empty for the updateWithOracle() call
       const oracleAddress = proof.publicInput.oracleAddress;
       oracleAddress
         .equals(PublicKey.empty())
