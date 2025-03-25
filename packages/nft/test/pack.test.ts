@@ -98,6 +98,7 @@ describe("Test packing and unpacking", async () => {
         requireTransferApproval: Bool(randomBool()),
         mintingIsLimited: Bool(randomBool()),
         isPaused: Bool(randomBool()),
+        pendingCreatorIsOdd: publicKey.isOdd,
       });
 
       const packed = original.pack();
@@ -123,6 +124,10 @@ describe("Test packing and unpacking", async () => {
       assert.strictEqual(
         unpacked.transferFee.toBigInt() === original.transferFee.toBigInt(),
         true
+      );
+      assert.strictEqual(
+        unpacked.pendingCreatorIsOdd.toBoolean(),
+        original.pendingCreatorIsOdd.toBoolean()
       );
     }
   });

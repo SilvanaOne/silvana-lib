@@ -10,6 +10,7 @@ import {
   FeatureFlags,
   Option,
   Account,
+  Gadgets,
 } from "o1js";
 import { Storage } from "@silvana-one/storage";
 export {
@@ -504,9 +505,9 @@ class CollectionData extends Struct({
       this.requireTransferApproval,
       this.mintingIsLimited,
       this.pendingCreatorIsOdd,
-      ...this.royaltyFee.value.toBits(32),
-      ...this.transferFee.value.toBits(64),
-    ]);
+    ])
+      .add(Field(this.royaltyFee.value).mul(Field(2 ** 4)))
+      .add(Field(this.transferFee.value).mul(Field(2 ** (4 + 32))));
   }
 
   /**
@@ -515,13 +516,33 @@ class CollectionData extends Struct({
    * @returns A new CollectionData instance.
    */
   static unpack(packed: Field) {
-    const bits = packed.toBits(4 + 32 + 64);
-    const royaltyFee = UInt32.Unsafe.fromField(
-      Field.fromBits(bits.slice(4, 4 + 32))
+    const bits = Gadgets.and(packed, Field(0xfn), 4 + 32 + 64).toBits(4);
+    const royaltyFeeField = Gadgets.and(
+      packed,
+      Field(0xffffffff0n),
+      4 + 32 + 64
     );
-    const transferFee = UInt64.Unsafe.fromField(
-      Field.fromBits(bits.slice(4 + 32, 4 + 32 + 64))
+    const royaltyFee = Provable.witness(UInt32, () => {
+      const royaltyFeeBits = royaltyFeeField.toBits(4 + 32);
+      // The next line relies on the constants 0xffffffff0n and 4 + 32 + 64 above
+      return UInt32.Unsafe.fromField(
+        Field.fromBits(royaltyFeeBits.slice(4, 4 + 32))
+      );
+    });
+    royaltyFee.value.mul(Field(2 ** 4)).assertEquals(royaltyFeeField);
+    const transferFeeField = Gadgets.and(
+      packed,
+      Field(0xffffffffffffffff000000000n),
+      4 + 32 + 64
     );
+    const transferFee = Provable.witness(UInt64, () => {
+      const transferFeeBits = transferFeeField.toBits(4 + 32 + 64);
+      // The next line relies on the constants 0xffffffffffffffff000000000n and 4 + 32 + 64 above
+      return UInt64.Unsafe.fromField(
+        Field.fromBits(transferFeeBits.slice(4 + 32, 4 + 32 + 64))
+      );
+    });
+    transferFee.value.mul(Field(2 ** (4 + 32))).assertEquals(transferFeeField);
 
     return new CollectionData({
       isPaused: bits[0],
