@@ -34,6 +34,7 @@ import {
   NFTUpdateProof,
   NFTStateStruct,
   MintEvent,
+  NFTUpdateEvent,
   TransferEvent,
   ApproveEvent,
   UpgradeVerificationKeyEvent,
@@ -43,6 +44,11 @@ import {
   NFTAdminContractConstructor,
   PausableContract,
   PauseEvent,
+  SetNameEvent,
+  SetBaseURLEvent,
+  SetRoyaltyFeeEvent,
+  SetTransferFeeEvent,
+  SetAdminEvent,
   OwnableContract,
   OwnershipChangeEvent,
   NFTOwnerBase,
@@ -189,22 +195,22 @@ function CollectionFactory(params: {
      */
     events = {
       mint: MintEvent,
-      update: PublicKey,
+      update: NFTUpdateEvent,
       transfer: TransferEvent,
       approve: ApproveEvent,
       upgradeNFTVerificationKey: UpgradeVerificationKeyEvent,
-      upgradeVerificationKey: Field,
+      upgradeVerificationKey: UpgradeVerificationKeyEvent,
       limitMinting: LimitMintingEvent,
       pause: PauseEvent,
       resume: PauseEvent,
       pauseNFT: PauseNFTEvent,
       resumeNFT: PauseNFTEvent,
       ownershipChange: OwnershipChangeEvent,
-      setName: Field,
-      setBaseURL: Field,
-      setRoyaltyFee: UInt32,
-      setTransferFee: UInt64,
-      setAdmin: PublicKey,
+      setName: SetNameEvent,
+      setBaseURL: SetBaseURLEvent,
+      setRoyaltyFee: SetRoyaltyFeeEvent,
+      setTransferFee: SetTransferFeeEvent,
+      setAdmin: SetAdminEvent,
     };
 
     /**
@@ -542,7 +548,12 @@ function CollectionFactory(params: {
       // Verify the metadata update proof
       metadataVerificationKeyHash.assertEquals(vk.hash);
       proof.verify(vk);
-      this.emitEvent("update", proof.publicInput.immutableState.address);
+      this.emitEvent(
+        "update",
+        new NFTUpdateEvent({
+          address: proof.publicInput.immutableState.address,
+        })
+      );
     }
 
     /**
@@ -931,7 +942,14 @@ function CollectionFactory(params: {
       canUpgrade.assertTrue(CollectionErrors.cannotUpgradeVerificationKey);
       this.account.verificationKey.set(vk);
 
-      this.emitEvent("upgradeVerificationKey", vk.hash);
+      this.emitEvent(
+        "upgradeVerificationKey",
+        new UpgradeVerificationKeyEvent({
+          address: this.address,
+          tokenId: this.tokenId,
+          verificationKeyHash: vk.hash,
+        })
+      );
     }
 
     /**
@@ -1073,7 +1091,7 @@ function CollectionFactory(params: {
       const canChangeName = await adminContract.canChangeName(name);
       canChangeName.assertTrue(CollectionErrors.noPermissionToChangeName);
       this.collectionName.set(name);
-      this.emitEvent("setName", name);
+      this.emitEvent("setName", new SetNameEvent({ name }));
     }
 
     /**
@@ -1091,7 +1109,7 @@ function CollectionFactory(params: {
       const canChangeBaseUri = await adminContract.canChangeBaseUri(baseURL);
       canChangeBaseUri.assertTrue(CollectionErrors.noPermissionToChangeBaseUri);
       this.baseURL.set(baseURL);
-      this.emitEvent("setBaseURL", baseURL);
+      this.emitEvent("setBaseURL", new SetBaseURLEvent({ baseURL }));
     }
 
     /**
@@ -1109,7 +1127,7 @@ function CollectionFactory(params: {
       const canSetAdmin = await adminContract.canSetAdmin(admin);
       canSetAdmin.assertTrue(CollectionErrors.noPermissionToSetAdmin);
       this.admin.set(admin);
-      this.emitEvent("setAdmin", admin);
+      this.emitEvent("setAdmin", new SetAdminEvent({ admin }));
     }
 
     /**
@@ -1135,7 +1153,7 @@ function CollectionFactory(params: {
       canChangeRoyalty.assertTrue(CollectionErrors.noPermissionToChangeRoyalty);
       collectionData.royaltyFee = royaltyFee;
       this.packedData.set(collectionData.pack());
-      this.emitEvent("setRoyaltyFee", royaltyFee);
+      this.emitEvent("setRoyaltyFee", new SetRoyaltyFeeEvent({ royaltyFee }));
     }
 
     /**
@@ -1161,7 +1179,10 @@ function CollectionFactory(params: {
       );
       collectionData.transferFee = transferFee;
       this.packedData.set(collectionData.pack());
-      this.emitEvent("setTransferFee", transferFee);
+      this.emitEvent(
+        "setTransferFee",
+        new SetTransferFeeEvent({ transferFee })
+      );
     }
 
     /**
