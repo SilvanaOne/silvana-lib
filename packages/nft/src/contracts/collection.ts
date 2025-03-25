@@ -446,7 +446,6 @@ function CollectionFactory(params: {
           access: Permissions.proof(),
           setZkappUri: Permissions.impossible(),
           setTokenSymbol: Permissions.impossible(),
-          receive: Permissions.impossible(),
         },
       };
       const initialState = new NFTStateStruct({
@@ -877,23 +876,6 @@ function CollectionFactory(params: {
       address: PublicKey,
       vk: VerificationKey
     ): Promise<UpgradeVerificationKeyData> {
-      const mainnetVerificationKeyHash = Field(
-        nftVerificationKeys.mainnet.vk.NFT.hash
-      );
-      const devnetVerificationKeyHash = Field(
-        nftVerificationKeys.devnet.vk.NFT.hash
-      );
-      // We check that the verification key hash is the same as the one
-      // that was compiled at the time of the collection deployment or upgrade,
-      // as the case can be.
-      // The upgrade procedure:
-      // 1. upgradeVerificationKey() is called on old collection contract to upgrade the verification key of the collection
-      // 2. upgradeNFTVerificationKey() is called on new collection contract to upgrade the verification key of the NFT
-      if (Mina.getNetworkId() === "mainnet") {
-        vk.hash.assertEquals(mainnetVerificationKeyHash); // this constant should be changed at the time of the collection upgrade
-      } else {
-        vk.hash.assertEquals(devnetVerificationKeyHash); // this constant should be changed at the time of the collection upgrade
-      }
       const tokenId = this.deriveTokenId();
       const nft = new NFT(address, tokenId);
       const adminContract = this.getAdminContract();
