@@ -6,6 +6,10 @@ The MinaNFT project is an innovative Non-Fungible Token (NFT) platform that inte
 
 https://docs.minanft.io/
 
+## Best practices
+
+For best practices on creating and using NFT collections, please refer to our [Best Practices Guide](./BEST_PRACTICES.md).
+
 ## Frontend
 
 https://devnet.minanft.io/
