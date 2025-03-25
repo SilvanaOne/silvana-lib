@@ -85,6 +85,7 @@ const CollectionErrors = {
   onlyOwnerCanUpgradeVerificationKey: "Only owner can upgrade verification key",
   invalidRoyaltyFee: "Royalty fee is too high, cannot be more than 100%",
   invalidOracleAddress: "Oracle address is invalid",
+  pendingCreatorIsEmpty: "Pending creator address is empty",
 };
 
 interface CollectionDeployProps extends Exclude<DeployArgs, undefined> {
@@ -1196,6 +1197,10 @@ function CollectionFactory(params: {
         x: pendingCreatorX,
         isOdd: collectionData.pendingCreatorIsOdd,
       });
+      const emptyPublicKey = PublicKey.empty();
+      pendingCreator
+        .equals(emptyPublicKey)
+        .assertFalse(CollectionErrors.pendingCreatorIsEmpty);
       // pendingCreator can be different from the sender, but it should sign the tx
       const pendingCreatorUpdate = AccountUpdate.createSigned(pendingCreator);
       pendingCreatorUpdate.body.useFullCommitment = Bool(true); // Prevent memo and fee change
@@ -1207,7 +1212,7 @@ function CollectionFactory(params: {
       );
       canChangeCreator.assertTrue(CollectionErrors.noPermissionToChangeCreator);
       const from = this.creator.getAndRequireEquals();
-      const emptyPublicKey = PublicKey.empty();
+
       this.pendingCreatorX.set(emptyPublicKey.x);
       collectionData.pendingCreatorIsOdd = Bool(emptyPublicKey.isOdd);
       this.creator.set(pendingCreator);
