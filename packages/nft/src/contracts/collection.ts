@@ -359,7 +359,7 @@ function CollectionFactory(params: {
       } = params;
 
       this.network.globalSlotSinceGenesis.requireBetween(UInt32.zero, expiry);
-      data.version.assertEquals(UInt32.zero);
+      data.version.assertEquals(UInt64.zero);
       data.isPaused
         .equals(Bool(false))
         .or(data.canPause.equals(Bool(true)))
