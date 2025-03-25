@@ -153,6 +153,8 @@ function CollectionFactory(params: {
         }).pack()
       );
       this.pendingCreatorX.set(PublicKey.empty().x);
+      // Changes must be made if the number of state fields available on the Mina blockchain changes
+      // This function should initialize ALL state fields due to the logic in the initialize() method
       this.account.zkappUri.set(props.url);
       this.account.tokenSymbol.set(props.symbol);
       this.account.permissions.set({
@@ -175,6 +177,9 @@ function CollectionFactory(params: {
      */
     @method
     async initialize(masterNFT: MintParams, collectionData: CollectionData) {
+      // Changes must be made if the number of state fields available on the Mina blockchain changes
+      // as the next line relies on the fact that the state size is 8 Fields
+      // and all 8 Field are initialized in deploy()
       this.account.provedState.requireEquals(Bool(false));
       collectionData.royaltyFee.assertLessThanOrEqual(
         UInt32.from(MAX_ROYALTY_FEE),
