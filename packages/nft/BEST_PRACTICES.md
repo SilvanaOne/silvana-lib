@@ -110,3 +110,43 @@ Users of the protocol should ensure they are confident that the operators of pri
 7. Securely storing physical, non-digital backups for critical keys.
 8. Actively monitoring for unexpected invocation of critical operations and/or deployed attack contracts.
 9. Regularly drilling responses to situations requiring emergency response such as pausing/unpausing.
+
+## Recommended contract factory validations for developers
+
+The Mina NFT standard uses a new contract factory pattern for development. For example, suppose a contract Foo is intended to call a contract Bar. Using the contract factory pattern, Foo would access Bar by calling a function which returns a constructor for Bar, instead of just calling Bar directly. An example can be seen in the below code snippet.
+
+```typescript
+function FooFactory(barFactory: () => BarConstructor) {
+  class Foo extends SmartContract {
+    @method async foo(address: PublicKey) {
+      const barInstance = new BarConstructor()(address);
+      barInstance.bar();
+    }
+  }
+  return Foo;
+}
+```
+
+Since the logic of `Foo` and `Bar` are compiled separately, taking this approach (instead of just calling `new Bar()` directly) should not change the verification key of `Foo`.
+
+This pattern allows users to more easily swap out different implementations of `Bar`, so long as each implementation has a `@method` with the same signature as `Bar.bar()`. This is especially helpful for the NFT standard, which expects users to have custom admin, owner, update, and approver contracts.
+
+When compiling a class created with the factory pattern, users must call the factory to get a concrete instance of the class, then compile that instance. To ensure that all the usual checks performed when calling another smart contract are in place, this instance must be instantiated with constructors of actual o1js smart contracts.
+
+For example, a malicious compiler could use an overriden o1js smart contract whose constructor sets its `tokenId` to an unconstrained variable, instead of a constant 1. This would create an attack vector which may allow an attacker to maliciously deploy contracts with the `Collection`'s `tokenId`.
+
+### Best practices of contract factories
+
+When using the factory pattern,
+
+1. Compile the factory-created contract with concrete instantiations of the contracts it may call.
+2. Compile the factory-created contract with multiple different concrete instantiations of the contracts it may call, and validate the `vkey` is unchanged.
+3. Consider using `Provable.isConstant()` to check that the `AccountUpdate` produced by method calls has a constant token ID of 1.
+
+```typescript
+const OwnerContract = ownerContract();
+const owner = new OwnerContract(address);
+assert(Provable.isConstant(Field, owner.self.tokenId));
+Provable.assertEqual(Field, owner.self.tokenId, TokenId.default);
+return owner;
+```
