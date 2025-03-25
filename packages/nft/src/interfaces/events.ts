@@ -23,7 +23,11 @@ class MintEvent extends Struct({
   address: PublicKey,
   /** The token ID of the minted NFT. */
   tokenId: Field,
-  /** The fee paid for the minting. */
+  /** The fee paid for the minting.
+   *  This fee is controlled by the admin contract
+   *  and is not checked by the Collection contract
+   *  Please check the admin contract code before using this fee
+   */
   fee: UInt64,
 }) {}
 
