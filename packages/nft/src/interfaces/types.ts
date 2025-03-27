@@ -536,13 +536,6 @@ class CollectionData extends Struct({
   static requireTransferApproval(packed: Field) {
     return packed.toBits(3 + 32 + 64)[1];
   }
-
-  static mintingIsLimited(packed: Field) {
-    const bits = packed.toBits(3 + 32 + 64);
-    const isPaused = bits[0];
-    const mintingIsLimited = bits[2];
-    return isPaused.or(mintingIsLimited);
-  }
 }
 
 /**
