@@ -213,6 +213,7 @@ class NFT extends SmartContract {
     data.owner = output.owner;
     data.approved = output.approved;
     data.version = output.version;
+    data.isPaused = output.isPaused;
 
     this.packedData.set(data.pack());
 

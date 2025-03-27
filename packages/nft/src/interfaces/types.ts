@@ -25,7 +25,8 @@ export {
   NFTUpdateProof,
   NFTStateStruct,
   UInt64Option,
-  TransferParams,
+  TransferBySignatureParams,
+  TransferByProofParams,
   MAX_ROYALTY_FEE,
   NFTTransactionContext,
   TransferExtendedParams,
@@ -110,7 +111,10 @@ class NFTImmutableState extends Struct({
   address: PublicKey, // readonly
   /** The token ID associated with the NFT (readonly). */
   tokenId: Field, // readonly
-  /** The unique identifier of the NFT within the collection (readonly). */
+  /** The identifier of the NFT within the collection to be used off-chain(readonly).
+   * It can be set to any value chosen by the creator for the new NFTs
+   * and by default is set to 0. To uniquely identify the NFT, use the pair (NFT address, tokenId) or (collection address, NFT address)
+   */
   id: UInt64, // readonly
 }) {
   /**
@@ -287,11 +291,19 @@ class NFTData extends Struct({
   version: UInt64,
   /** The unique identifier of the NFT within the collection. */
   id: UInt64,
-  /** Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly). */
+  /** Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly).
+   *
+   * It can be used only with update() and updateWithOracle() methods and
+   * in this case overrides both canTransfer and canApprove flags used in the transfer methods
+   */
   canChangeOwnerByProof: Bool, // readonly
-  /** Specifies if the NFT's ownership can be transferred (readonly). */
+  /** Specifies if the NFT's ownership can be transferred (readonly). Applies
+   * to transfer methods and can be bypassed by the update() and updateWithOracle() methods
+   */
   canTransfer: Bool, // readonly
-  /** Specifies if the NFT's approved address can be changed (readonly). */
+  /** Specifies if the NFT's approved address can be changed (readonly). Transfer methods reset approved address to PublicKey.empty()
+   *  on transfer independently from the canApprove flag value
+   */
   canApprove: Bool, // readonly
   /** Indicates whether the NFT's metadata can be updated (readonly). */
   canChangeMetadata: Bool, // readonly
@@ -560,13 +572,6 @@ class CollectionData extends Struct({
   static requireTransferApproval(packed: Field) {
     return packed.toBits(3 + 32 + 64)[1];
   }
-
-  static mintingIsLimited(packed: Field) {
-    const bits = packed.toBits(3 + 32 + 64);
-    const isPaused = bits[0];
-    const mintingIsLimited = bits[2];
-    return isPaused.or(mintingIsLimited);
-  }
 }
 
 /**
@@ -611,9 +616,23 @@ class MintRequest extends Struct({
 }) {}
 
 /**
- * Represents the parameters required for transferring an NFT.
+ * Represents the parameters required for transferring an NFT using a signature.
  */
-class TransferParams extends Struct({
+class TransferBySignatureParams extends Struct({
+  /** The address of the NFT contract. */
+  address: PublicKey,
+  /** The receiver's public key. */
+  to: PublicKey,
+  /** Optional price for the transfer. */
+  price: UInt64Option,
+  /** Custom value that can be interpreted by the owner or approved contract. */
+  context: NFTTransactionContext,
+}) {}
+
+/**
+ * Represents the parameters required for transferring an NFT using a proof.
+ */
+class TransferByProofParams extends Struct({
   /** The address of the NFT contract. */
   address: PublicKey,
   /** The sender's public key. */

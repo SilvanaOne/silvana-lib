@@ -23,7 +23,8 @@ import {
   NFTCollectionBase,
   NFTTransactionContext,
   TransferExtendedParams,
-  TransferParams,
+  TransferBySignatureParams,
+  TransferByProofParams,
 } from "../interfaces/index.js";
 import { mulDiv } from "../util/index.js";
 
@@ -231,7 +232,7 @@ export function AuctionFactory(params: {
 
     events = {
       bid: AuctionBidEvent,
-      settleAuction: TransferParams,
+      settleAuction: TransferByProofParams,
       canTransfer: TransferEvent,
       settlePayment: UInt64,
       settleAuctioneerPayment: UInt64,
@@ -337,7 +338,7 @@ export function AuctionFactory(params: {
         "Bidder does not have enough balance"
       );
       const collection = this.getCollectionContract(auction.collection);
-      const transferParams = new TransferParams({
+      const transferParams = new TransferByProofParams({
         address: nftAddress,
         from: this.address,
         to: auction.bidder,
@@ -366,7 +367,7 @@ export function AuctionFactory(params: {
       const nftAddress = auction.nft;
 
       const collection = this.getCollectionContract(auction.collection);
-      const transferParams = new TransferParams({
+      const transferParams = new TransferByProofParams({
         address: nftAddress,
         from: this.address,
         to: auction.owner,
