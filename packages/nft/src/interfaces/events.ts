@@ -103,7 +103,7 @@ class UpgradeVerificationKeyEvent extends Struct({
   verificationKeyHash: Field,
   /** The public key address of the NFT whose verification key is upgraded. */
   address: PublicKey,
-  /** The version number of the NFT state after the upgrade. */
+  /** The tokenId of the upgraded contract */
   tokenId: Field,
 }) {}
 

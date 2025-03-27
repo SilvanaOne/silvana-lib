@@ -566,8 +566,8 @@ function CollectionFactory(params: {
     /**
      * Transfers ownership of an NFT without admin approval.
      *
-     * @param address - The address of the NFT.
-     * @param to - The recipient's public key.
+     * @param nftAddress - The address of the NFT.
+     * @param approved - The approved public key.
      */
     @method async approveAddressByProof(
       nftAddress: PublicKey,
@@ -754,9 +754,17 @@ function CollectionFactory(params: {
     /**
      * Internal method to transfer an NFT.
      *
-     * @param address - The address of the NFT.
-     * @param to - The recipient's public key.
+     * This method handles the transfer logic and fee calculation. The fee is determined as follows:
+     * - If a price is provided, the fee is calculated as (price * royaltyFee / MAX_ROYALTY_FEE)
+     * - If no price is provided, the fixed transferFee is used to handle two cases:
+     *  when NFT is being sold and the price is not provided to the contract
+     *  when NFT is being transferred by the owner (without price)
+     * - If the sender is the creator, no fee is charged
+     * - The minimum fee is always the transferFee (unless sender is creator)
+     *
+     * @param transferEventDraft - The transfer event draft, containing the information about the transfer
      * @param transferFee - The transfer fee amount.
+     * @param royaltyFee - The royalty fee amount.
      * @returns The TransferEvent emitted.
      */
     async _transfer(params: {
@@ -778,7 +786,6 @@ function CollectionFactory(params: {
       const nft = new NFT(transferEventDraft.nft, tokenId);
       const transferEvent = await nft.transfer(transferEventDraft);
       const creator = this.creator.getAndRequireEquals();
-      // TODO: check is the owner is the creator
       let fee = Provable.if(
         transferEventDraft.price.isSome,
         // We cannot check the price here, so we just rely on owner contract
@@ -1135,10 +1142,12 @@ function CollectionFactory(params: {
     }
 
     /**
-     * Transfers ownership of the collection to a new owner.
+     * Transfers ownership of the collection to a new creator.
+     * This method is called transferOwnership as the Collection is implementing OwnableContract interface
+     * For the Collection, the creator is the owner of the collection
      *
-     * @param to - The public key of the new owner.
-     * @returns The public key of the old owner.
+     * @param to - The public key of the new creator.
+     * @returns The public key of the old creator.
      */
     @method.returns(PublicKey)
     async transferOwnership(to: PublicKey): Promise<PublicKey> {
