@@ -28,7 +28,8 @@ import { NFT } from "./nft.js";
 import {
   MintParams,
   MintRequest,
-  TransferParams,
+  TransferBySignatureParams,
+  TransferByProofParams,
   CollectionData,
   NFTUpdateProof,
   NFTStateStruct,
@@ -595,7 +596,9 @@ function CollectionFactory(params: {
      * @param to - The recipient's public key.
      * @param price - The price of the NFT (optional).
      */
-    @method async transferBySignature(params: TransferParams): Promise<void> {
+    @method async transferBySignature(
+      params: TransferBySignatureParams
+    ): Promise<void> {
       const { address, to, price, context } = params;
       const collectionData = await this.ensureNotPaused();
       collectionData.requireTransferApproval.assertFalse(
@@ -627,7 +630,9 @@ function CollectionFactory(params: {
      *
      * @param params - The transfer parameters.
      */
-    @method async transferByProof(params: TransferParams): Promise<void> {
+    @method async transferByProof(
+      params: TransferByProofParams
+    ): Promise<void> {
       const { address, from, to, price, context } = params;
       const collectionData = await this.ensureNotPaused();
       collectionData.requireTransferApproval.assertFalse(
@@ -670,8 +675,8 @@ function CollectionFactory(params: {
      *
      * @param params - The transfer parameters.
      */
-    @method async approvedTransferByProof(
-      params: TransferParams
+    @method async adminApprovedTransferByProof(
+      params: TransferByProofParams
     ): Promise<void> {
       const { address, from, to, price, context } = params;
       const collectionData = await this.ensureNotPaused();
@@ -719,8 +724,8 @@ function CollectionFactory(params: {
      * @param to - The recipient's public key.
      * @param price - The price of the NFT (optional).
      */
-    @method async approvedTransferBySignature(
-      params: TransferParams
+    @method async adminApprovedTransferBySignature(
+      params: TransferBySignatureParams
     ): Promise<void> {
       const { address, to, price, context } = params;
       const collectionData = await this.ensureNotPaused();

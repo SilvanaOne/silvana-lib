@@ -769,7 +769,7 @@ export type NftTransferParams = {
     /**
      * The address of the owner or approved
      */
-    from: string;
+    from?: string;
     /**
      * The address of the recipient
      */

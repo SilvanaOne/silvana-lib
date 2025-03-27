@@ -25,7 +25,7 @@ import {
 import {
   NFTCollectionBase,
   NFTCollectionContractConstructor,
-  TransferParams,
+  TransferBySignatureParams,
   UInt64Option,
   NFTTransactionContext,
 } from "../interfaces/index.js";
@@ -178,9 +178,8 @@ export function BidFactory(params: {
       const Collection = collectionContract();
       const collection = new Collection(nftAddress.collection);
       await collection.transferBySignature(
-        new TransferParams({
+        new TransferBySignatureParams({
           address: nftAddress.nft,
-          from: PublicKey.empty(),
           to: buyer,
           price: UInt64Option.fromValue(price),
           context: new NFTTransactionContext({
@@ -195,10 +194,9 @@ export function BidFactory(params: {
       const buyer = this.buyer.getAndRequireEquals();
       const Collection = collectionContract();
       const collection = new Collection(nftAddress.collection);
-      await collection.approvedTransferBySignature(
-        new TransferParams({
+      await collection.adminApprovedTransferBySignature(
+        new TransferBySignatureParams({
           address: nftAddress.nft,
-          from: PublicKey.empty(),
           to: buyer,
           price: UInt64Option.fromValue(price),
           context: new NFTTransactionContext({

@@ -42,7 +42,7 @@ import {
   Metadata,
   NonFungibleTokenContractsFactory,
   NFTTransactionContext,
-  TransferParams,
+  TransferBySignatureParams,
   NFTUpdateBase,
   MetadataValue,
 } from "../src/index.js";
@@ -943,10 +943,9 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
         },
         async () => {
           if (requireTransferApproval) {
-            await collectionContract.approvedTransferBySignature(
-              new TransferParams({
+            await collectionContract.adminApprovedTransferBySignature(
+              new TransferBySignatureParams({
                 address: zkNFTKey,
-                from: owner,
                 to,
                 price: UInt64Option.none(),
                 context: NFTTransactionContext.empty(),
@@ -954,9 +953,8 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
             );
           } else {
             await collectionContract.transferBySignature(
-              new TransferParams({
+              new TransferBySignatureParams({
                 address: zkNFTKey,
-                from: owner,
                 to,
                 price: UInt64Option.none(),
                 context: NFTTransactionContext.empty(),
