@@ -12,6 +12,7 @@ import {
   Field,
   AccountUpdate,
   UInt32,
+  assert,
 } from "o1js";
 import {
   MintRequest,
@@ -79,9 +80,15 @@ class NFTAdmin
    */
   async deploy(props: NFTAdminDeployProps) {
     await super.deploy(props);
+    const isPaused = props.isPaused ?? Bool(false);
+    const canBePaused = props.canBePaused ?? Bool(true);
+    assert(
+      isPaused.equals(Bool(false)).or(canBePaused.equals(Bool(true))),
+      "Cannot deploy paused contract that cannot be resumed"
+    );
     this.admin.set(props.admin);
-    this.isPaused.set(props.isPaused ?? Bool(false));
-    this.canBePaused.set(props.canBePaused ?? Bool(true));
+    this.isPaused.set(isPaused);
+    this.canBePaused.set(canBePaused);
     this.allowChangeRoyalty.set(props.allowChangeRoyalty ?? Bool(false));
     this.allowChangeTransferFee.set(
       props.allowChangeTransferFee ?? Bool(false)
