@@ -50,7 +50,7 @@ import {
   DefineApprovalFactory,
   NFTCollectionContractConstructor,
   NFTAdminContractConstructor,
-  TransferParams,
+  TransferBySignatureParams,
   NFTTransactionContext,
 } from "../src/index.js";
 import {
@@ -1139,10 +1139,9 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       },
       async () => {
         if (requireTransferApproval) {
-          await collectionContract.approvedTransferBySignature(
-            new TransferParams({
+          await collectionContract.adminApprovedTransferBySignature(
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -1150,9 +1149,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
           );
         } else {
           await collectionContract.transferBySignature(
-            new TransferParams({
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -1246,10 +1244,9 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
         },
         async () => {
           if (requireTransferApproval) {
-            await collectionContract.approvedTransferBySignature(
-              new TransferParams({
+            await collectionContract.adminApprovedTransferBySignature(
+              new TransferBySignatureParams({
                 address: zkNFTKey,
-                from: owner,
                 to,
                 price: UInt64Option.none(),
                 context: NFTTransactionContext.empty(),
@@ -1257,9 +1254,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
             );
           } else {
             await collectionContract.transferBySignature(
-              new TransferParams({
+              new TransferBySignatureParams({
                 address: zkNFTKey,
-                from: owner,
                 to,
                 price: UInt64Option.none(),
                 context: NFTTransactionContext.empty(),
@@ -1354,10 +1350,9 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       },
       async () => {
         if (requireTransferApproval) {
-          await collectionContract.approvedTransferBySignature(
-            new TransferParams({
+          await collectionContract.adminApprovedTransferBySignature(
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -1365,9 +1360,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
           );
         } else {
           await collectionContract.transferBySignature(
-            new TransferParams({
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -1451,10 +1445,9 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
         },
         async () => {
           if (requireTransferApproval) {
-            await collectionContract.approvedTransferBySignature(
-              new TransferParams({
+            await collectionContract.adminApprovedTransferBySignature(
+              new TransferBySignatureParams({
                 address: zkNFTKey,
-                from: owner,
                 to,
                 price: UInt64Option.none(),
                 context: NFTTransactionContext.empty(),
@@ -1462,9 +1455,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
             );
           } else {
             await collectionContract.transferBySignature(
-              new TransferParams({
+              new TransferBySignatureParams({
                 address: zkNFTKey,
-                from: owner,
                 to,
                 price: UInt64Option.none(),
                 context: NFTTransactionContext.empty(),
@@ -1846,10 +1838,9 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       },
       async () => {
         if (requireTransferApproval) {
-          await collectionContract.approvedTransferBySignature(
-            new TransferParams({
+          await collectionContract.adminApprovedTransferBySignature(
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),
@@ -1857,9 +1848,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
           );
         } else {
           await collectionContract.transferBySignature(
-            new TransferParams({
+            new TransferBySignatureParams({
               address: zkNFTKey,
-              from: owner,
               to,
               price: UInt64Option.none(),
               context: NFTTransactionContext.empty(),

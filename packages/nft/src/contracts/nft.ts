@@ -30,6 +30,7 @@ const NftErrors = {
   cannotChangeMetadataVerificationKeyHash:
     "Cannot change metadata verification key hash",
   cannotChangeOwner: "Cannot change owner",
+  cannotChangeApproval: "Cannot change approval",
   cannotChangeStorage: "Cannot change storage",
   cannotChangePauseState: "Cannot change pause state",
   noPermissionToPause: "No permission to pause",
@@ -212,6 +213,7 @@ class NFT extends SmartContract {
     data.owner = output.owner;
     data.approved = output.approved;
     data.version = output.version;
+    data.isPaused = output.isPaused;
 
     this.packedData.set(data.pack());
 
@@ -282,6 +284,7 @@ class NFT extends SmartContract {
   async approveAddress(approved: PublicKey): Promise<PublicKey> {
     const data = NFTData.unpack(this.packedData.getAndRequireEquals());
     data.isPaused.assertFalse(NftErrors.nftIsPaused);
+    data.canApprove.assertTrue(NftErrors.cannotChangeApproval);
     data.approved = approved;
     this.packedData.set(data.pack());
     this.emitEvent("approve", approved);

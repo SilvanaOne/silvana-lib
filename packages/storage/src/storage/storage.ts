@@ -60,6 +60,6 @@ export class Storage extends Struct({
   }
 
   isEmpty(): Bool {
-    return this.url[0].equals(Field(0)).and(this.url[1].equals(Field(0)));
+    return Storage.equals(this, Storage.empty());
   }
 }
