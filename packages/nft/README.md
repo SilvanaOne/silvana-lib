@@ -10,6 +10,14 @@ https://docs.minanft.io/
 
 For best practices on creating and using NFT collections, please refer to our [Best Practices Guide](./BEST_PRACTICES.md).
 
+## NFT configuration
+
+For detailed information on NFT and Collection flags, including their meanings, interactions, and best practices, please refer to our [NFT Configuration Guide](./FLAGS.md).
+
+## Metadata
+
+For detailed information on NFT metadata structure and usage, please refer to our [Metadata Guide](./METADATA.md).
+
 ## Frontend
 
 https://devnet.minanft.io/
