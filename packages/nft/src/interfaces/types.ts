@@ -516,42 +516,47 @@ class CollectionData extends Struct({
    * @returns A new CollectionData instance.
    */
   static unpack(packed: Field) {
-    const bits = Gadgets.and(packed, Field(0xfn), 4 + 32 + 64).toBits(4);
-    const royaltyFeeField = Gadgets.and(
-      packed,
-      Field(0xffffffff0n),
-      4 + 32 + 64
-    );
-    const royaltyFee = Provable.witness(UInt32, () => {
+    const unpacked = Provable.witness(CollectionData, () => {
+      const bits = Gadgets.and(packed, Field(0xfn), 4 + 32 + 64).toBits(4);
+
+      const royaltyFeeField = Gadgets.and(
+        packed,
+        Field(0xffffffff0n),
+        4 + 32 + 64
+      );
+
       const royaltyFeeBits = royaltyFeeField.toBits(4 + 32);
       // The next line relies on the constants 0xffffffff0n and 4 + 32 + 64 above
-      return UInt32.Unsafe.fromField(
+      const royaltyFee = UInt32.Unsafe.fromField(
         Field.fromBits(royaltyFeeBits.slice(4, 4 + 32))
       );
-    });
-    royaltyFee.value.mul(Field(2 ** 4)).assertEquals(royaltyFeeField);
-    const transferFeeField = Gadgets.and(
-      packed,
-      Field(0xffffffffffffffff000000000n),
-      4 + 32 + 64
-    );
-    const transferFee = Provable.witness(UInt64, () => {
+      royaltyFee.value.mul(Field(2 ** 4)).assertEquals(royaltyFeeField);
+
+      const transferFeeField = Gadgets.and(
+        packed,
+        Field(0xffffffffffffffff000000000n),
+        4 + 32 + 64
+      );
       const transferFeeBits = transferFeeField.toBits(4 + 32 + 64);
       // The next line relies on the constants 0xffffffffffffffff000000000n and 4 + 32 + 64 above
-      return UInt64.Unsafe.fromField(
+      const transferFee = UInt64.Unsafe.fromField(
         Field.fromBits(transferFeeBits.slice(4 + 32, 4 + 32 + 64))
       );
-    });
-    transferFee.value.mul(Field(2 ** (4 + 32))).assertEquals(transferFeeField);
+      transferFee.value
+        .mul(Field(2 ** (4 + 32)))
+        .assertEquals(transferFeeField);
 
-    return new CollectionData({
-      isPaused: bits[0],
-      requireTransferApproval: bits[1],
-      mintingIsLimited: bits[2],
-      pendingCreatorIsOdd: bits[3],
-      royaltyFee,
-      transferFee,
+      return new CollectionData({
+        isPaused: bits[0],
+        requireTransferApproval: bits[1],
+        mintingIsLimited: bits[2],
+        pendingCreatorIsOdd: bits[3],
+        royaltyFee,
+        transferFee,
+      });
     });
+    unpacked.pack().assertEquals(packed);
+    return unpacked;
   }
 
   static isPaused(packed: Field) {
