@@ -1,7 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
 import { UInt32, Bool, UInt64, PrivateKey, PublicKey, Field } from "o1js";
-import { NFTData, CollectionData, AdminData } from "../src/index.js";
+import {
+  NFTData,
+  CollectionData,
+  AdminData,
+  NFTAdminAllowFlags,
+} from "../src/index.js";
 import { Storage } from "@silvana-one/storage";
 import { UpgradeDatabaseState, PublicKeyOption } from "@silvana-one/upgradable";
 
@@ -130,6 +135,34 @@ describe("Test packing and unpacking", async () => {
       );
     }
   });
+
+  it("should pack and unpack NFTAdminAllowFlags", async () => {
+    for (let i = 0; i < NUMBER_OF_ITERATIONS; i++) {
+      const original = new NFTAdminAllowFlags({
+        allowChangeRoyalty: Bool(randomBool()),
+        allowChangeTransferFee: Bool(randomBool()),
+        allowPauseCollection: Bool(randomBool()),
+      });
+
+      const packed = original.pack();
+      const unpacked = NFTAdminAllowFlags.unpack(packed);
+
+      assert.strictEqual(
+        unpacked.allowChangeRoyalty.toBoolean(),
+        original.allowChangeRoyalty.toBoolean()
+      );
+      assert.strictEqual(
+        unpacked.allowChangeTransferFee.toBoolean(),
+        original.allowChangeTransferFee.toBoolean()
+      );
+
+      assert.strictEqual(
+        unpacked.allowPauseCollection.toBoolean(),
+        original.allowPauseCollection.toBoolean()
+      );
+    }
+  });
+
   it("should pack and unpack PublicKey", async () => {
     for (let i = 0; i < NUMBER_OF_ITERATIONS; i++) {
       const publicKey = PrivateKey.random().toPublicKey();

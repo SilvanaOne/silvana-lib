@@ -12,6 +12,8 @@ import {
   Field,
   AccountUpdate,
   UInt32,
+  UInt8,
+  Struct,
   assert,
 } from "o1js";
 import {
@@ -25,7 +27,7 @@ import {
   OwnableContract,
   TransferEvent,
 } from "../interfaces/index.js";
-export { NFTAdmin, NFTAdminDeployProps };
+export { NFTAdmin, NFTAdminDeployProps, NFTAdminAllowFlags };
 
 interface NFTAdminDeployProps extends Exclude<DeployArgs, undefined> {
   admin: PublicKey;
@@ -35,6 +37,48 @@ interface NFTAdminDeployProps extends Exclude<DeployArgs, undefined> {
   allowChangeTransferFee?: Bool;
   allowPauseCollection?: Bool;
   isPaused?: Bool;
+}
+
+/**
+ * Contains flags for the admin contract related to the NFT collection permissions.
+ */
+class NFTAdminAllowFlags extends Struct({
+  allowChangeRoyalty: Bool,
+  allowChangeTransferFee: Bool,
+  allowPauseCollection: Bool,
+}) {
+  /**
+   * Packs the NFTAdminAllowFlags into a UInt8 representation for efficient storage.
+   * @returns The packed UInt8 instance.
+   */
+  pack(): UInt8 {
+    return UInt8.from(
+      Field.fromBits([
+        this.allowChangeRoyalty,
+        this.allowChangeTransferFee,
+        this.allowPauseCollection,
+      ])
+    );
+  }
+
+  /**
+   * Unpacks a UInt8 instance into a NFTAdminAllowFlags instance.
+   * @param packed The packed UInt8 instance.
+   * @returns A new NFTAdminAllowFlags instance.
+   */
+  static unpack(packed: UInt8): NFTAdminAllowFlags {
+    const bits = packed.value.toBits(3);
+
+    const allowChangeRoyalty = bits[0];
+    const allowChangeTransferFee = bits[1];
+    const allowPauseCollection = bits[2];
+
+    return new NFTAdminAllowFlags({
+      allowChangeRoyalty,
+      allowChangeTransferFee,
+      allowPauseCollection,
+    });
+  }
 }
 
 /**
@@ -71,19 +115,9 @@ class NFTAdmin
   @state(Bool) canBePaused = State<Bool>();
 
   /**
-   * A boolean flag indicating whether the collection is allowed to change the royalty fee.
+   * A boolean flags indicating whether the collection is allowed to change the royalty fee, transfer fee and pause the collection.
    */
-  @state(Bool) allowChangeRoyalty = State<Bool>();
-
-  /**
-   * A boolean flag indicating whether the collection is allowed to change the transfer fee.
-   */
-  @state(Bool) allowChangeTransferFee = State<Bool>();
-
-  /**
-   * A boolean flag indicating whether the collection is allowed to be paused.
-   */
-  @state(Bool) allowPauseCollection = State<Bool>();
+  @state(UInt8) flags = State<UInt8>();
 
   /**
    * Deploys the contract with initial settings.
@@ -101,11 +135,13 @@ class NFTAdmin
     this.pendingAdmin.set(PublicKey.empty());
     this.isPaused.set(isPaused);
     this.canBePaused.set(canBePaused);
-    this.allowChangeRoyalty.set(props.allowChangeRoyalty ?? Bool(false));
-    this.allowChangeTransferFee.set(
-      props.allowChangeTransferFee ?? Bool(false)
+    this.flags.set(
+      new NFTAdminAllowFlags({
+        allowChangeRoyalty: props.allowChangeRoyalty ?? Bool(false),
+        allowChangeTransferFee: props.allowChangeTransferFee ?? Bool(false),
+        allowPauseCollection: props.allowPauseCollection ?? Bool(true),
+      }).pack()
     );
-    this.allowPauseCollection.set(props.allowPauseCollection ?? Bool(true));
     this.account.zkappUri.set(props.uri);
     this.account.permissions.set({
       ...Permissions.default(),
@@ -326,7 +362,8 @@ class NFTAdmin
     const isPaused = this.isPaused.getAndRequireEquals();
     isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
-    return this.allowChangeRoyalty.getAndRequireEquals();
+    const flags = NFTAdminAllowFlags.unpack(this.flags.getAndRequireEquals());
+    return flags.allowChangeRoyalty;
   }
 
   /**
@@ -337,7 +374,8 @@ class NFTAdmin
     const isPaused = this.isPaused.getAndRequireEquals();
     isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
-    return this.allowChangeTransferFee.getAndRequireEquals();
+    const flags = NFTAdminAllowFlags.unpack(this.flags.getAndRequireEquals());
+    return flags.allowChangeTransferFee;
   }
 
   /**
@@ -358,7 +396,8 @@ class NFTAdmin
     const isPaused = this.isPaused.getAndRequireEquals();
     isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
-    return this.allowPauseCollection.getAndRequireEquals();
+    const flags = NFTAdminAllowFlags.unpack(this.flags.getAndRequireEquals());
+    return flags.allowPauseCollection;
   }
 
   /**
@@ -369,6 +408,7 @@ class NFTAdmin
     const isPaused = this.isPaused.getAndRequireEquals();
     isPaused.assertFalse("Contract is paused");
     await this.ensureOwnerSignature();
-    return this.allowPauseCollection.getAndRequireEquals();
+    const flags = NFTAdminAllowFlags.unpack(this.flags.getAndRequireEquals());
+    return flags.allowPauseCollection;
   }
 }
