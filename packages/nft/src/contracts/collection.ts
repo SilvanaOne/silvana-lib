@@ -356,6 +356,8 @@ function CollectionFactory(params: {
         storage,
         metadataVerificationKeyHash,
         expiry,
+        fee,
+        tokenId,
       } = params;
 
       this.network.globalSlotSinceGenesis.requireBetween(UInt32.zero, expiry);
@@ -365,7 +367,8 @@ function CollectionFactory(params: {
         .or(data.canPause.equals(Bool(true)))
         .assertTrue(CollectionErrors.cannotMint);
       const packedData = data.pack();
-      const tokenId = this.deriveTokenId();
+      const collectionTokenId = this.deriveTokenId();
+      collectionTokenId.assertEquals(tokenId);
 
       const update = AccountUpdate.createSigned(address, tokenId);
       update.body.useFullCommitment = Bool(true); // Prevent memo and fee change
@@ -465,6 +468,8 @@ function CollectionFactory(params: {
       const event = new MintEvent({
         initialState,
         address,
+        tokenId,
+        fee,
       });
       this.emitEvent("mint", event);
       return event;

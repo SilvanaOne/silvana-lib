@@ -1,4 +1,4 @@
-import { PublicKey, Struct, UInt32, Field, Bool } from "o1js";
+import { PublicKey, Struct, UInt32, Field, Bool, UInt64 } from "o1js";
 import { Storage } from "@silvana-one/storage";
 import { NFTStateStruct, UInt64Option } from "./types.js";
 
@@ -21,6 +21,14 @@ class MintEvent extends Struct({
   initialState: NFTStateStruct,
   /** The public key address of the minted NFT. */
   address: PublicKey,
+  /** The token ID of the minted NFT. */
+  tokenId: Field,
+  /** The fee paid for the minting.
+   *  This fee is controlled by the admin contract
+   *  and is not checked by the Collection contract
+   *  Please check the admin contract code before using this fee
+   */
+  fee: UInt64,
 }) {}
 
 /**
