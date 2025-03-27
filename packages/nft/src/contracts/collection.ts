@@ -91,6 +91,7 @@ const CollectionErrors = {
   onlyOwnerCanUpgradeVerificationKey: "Only owner can upgrade verification key",
   invalidRoyaltyFee: "Royalty fee is too high, cannot be more than 100%",
   invalidOracleAddress: "Oracle address is invalid",
+  pendingCreatorIsEmpty: "Pending creator address is empty",
 };
 
 interface CollectionDeployProps extends Exclude<DeployArgs, undefined> {
@@ -138,6 +139,8 @@ function CollectionFactory(params: {
      * such as flags and fee configurations.
      */
     @state(Field) packedData = State<Field>();
+    /** The public key part (x) of the pending creator. The isOdd field is written to the packedData */
+    @state(Field) pendingCreatorX = State<Field>();
 
     /**
      * Deploys the NFT Collection Contract with the initial settings.
@@ -156,6 +159,9 @@ function CollectionFactory(params: {
           isPaused: true,
         }).pack()
       );
+      this.pendingCreatorX.set(PublicKey.empty().x);
+      // Changes must be made if the number of state fields available on the Mina blockchain changes
+      // This function should initialize ALL state fields due to the logic in the initialize() method
       this.account.zkappUri.set(props.url);
       this.account.tokenSymbol.set(props.symbol);
       this.account.permissions.set({
@@ -178,6 +184,9 @@ function CollectionFactory(params: {
      */
     @method
     async initialize(masterNFT: MintParams, collectionData: CollectionData) {
+      // Changes must be made if the number of state fields available on the Mina blockchain changes
+      // as the next line relies on the fact that the state size is 8 Fields
+      // and all 8 Field are initialized in deploy()
       this.account.provedState.requireEquals(Bool(false));
       collectionData.royaltyFee.assertLessThanOrEqual(
         UInt32.from(MAX_ROYALTY_FEE),
@@ -205,7 +214,8 @@ function CollectionFactory(params: {
       resume: PauseEvent,
       pauseNFT: PauseNFTEvent,
       resumeNFT: PauseNFTEvent,
-      ownershipChange: OwnershipChangeEvent,
+      ownershipTransfer: OwnershipChangeEvent,
+      ownershipAccepted: OwnershipChangeEvent,
       setName: SetNameEvent,
       setBaseURL: SetBaseURLEvent,
       setRoyaltyFee: SetRoyaltyFeeEvent,
@@ -1173,17 +1183,72 @@ function CollectionFactory(params: {
     @method.returns(PublicKey)
     async transferOwnership(to: PublicKey): Promise<PublicKey> {
       await this.ensureCreatorSignature();
-      await this.ensureNotPaused();
+      const collectionData = CollectionData.unpack(
+        this.packedData.getAndRequireEquals()
+      );
+      collectionData.isPaused.assertFalse(CollectionErrors.collectionNotPaused);
+
       const adminContract = this.getAdminContract();
       const canChangeCreator = await adminContract.canChangeCreator(to);
       canChangeCreator.assertTrue(CollectionErrors.noPermissionToChangeCreator);
       const from = this.creator.getAndRequireEquals();
-      this.creator.set(to);
+      // Pending creator public key can be empty, it cancels the transfer
+      this.pendingCreatorX.set(to.x);
+      collectionData.pendingCreatorIsOdd = to.isOdd;
+      this.packedData.set(collectionData.pack());
       this.emitEvent(
-        "ownershipChange",
+        "ownershipTransfer",
         new OwnershipChangeEvent({
           from,
           to,
+        })
+      );
+      return from;
+    }
+
+    /**
+     * Transfers ownership of the collection to a new owner.
+     *
+     * @param to - The public key of the new owner.
+     * @returns The public key of the old owner.
+     */
+    @method.returns(PublicKey)
+    async acceptOwnership(): Promise<PublicKey> {
+      const collectionData = CollectionData.unpack(
+        this.packedData.getAndRequireEquals()
+      );
+      collectionData.isPaused.assertFalse(CollectionErrors.collectionNotPaused);
+
+      const pendingCreatorX = this.pendingCreatorX.getAndRequireEquals();
+      const pendingCreator = PublicKey.from({
+        x: pendingCreatorX,
+        isOdd: collectionData.pendingCreatorIsOdd,
+      });
+      const emptyPublicKey = PublicKey.empty();
+      pendingCreator
+        .equals(emptyPublicKey)
+        .assertFalse(CollectionErrors.pendingCreatorIsEmpty);
+      // pendingCreator can be different from the sender, but it should sign the tx
+      const pendingCreatorUpdate = AccountUpdate.createSigned(pendingCreator);
+      pendingCreatorUpdate.body.useFullCommitment = Bool(true); // Prevent memo and fee change
+
+      // Check second time that the transfer is allowed
+      const adminContract = this.getAdminContract();
+      const canChangeCreator = await adminContract.canChangeCreator(
+        pendingCreator
+      );
+      canChangeCreator.assertTrue(CollectionErrors.noPermissionToChangeCreator);
+      const from = this.creator.getAndRequireEquals();
+
+      this.pendingCreatorX.set(emptyPublicKey.x);
+      collectionData.pendingCreatorIsOdd = Bool(emptyPublicKey.isOdd);
+      this.creator.set(pendingCreator);
+      this.packedData.set(collectionData.pack());
+      this.emitEvent(
+        "ownershipAccepted",
+        new OwnershipChangeEvent({
+          from,
+          to: pendingCreator,
         })
       );
       return from;
