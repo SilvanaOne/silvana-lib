@@ -30,15 +30,22 @@ export function mulDiv(params: {
       valueBigInt * multiplierBigInt - result * denominatorBigInt;
     return { result: Field.from(result), remainder: Field.from(remainder) };
   });
+  // We check that the result and remainder are in the correct range using Gadgets.rangeCheck64 before using Unsafe methods
+  // The next four lines should always be used together and cannot be separated
   Gadgets.rangeCheck64(fields.result);
+  const result = UInt64.Unsafe.fromField(fields.result);
   Gadgets.rangeCheck64(fields.remainder);
-  fields.remainder.assertLessThan(denominator.value); // should fail in case the denominator is zero
-  fields.result
+  const remainder = UInt64.Unsafe.fromField(fields.remainder);
+
+  remainder.assertLessThan(denominator); // should fail in case the denominator is zero
+
+  // We use the Field representations of the values to avoid overflows
+  result.value
     .mul(denominator.value)
-    .add(fields.remainder)
+    .add(remainder.value)
     .assertEquals(value.value.mul(multiplier.value)); // should fail in case the denominator is zero
   return {
-    result: UInt64.Unsafe.fromField(fields.result),
-    remainder: UInt64.Unsafe.fromField(fields.remainder),
+    result,
+    remainder,
   };
 }

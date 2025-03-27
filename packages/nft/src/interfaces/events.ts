@@ -4,6 +4,7 @@ import { NFTStateStruct, UInt64Option } from "./types.js";
 
 export {
   MintEvent,
+  NFTUpdateEvent,
   UpdateEvent,
   TransferEvent,
   UpgradeVerificationKeyEvent,
@@ -11,6 +12,11 @@ export {
   LimitMintingEvent,
   PauseNFTEvent,
   ApproveEvent,
+  SetNameEvent,
+  SetBaseURLEvent,
+  SetRoyaltyFeeEvent,
+  SetTransferFeeEvent,
+  SetAdminEvent,
 };
 
 /**
@@ -120,4 +126,34 @@ class UpgradeVerificationKeyData extends Struct({
 class LimitMintingEvent extends Struct({
   /** Indicates whether minting is limited (`true`) or not (`false`). */
   mintingLimited: Bool,
+}) {}
+
+class NFTUpdateEvent extends Struct({
+  /** The public key address of the NFT. */
+  address: PublicKey,
+}) {}
+
+class SetNameEvent extends Struct({
+  /** The updated name of the Collection. */
+  name: Field,
+}) {}
+
+class SetBaseURLEvent extends Struct({
+  /** The updated base URL of the Collection. */
+  baseURL: Field,
+}) {}
+
+class SetRoyaltyFeeEvent extends Struct({
+  /** The updated royalty fee of the Collection. */
+  royaltyFee: UInt32,
+}) {}
+
+class SetTransferFeeEvent extends Struct({
+  /** The updated transfer fee of the Collection. */
+  transferFee: UInt64,
+}) {}
+
+class SetAdminEvent extends Struct({
+  /** The updated admin contract of the Collection. */
+  admin: PublicKey,
 }) {}
