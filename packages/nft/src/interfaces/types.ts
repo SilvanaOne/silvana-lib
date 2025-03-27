@@ -10,6 +10,7 @@ import {
   FeatureFlags,
   Option,
   Account,
+  Gadgets,
 } from "o1js";
 import { Storage } from "@silvana-one/storage";
 export {
@@ -197,7 +198,7 @@ class NFTState extends Struct({
   /** The off-chain storage information (e.g., IPFS hash). */
   storage: Storage,
   /** The version number of the NFT state. */
-  version: UInt32,
+  version: UInt64,
   /** Indicates whether the NFT contract is currently paused. */
   isPaused: Bool,
   /** The hash of the verification key used for metadata proofs. */
@@ -287,7 +288,7 @@ class NFTData extends Struct({
   /** The approved address of the NFT. */
   approved: PublicKey,
   /** The version number of the NFT state. */
-  version: UInt32,
+  version: UInt64,
   /** The unique identifier of the NFT within the collection. */
   id: UInt64,
   /** Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly).
@@ -327,7 +328,7 @@ class NFTData extends Struct({
   static new(params: {
     owner: string | PublicKey;
     approved?: string | PublicKey;
-    version?: number;
+    version?: number | bigint | string;
     id?: bigint | string;
     canChangeOwnerByProof?: boolean;
     canTransfer?: boolean;
@@ -363,7 +364,7 @@ class NFTData extends Struct({
           ? PublicKey.fromBase58(approved)
           : approved
         : PublicKey.empty(),
-      version: UInt32.from(version ?? 0),
+      version: UInt64.from(BigInt(version ?? 0)),
       id: UInt64.from(BigInt(id ?? 0)),
       canChangeOwnerByProof: Bool(canChangeOwnerByProof ?? false),
       canTransfer: Bool(canTransfer ?? true),
@@ -387,14 +388,10 @@ class NFTData extends Struct({
    * @returns The packed Field representation of the NFTData.
    */
   pack(): NFTDataPacked {
-    const id = this.id.value.toBits(64);
-    const version = this.version.value.toBits(32);
     return new NFTDataPacked({
       ownerX: this.owner.x,
       approvedX: this.approved.x,
       data: Field.fromBits([
-        ...id,
-        ...version,
         this.canChangeOwnerByProof,
         this.canTransfer,
         this.canApprove,
@@ -407,7 +404,9 @@ class NFTData extends Struct({
         this.requireOwnerAuthorizationToUpgrade,
         this.owner.isOdd,
         this.approved.isOdd,
-      ]),
+      ])
+        .add(Field(this.id.value).mul(Field(2 ** 12)))
+        .add(Field(this.version.value).mul(Field(2 ** (12 + 64)))),
     });
   }
 
@@ -417,45 +416,70 @@ class NFTData extends Struct({
    * @returns A new NFTData instance.
    */
   static unpack(packed: NFTDataPacked): NFTData {
-    const bits = packed.data.toBits(64 + 32 + 12);
-    const id = UInt64.Unsafe.fromField(Field.fromBits(bits.slice(0, 64)));
-    const version = UInt32.Unsafe.fromField(
-      Field.fromBits(bits.slice(64, 64 + 32))
-    );
+    const unpacked = Provable.witness(NFTData, () => {
+      const bits = Gadgets.and(packed.data, Field(0xfffn), 12 + 64 + 64).toBits(
+        12
+      );
+      const idField = Gadgets.and(
+        packed.data,
+        Field(0xffffffffffffffff000n),
+        12 + 64 + 64
+      );
+      const idBits = idField.toBits(64 + 12);
+      // the next line relies on the constants 0xffffffffffffffff000n and 12 + 64 + 64 above
+      const id = UInt64.Unsafe.fromField(
+        Field.fromBits(idBits.slice(12, 64 + 12))
+      );
+      id.value.mul(Field(2 ** 12)).assertEquals(idField);
 
-    const canChangeOwnerByProof = bits[64 + 32 + 0];
-    const canTransfer = bits[64 + 32 + 1];
-    const canApprove = bits[64 + 32 + 2];
-    const canChangeMetadata = bits[64 + 32 + 3];
-    const canChangeStorage = bits[64 + 32 + 4];
-    const canChangeName = bits[64 + 32 + 5];
-    const canChangeMetadataVerificationKeyHash = bits[64 + 32 + 6];
-    const canPause = bits[64 + 32 + 7];
-    const isPaused = bits[64 + 32 + 8];
-    const requireOwnerAuthorizationToUpgrade = bits[64 + 32 + 9];
-    const ownerIsOdd = bits[64 + 32 + 10];
-    const approvedIsOdd = bits[64 + 32 + 11];
-    const owner = PublicKey.from({ x: packed.ownerX, isOdd: ownerIsOdd });
-    const approved = PublicKey.from({
-      x: packed.approvedX,
-      isOdd: approvedIsOdd,
+      const versionField = Gadgets.and(
+        packed.data,
+        Field(0xffffffffffffffff0000000000000000000n),
+        64 + 64 + 12
+      );
+      const versionBits = versionField.toBits(12 + 64 + 64);
+      // the next line relies on the constants 0xffffffffffffffff0000000000000000000n and 12 + 64 + 64 above
+      const version = UInt64.Unsafe.fromField(
+        Field.fromBits(versionBits.slice(12 + 64, 12 + 64 + 64))
+      );
+      version.value.mul(Field(2 ** (12 + 64))).assertEquals(versionField);
+
+      const canChangeOwnerByProof = bits[0];
+      const canTransfer = bits[1];
+      const canApprove = bits[2];
+      const canChangeMetadata = bits[3];
+      const canChangeStorage = bits[4];
+      const canChangeName = bits[5];
+      const canChangeMetadataVerificationKeyHash = bits[6];
+      const canPause = bits[7];
+      const isPaused = bits[8];
+      const requireOwnerAuthorizationToUpgrade = bits[9];
+      const ownerIsOdd = bits[10];
+      const approvedIsOdd = bits[11];
+      const owner = PublicKey.from({ x: packed.ownerX, isOdd: ownerIsOdd });
+      const approved = PublicKey.from({
+        x: packed.approvedX,
+        isOdd: approvedIsOdd,
+      });
+      return new NFTData({
+        owner,
+        approved,
+        id,
+        version,
+        canChangeOwnerByProof,
+        canTransfer,
+        canApprove,
+        canChangeMetadata,
+        canChangeStorage,
+        canChangeName,
+        canChangeMetadataVerificationKeyHash,
+        canPause,
+        isPaused,
+        requireOwnerAuthorizationToUpgrade,
+      });
     });
-    return new NFTData({
-      owner,
-      approved,
-      id,
-      version,
-      canChangeOwnerByProof,
-      canTransfer,
-      canApprove,
-      canChangeMetadata,
-      canChangeStorage,
-      canChangeName,
-      canChangeMetadataVerificationKeyHash,
-      canPause,
-      isPaused,
-      requireOwnerAuthorizationToUpgrade,
-    });
+    NFTDataPacked.assertEqual(unpacked.pack(), packed);
+    return unpacked;
   }
 }
 

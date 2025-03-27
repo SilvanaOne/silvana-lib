@@ -52,7 +52,7 @@ class UpdateEvent extends Struct({
   /** The approved address of the NFT after the update. */
   approved: PublicKey,
   /** The version number of the NFT state. */
-  version: UInt32,
+  version: UInt64,
   /** Indicates whether the NFT is paused after the update. */
   isPaused: Bool,
   /** The hash of the verification key used for metadata proofs. */

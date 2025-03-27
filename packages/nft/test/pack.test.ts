@@ -11,13 +11,12 @@ const randomBool = () => Math.random() < 0.5;
 describe("Test packing and unpacking", async () => {
   it("should pack and unpack NFTData", async () => {
     for (let i = 0; i < NUMBER_OF_ITERATIONS; i++) {
-      const randomVersion = UInt32.from(Math.floor(Math.random() * 2 ** 32));
-      const randomId = UInt64.from(Math.floor(Math.random() * 2 ** 64));
+      const randomUInt64 = UInt64.from(Math.floor(Math.random() * 2 ** 64));
       const original = new NFTData({
         owner: PrivateKey.random().toPublicKey(),
         approved: PrivateKey.random().toPublicKey(),
-        version: randomVersion,
-        id: randomId,
+        version: randomUInt64,
+        id: randomUInt64,
         canChangeOwnerByProof: Bool(randomBool()),
         canTransfer: Bool(randomBool()),
         canApprove: Bool(randomBool()),
@@ -42,8 +41,8 @@ describe("Test packing and unpacking", async () => {
         true
       );
       assert.strictEqual(
-        unpacked.version.toBigint(),
-        original.version.toBigint()
+        unpacked.version.toBigInt(),
+        original.version.toBigInt()
       );
       assert.strictEqual(unpacked.id.toBigInt(), original.id.toBigInt());
       assert.strictEqual(
