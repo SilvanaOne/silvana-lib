@@ -246,6 +246,9 @@ class NFTAdmin
     isPaused.assertFalse("Contract is paused");
     const admin = this.admin.getAndRequireEquals();
     const pendingAdmin = this.pendingAdmin.getAndRequireEquals();
+    pendingAdmin
+      .equals(PublicKey.empty())
+      .assertFalse("Pending admin is not set");
     // pendingAdmin can be different from the sender, but it should sign the tx
     const pendingAminUpdate = AccountUpdate.createSigned(pendingAdmin);
     pendingAminUpdate.body.useFullCommitment = Bool(true); // Prevent memo and fee change
