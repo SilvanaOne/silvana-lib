@@ -10,6 +10,7 @@ import {
   FeatureFlags,
   Option,
   Account,
+  Gadgets,
 } from "o1js";
 import { Storage } from "@silvana-one/storage";
 export {
@@ -24,7 +25,8 @@ export {
   NFTUpdateProof,
   NFTStateStruct,
   UInt64Option,
-  TransferParams,
+  TransferBySignatureParams,
+  TransferByProofParams,
   MAX_ROYALTY_FEE,
   NFTTransactionContext,
   TransferExtendedParams,
@@ -109,7 +111,10 @@ class NFTImmutableState extends Struct({
   address: PublicKey, // readonly
   /** The token ID associated with the NFT (readonly). */
   tokenId: Field, // readonly
-  /** The unique identifier of the NFT within the collection (readonly). */
+  /** The identifier of the NFT within the collection to be used off-chain(readonly).
+   * It can be set to any value chosen by the creator for the new NFTs
+   * and by default is set to 0. To uniquely identify the NFT, use the pair (NFT address, tokenId) or (collection address, NFT address)
+   */
   id: UInt64, // readonly
 }) {
   /**
@@ -193,7 +198,7 @@ class NFTState extends Struct({
   /** The off-chain storage information (e.g., IPFS hash). */
   storage: Storage,
   /** The version number of the NFT state. */
-  version: UInt32,
+  version: UInt64,
   /** Indicates whether the NFT contract is currently paused. */
   isPaused: Bool,
   /** The hash of the verification key used for metadata proofs. */
@@ -223,6 +228,7 @@ class NFTState extends Struct({
     a.metadataVerificationKeyHash.assertEquals(b.metadataVerificationKeyHash);
     a.creator.assertEquals(b.creator);
     NFTTransactionContext.assertEqual(a.context, b.context);
+    a.oracleAddress.assertEquals(b.oracleAddress);
   }
 
   /**
@@ -282,14 +288,22 @@ class NFTData extends Struct({
   /** The approved address of the NFT. */
   approved: PublicKey,
   /** The version number of the NFT state. */
-  version: UInt32,
+  version: UInt64,
   /** The unique identifier of the NFT within the collection. */
   id: UInt64,
-  /** Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly). */
+  /** Determines whether the NFT's ownership can be changed via a zero-knowledge proof (readonly).
+   *
+   * It can be used only with update() and updateWithOracle() methods and
+   * in this case overrides both canTransfer and canApprove flags used in the transfer methods
+   */
   canChangeOwnerByProof: Bool, // readonly
-  /** Specifies if the NFT's ownership can be transferred (readonly). */
+  /** Specifies if the NFT's ownership can be transferred (readonly). Applies
+   * to transfer methods and can be bypassed by the update() and updateWithOracle() methods
+   */
   canTransfer: Bool, // readonly
-  /** Specifies if the NFT's approved address can be changed (readonly). */
+  /** Specifies if the NFT's approved address can be changed (readonly). Transfer methods reset approved address to PublicKey.empty()
+   *  on transfer independently from the canApprove flag value
+   */
   canApprove: Bool, // readonly
   /** Indicates whether the NFT's metadata can be updated (readonly). */
   canChangeMetadata: Bool, // readonly
@@ -314,7 +328,7 @@ class NFTData extends Struct({
   static new(params: {
     owner: string | PublicKey;
     approved?: string | PublicKey;
-    version?: number;
+    version?: number | bigint | string;
     id?: bigint | string;
     canChangeOwnerByProof?: boolean;
     canTransfer?: boolean;
@@ -350,7 +364,7 @@ class NFTData extends Struct({
           ? PublicKey.fromBase58(approved)
           : approved
         : PublicKey.empty(),
-      version: UInt32.from(version ?? 0),
+      version: UInt64.from(BigInt(version ?? 0)),
       id: UInt64.from(BigInt(id ?? 0)),
       canChangeOwnerByProof: Bool(canChangeOwnerByProof ?? false),
       canTransfer: Bool(canTransfer ?? true),
@@ -374,14 +388,10 @@ class NFTData extends Struct({
    * @returns The packed Field representation of the NFTData.
    */
   pack(): NFTDataPacked {
-    const id = this.id.value.toBits(64);
-    const version = this.version.value.toBits(32);
     return new NFTDataPacked({
       ownerX: this.owner.x,
       approvedX: this.approved.x,
       data: Field.fromBits([
-        ...id,
-        ...version,
         this.canChangeOwnerByProof,
         this.canTransfer,
         this.canApprove,
@@ -394,7 +404,9 @@ class NFTData extends Struct({
         this.requireOwnerAuthorizationToUpgrade,
         this.owner.isOdd,
         this.approved.isOdd,
-      ]),
+      ])
+        .add(Field(this.id.value).mul(Field(2 ** 12)))
+        .add(Field(this.version.value).mul(Field(2 ** (12 + 64)))),
     });
   }
 
@@ -404,45 +416,70 @@ class NFTData extends Struct({
    * @returns A new NFTData instance.
    */
   static unpack(packed: NFTDataPacked): NFTData {
-    const bits = packed.data.toBits(64 + 32 + 12);
-    const id = UInt64.Unsafe.fromField(Field.fromBits(bits.slice(0, 64)));
-    const version = UInt32.Unsafe.fromField(
-      Field.fromBits(bits.slice(64, 64 + 32))
-    );
+    const unpacked = Provable.witness(NFTData, () => {
+      const bits = Gadgets.and(packed.data, Field(0xfffn), 12 + 64 + 64).toBits(
+        12
+      );
+      const idField = Gadgets.and(
+        packed.data,
+        Field(0xffffffffffffffff000n),
+        12 + 64 + 64
+      );
+      const idBits = idField.toBits(64 + 12);
+      // the next line relies on the constants 0xffffffffffffffff000n and 12 + 64 + 64 above
+      const id = UInt64.Unsafe.fromField(
+        Field.fromBits(idBits.slice(12, 64 + 12))
+      );
+      id.value.mul(Field(2 ** 12)).assertEquals(idField);
 
-    const canChangeOwnerByProof = bits[64 + 32 + 0];
-    const canTransfer = bits[64 + 32 + 1];
-    const canApprove = bits[64 + 32 + 2];
-    const canChangeMetadata = bits[64 + 32 + 3];
-    const canChangeStorage = bits[64 + 32 + 4];
-    const canChangeName = bits[64 + 32 + 5];
-    const canChangeMetadataVerificationKeyHash = bits[64 + 32 + 6];
-    const canPause = bits[64 + 32 + 7];
-    const isPaused = bits[64 + 32 + 8];
-    const requireOwnerAuthorizationToUpgrade = bits[64 + 32 + 9];
-    const ownerIsOdd = bits[64 + 32 + 10];
-    const approvedIsOdd = bits[64 + 32 + 11];
-    const owner = PublicKey.from({ x: packed.ownerX, isOdd: ownerIsOdd });
-    const approved = PublicKey.from({
-      x: packed.approvedX,
-      isOdd: approvedIsOdd,
+      const versionField = Gadgets.and(
+        packed.data,
+        Field(0xffffffffffffffff0000000000000000000n),
+        64 + 64 + 12
+      );
+      const versionBits = versionField.toBits(12 + 64 + 64);
+      // the next line relies on the constants 0xffffffffffffffff0000000000000000000n and 12 + 64 + 64 above
+      const version = UInt64.Unsafe.fromField(
+        Field.fromBits(versionBits.slice(12 + 64, 12 + 64 + 64))
+      );
+      version.value.mul(Field(2 ** (12 + 64))).assertEquals(versionField);
+
+      const canChangeOwnerByProof = bits[0];
+      const canTransfer = bits[1];
+      const canApprove = bits[2];
+      const canChangeMetadata = bits[3];
+      const canChangeStorage = bits[4];
+      const canChangeName = bits[5];
+      const canChangeMetadataVerificationKeyHash = bits[6];
+      const canPause = bits[7];
+      const isPaused = bits[8];
+      const requireOwnerAuthorizationToUpgrade = bits[9];
+      const ownerIsOdd = bits[10];
+      const approvedIsOdd = bits[11];
+      const owner = PublicKey.from({ x: packed.ownerX, isOdd: ownerIsOdd });
+      const approved = PublicKey.from({
+        x: packed.approvedX,
+        isOdd: approvedIsOdd,
+      });
+      return new NFTData({
+        owner,
+        approved,
+        id,
+        version,
+        canChangeOwnerByProof,
+        canTransfer,
+        canApprove,
+        canChangeMetadata,
+        canChangeStorage,
+        canChangeName,
+        canChangeMetadataVerificationKeyHash,
+        canPause,
+        isPaused,
+        requireOwnerAuthorizationToUpgrade,
+      });
     });
-    return new NFTData({
-      owner,
-      approved,
-      id,
-      version,
-      canChangeOwnerByProof,
-      canTransfer,
-      canApprove,
-      canChangeMetadata,
-      canChangeStorage,
-      canChangeName,
-      canChangeMetadataVerificationKeyHash,
-      canPause,
-      isPaused,
-      requireOwnerAuthorizationToUpgrade,
-    });
+    NFTDataPacked.assertEqual(unpacked.pack(), packed);
+    return unpacked;
   }
 }
 
@@ -462,6 +499,8 @@ class CollectionData extends Struct({
   mintingIsLimited: Bool,
   /** Indicates whether the collection is currently paused. */
   isPaused: Bool,
+  /** The public key part (isOdd) of the pending creator. The x field is written to the contract state as pendingCreatorX */
+  pendingCreatorIsOdd: Bool,
 }) {
   /**
    * Creates a new CollectionData instance with specified parameters.
@@ -488,6 +527,7 @@ class CollectionData extends Struct({
       requireTransferApproval: Bool(requireTransferApproval ?? false),
       mintingIsLimited: Bool(mintingIsLimited ?? false),
       isPaused: Bool(isPaused ?? false),
+      pendingCreatorIsOdd: Bool(PublicKey.empty().isOdd),
     });
   }
 
@@ -500,9 +540,10 @@ class CollectionData extends Struct({
       this.isPaused,
       this.requireTransferApproval,
       this.mintingIsLimited,
-      ...this.royaltyFee.value.toBits(32),
-      ...this.transferFee.value.toBits(64),
-    ]);
+      this.pendingCreatorIsOdd,
+    ])
+      .add(Field(this.royaltyFee.value).mul(Field(2 ** 4)))
+      .add(Field(this.transferFee.value).mul(Field(2 ** (4 + 32))));
   }
 
   /**
@@ -511,36 +552,55 @@ class CollectionData extends Struct({
    * @returns A new CollectionData instance.
    */
   static unpack(packed: Field) {
-    const bits = packed.toBits(3 + 32 + 64);
-    const royaltyFee = UInt32.Unsafe.fromField(
-      Field.fromBits(bits.slice(3, 3 + 32))
-    );
-    const transferFee = UInt64.Unsafe.fromField(
-      Field.fromBits(bits.slice(3 + 32, 3 + 32 + 64))
-    );
+    const unpacked = Provable.witness(CollectionData, () => {
+      const bits = Gadgets.and(packed, Field(0xfn), 4 + 32 + 64).toBits(4);
 
-    return new CollectionData({
-      isPaused: bits[0],
-      requireTransferApproval: bits[1],
-      mintingIsLimited: bits[2],
-      royaltyFee,
-      transferFee,
+      const royaltyFeeField = Gadgets.and(
+        packed,
+        Field(0xffffffff0n),
+        4 + 32 + 64
+      );
+
+      const royaltyFeeBits = royaltyFeeField.toBits(4 + 32);
+      // The next line relies on the constants 0xffffffff0n and 4 + 32 + 64 above
+      const royaltyFee = UInt32.Unsafe.fromField(
+        Field.fromBits(royaltyFeeBits.slice(4, 4 + 32))
+      );
+      royaltyFee.value.mul(Field(2 ** 4)).assertEquals(royaltyFeeField);
+
+      const transferFeeField = Gadgets.and(
+        packed,
+        Field(0xffffffffffffffff000000000n),
+        4 + 32 + 64
+      );
+      const transferFeeBits = transferFeeField.toBits(4 + 32 + 64);
+      // The next line relies on the constants 0xffffffffffffffff000000000n and 4 + 32 + 64 above
+      const transferFee = UInt64.Unsafe.fromField(
+        Field.fromBits(transferFeeBits.slice(4 + 32, 4 + 32 + 64))
+      );
+      transferFee.value
+        .mul(Field(2 ** (4 + 32)))
+        .assertEquals(transferFeeField);
+
+      return new CollectionData({
+        isPaused: bits[0],
+        requireTransferApproval: bits[1],
+        mintingIsLimited: bits[2],
+        pendingCreatorIsOdd: bits[3],
+        royaltyFee,
+        transferFee,
+      });
     });
+    unpacked.pack().assertEquals(packed);
+    return unpacked;
   }
 
   static isPaused(packed: Field) {
-    return packed.toBits(3 + 32 + 64)[0];
+    return packed.toBits(4 + 32 + 64)[0];
   }
 
   static requireTransferApproval(packed: Field) {
-    return packed.toBits(3 + 32 + 64)[1];
-  }
-
-  static mintingIsLimited(packed: Field) {
-    const bits = packed.toBits(3 + 32 + 64);
-    const isPaused = bits[0];
-    const mintingIsLimited = bits[2];
-    return isPaused.or(mintingIsLimited);
+    return packed.toBits(4 + 32 + 64)[1];
   }
 }
 
@@ -586,9 +646,23 @@ class MintRequest extends Struct({
 }) {}
 
 /**
- * Represents the parameters required for transferring an NFT.
+ * Represents the parameters required for transferring an NFT using a signature.
  */
-class TransferParams extends Struct({
+class TransferBySignatureParams extends Struct({
+  /** The address of the NFT contract. */
+  address: PublicKey,
+  /** The receiver's public key. */
+  to: PublicKey,
+  /** Optional price for the transfer. */
+  price: UInt64Option,
+  /** Custom value that can be interpreted by the owner or approved contract. */
+  context: NFTTransactionContext,
+}) {}
+
+/**
+ * Represents the parameters required for transferring an NFT using a proof.
+ */
+class TransferByProofParams extends Struct({
   /** The address of the NFT contract. */
   address: PublicKey,
   /** The sender's public key. */

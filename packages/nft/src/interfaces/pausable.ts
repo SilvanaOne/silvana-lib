@@ -1,4 +1,4 @@
-import { SmartContract, Field, Struct, Bool } from "o1js";
+import { SmartContract, Struct, Bool } from "o1js";
 export { PausableContract, PauseEvent };
 
 /**

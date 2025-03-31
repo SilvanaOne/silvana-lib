@@ -2376,7 +2376,6 @@ components:
     NftTransferParams:
       type: object
       required:
-        - from
         - to
       properties:
         from:

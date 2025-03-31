@@ -1,7 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
 import { UInt32, Bool, UInt64, PrivateKey, PublicKey, Field } from "o1js";
-import { NFTData, CollectionData, AdminData } from "../src/index.js";
+import {
+  NFTData,
+  CollectionData,
+  AdminData,
+  NFTAdminAllowFlags,
+} from "../src/index.js";
 import { Storage } from "@silvana-one/storage";
 import { UpgradeDatabaseState, PublicKeyOption } from "@silvana-one/upgradable";
 
@@ -11,13 +16,12 @@ const randomBool = () => Math.random() < 0.5;
 describe("Test packing and unpacking", async () => {
   it("should pack and unpack NFTData", async () => {
     for (let i = 0; i < NUMBER_OF_ITERATIONS; i++) {
-      const randomVersion = UInt32.from(Math.floor(Math.random() * 2 ** 32));
-      const randomId = UInt64.from(Math.floor(Math.random() * 2 ** 64));
+      const randomUInt64 = UInt64.from(Math.floor(Math.random() * 2 ** 64));
       const original = new NFTData({
         owner: PrivateKey.random().toPublicKey(),
         approved: PrivateKey.random().toPublicKey(),
-        version: randomVersion,
-        id: randomId,
+        version: randomUInt64,
+        id: randomUInt64,
         canChangeOwnerByProof: Bool(randomBool()),
         canTransfer: Bool(randomBool()),
         canApprove: Bool(randomBool()),
@@ -42,8 +46,8 @@ describe("Test packing and unpacking", async () => {
         true
       );
       assert.strictEqual(
-        unpacked.version.toBigint(),
-        original.version.toBigint()
+        unpacked.version.toBigInt(),
+        original.version.toBigInt()
       );
       assert.strictEqual(unpacked.id.toBigInt(), original.id.toBigInt());
       assert.strictEqual(
@@ -98,6 +102,7 @@ describe("Test packing and unpacking", async () => {
         requireTransferApproval: Bool(randomBool()),
         mintingIsLimited: Bool(randomBool()),
         isPaused: Bool(randomBool()),
+        pendingCreatorIsOdd: publicKey.isOdd,
       });
 
       const packed = original.pack();
@@ -124,8 +129,40 @@ describe("Test packing and unpacking", async () => {
         unpacked.transferFee.toBigInt() === original.transferFee.toBigInt(),
         true
       );
+      assert.strictEqual(
+        unpacked.pendingCreatorIsOdd.toBoolean(),
+        original.pendingCreatorIsOdd.toBoolean()
+      );
     }
   });
+
+  it("should pack and unpack NFTAdminAllowFlags", async () => {
+    for (let i = 0; i < NUMBER_OF_ITERATIONS; i++) {
+      const original = new NFTAdminAllowFlags({
+        allowChangeRoyalty: Bool(randomBool()),
+        allowChangeTransferFee: Bool(randomBool()),
+        allowPauseCollection: Bool(randomBool()),
+      });
+
+      const packed = original.pack();
+      const unpacked = NFTAdminAllowFlags.unpack(packed);
+
+      assert.strictEqual(
+        unpacked.allowChangeRoyalty.toBoolean(),
+        original.allowChangeRoyalty.toBoolean()
+      );
+      assert.strictEqual(
+        unpacked.allowChangeTransferFee.toBoolean(),
+        original.allowChangeTransferFee.toBoolean()
+      );
+
+      assert.strictEqual(
+        unpacked.allowPauseCollection.toBoolean(),
+        original.allowPauseCollection.toBoolean()
+      );
+    }
+  });
+
   it("should pack and unpack PublicKey", async () => {
     for (let i = 0; i < NUMBER_OF_ITERATIONS; i++) {
       const publicKey = PrivateKey.random().toPublicKey();

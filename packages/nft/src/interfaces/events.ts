@@ -1,9 +1,10 @@
-import { PublicKey, Struct, UInt32, Field, Bool } from "o1js";
+import { PublicKey, Struct, UInt32, Field, Bool, UInt64 } from "o1js";
 import { Storage } from "@silvana-one/storage";
 import { NFTStateStruct, UInt64Option } from "./types.js";
 
 export {
   MintEvent,
+  NFTUpdateEvent,
   UpdateEvent,
   TransferEvent,
   UpgradeVerificationKeyEvent,
@@ -11,6 +12,11 @@ export {
   LimitMintingEvent,
   PauseNFTEvent,
   ApproveEvent,
+  SetNameEvent,
+  SetBaseURLEvent,
+  SetRoyaltyFeeEvent,
+  SetTransferFeeEvent,
+  SetAdminEvent,
 };
 
 /**
@@ -21,6 +27,14 @@ class MintEvent extends Struct({
   initialState: NFTStateStruct,
   /** The public key address of the minted NFT. */
   address: PublicKey,
+  /** The token ID of the minted NFT. */
+  tokenId: Field,
+  /** The fee paid for the minting.
+   *  This fee is controlled by the admin contract
+   *  and is not checked by the Collection contract
+   *  Please check the admin contract code before using this fee
+   */
+  fee: UInt64,
 }) {}
 
 /**
@@ -38,7 +52,7 @@ class UpdateEvent extends Struct({
   /** The approved address of the NFT after the update. */
   approved: PublicKey,
   /** The version number of the NFT state. */
-  version: UInt32,
+  version: UInt64,
   /** Indicates whether the NFT is paused after the update. */
   isPaused: Bool,
   /** The hash of the verification key used for metadata proofs. */
@@ -95,7 +109,7 @@ class UpgradeVerificationKeyEvent extends Struct({
   verificationKeyHash: Field,
   /** The public key address of the NFT whose verification key is upgraded. */
   address: PublicKey,
-  /** The version number of the NFT state after the upgrade. */
+  /** The tokenId of the upgraded contract */
   tokenId: Field,
 }) {}
 
@@ -112,4 +126,34 @@ class UpgradeVerificationKeyData extends Struct({
 class LimitMintingEvent extends Struct({
   /** Indicates whether minting is limited (`true`) or not (`false`). */
   mintingLimited: Bool,
+}) {}
+
+class NFTUpdateEvent extends Struct({
+  /** The public key address of the NFT. */
+  address: PublicKey,
+}) {}
+
+class SetNameEvent extends Struct({
+  /** The updated name of the Collection. */
+  name: Field,
+}) {}
+
+class SetBaseURLEvent extends Struct({
+  /** The updated base URL of the Collection. */
+  baseURL: Field,
+}) {}
+
+class SetRoyaltyFeeEvent extends Struct({
+  /** The updated royalty fee of the Collection. */
+  royaltyFee: UInt32,
+}) {}
+
+class SetTransferFeeEvent extends Struct({
+  /** The updated transfer fee of the Collection. */
+  transferFee: UInt64,
+}) {}
+
+class SetAdminEvent extends Struct({
+  /** The updated admin contract of the Collection. */
+  admin: PublicKey,
 }) {}
