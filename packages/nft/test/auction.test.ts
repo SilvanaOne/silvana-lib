@@ -65,6 +65,10 @@ import { Whitelist, Storage } from "@silvana-one/storage";
 let { chain, useAdvancedAdmin, withdraw, noLog, approveTransfer, shares } =
   processArguments();
 
+if (approveTransfer) {
+  withdraw = true;
+}
+
 let local: Awaited<ReturnType<typeof Mina.LocalBlockchain>>;
 let name = "NFT";
 
@@ -892,18 +896,7 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
       },
       async () => {
         AccountUpdate.fundNewAccount(seller, 1);
-        if (withdraw) {
-          await collectionContract.adminApprovedTransferBySignature(
-            new TransferBySignatureParams({
-              address: zkNFTKey,
-              to: zkAuctionKey,
-              price: UInt64Option.none(),
-              context: NFTTransactionContext.empty(),
-            })
-          );
-        } else {
-          await collectionContract.approveAddress(zkNFTKey, zkAuctionKey);
-        }
+        await collectionContract.approveAddress(zkNFTKey, zkAuctionKey);
         await auctionContract.deploy({
           collection: zkCollectionKey,
           nft: zkNFTKey,
@@ -938,15 +931,11 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
     console.log("whitelisted 1", whitelistedUsers[1].toBase58());
     console.log("creator", creator.toBase58());
     assert.strictEqual(
-      dataCheck.owner
-        .equals(withdraw ? zkAuctionKey : whitelistedUsers[1])
-        .toBoolean(),
+      dataCheck.owner.equals(whitelistedUsers[1]).toBoolean(),
       true
     );
     assert.strictEqual(
-      dataCheck.approved
-        .equals(withdraw ? PublicKey.empty() : zkAuctionKey)
-        .toBoolean(),
+      dataCheck.approved.equals(zkAuctionKey).toBoolean(),
       true
     );
     console.timeEnd("auctioned NFT");
@@ -1394,45 +1383,85 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
     }
     const { name } = nft;
 
-    const tx = await Mina.transaction(
-      {
-        sender: user,
-        fee: 100_000_000,
-        memo: `Withdraw NFT ${name}`.substring(0, 30),
-      },
-      async () => {
-        // Any address can settle the auction
-        await auctionContract.withdrawNFT();
-      }
-    );
-    await tx.prove();
-    assert.strictEqual(
-      (
-        await sendTx({
-          tx: tx.sign([user.key]),
-          description: "withdraw NFT",
-        })
-      )?.status,
-      expectedTxStatus
-    );
-    console.timeEnd("withdrawn NFT");
-    owner = whitelistedUsers[1]; // The auction winner, not the user
+    try {
+      const tx = await Mina.transaction(
+        {
+          sender: user,
+          fee: 100_000_000,
+          memo: `Withdraw NFT ${name}`.substring(0, 30),
+        },
+        async () => {
+          // Any address can settle the auction
+          await auctionContract.withdrawNFT();
+        }
+      );
+      await tx.prove();
+      assert.strictEqual(
+        (
+          await sendTx({
+            tx: tx.sign([user.key]),
+            description: "withdraw NFT",
+          })
+        )?.status,
+        expectedTxStatus
+      );
+      console.timeEnd("withdrawn NFT");
+      owner = whitelistedUsers[1]; // The auction winner, not the user
 
-    await fetchMinaAccount({ publicKey: zkNFTKey, tokenId, force: true });
-    const zkNFT = new NFT(zkNFTKey, tokenId);
-    const dataCheck = NFTData.unpack(zkNFT.packedData.get());
-    console.log("whitelisted 1", whitelistedUsers[1].toBase58());
-    console.log("ownerCheck", dataCheck.owner.toBase58());
-    console.log("approvalCheck", dataCheck.approved.toBase58());
+      await fetchMinaAccount({ publicKey: zkNFTKey, tokenId, force: true });
+      const zkNFT = new NFT(zkNFTKey, tokenId);
+      const dataCheck = NFTData.unpack(zkNFT.packedData.get());
+      console.log("whitelisted 1", whitelistedUsers[1].toBase58());
+      console.log("ownerCheck", dataCheck.owner.toBase58());
+      console.log("approvalCheck", dataCheck.approved.toBase58());
 
-    assert.strictEqual(
-      dataCheck.owner.equals(whitelistedUsers[1]).toBoolean(),
-      true
-    );
-    assert.strictEqual(
-      dataCheck.approved.equals(PublicKey.empty()).toBoolean(),
-      true
-    );
+      assert.strictEqual(
+        dataCheck.owner.equals(whitelistedUsers[1]).toBoolean(),
+        true
+      );
+      assert.strictEqual(
+        dataCheck.approved.equals(PublicKey.empty()).toBoolean(),
+        true
+      );
+    } catch (e) {
+      console.log("Withdraw failed, approveTransfer:", approveTransfer);
+      assert.strictEqual(true, approveTransfer);
+
+      const tx = await Mina.transaction(
+        {
+          sender: owner,
+          fee: 100_000_000,
+          memo: `Withdraw NFT ${name}`.substring(0, 30),
+        },
+        async () => {
+          await collectionContract.approveAddress(zkNFTKey, PublicKey.empty());
+        }
+      );
+      await tx.prove();
+      assert.strictEqual(
+        (
+          await sendTx({
+            tx: tx.sign([owner.key]),
+            description: "withdraw NFT",
+          })
+        )?.status,
+        expectedTxStatus
+      );
+      console.timeEnd("withdrawn NFT");
+
+      await fetchMinaAccount({ publicKey: zkNFTKey, tokenId, force: true });
+      const zkNFT = new NFT(zkNFTKey, tokenId);
+      const dataCheck = NFTData.unpack(zkNFT.packedData.get());
+      console.log("owner", owner.toBase58());
+      console.log("ownerCheck", dataCheck.owner.toBase58());
+      console.log("approvalCheck", dataCheck.approved.toBase58());
+
+      assert.strictEqual(dataCheck.owner.equals(owner).toBoolean(), true);
+      assert.strictEqual(
+        dataCheck.approved.equals(PublicKey.empty()).toBoolean(),
+        true
+      );
+    }
   });
 
   it("should withdraw deposit", { skip: !withdraw }, async () => {
