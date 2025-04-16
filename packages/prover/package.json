@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/prover",
   "description": "Silvana Prover",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
