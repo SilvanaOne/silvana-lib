@@ -294,7 +294,7 @@ export abstract class Cloud {
    * @param params.metadata the metadata
    */
   abstract publishTransactionMetadata(params: {
-    txId: string;
+    txId?: string;
     metadata: TransactionMetadata;
   }): Promise<void>;
 
