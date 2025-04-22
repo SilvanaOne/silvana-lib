@@ -684,33 +684,17 @@ export type NftMetadata = {
      * Optional banner image URL or IPFS hash. Required for Collection Master NFT.
      */
     banner?: string;
-    traits?: Array<{
-        /**
-         * The trait key/name
-         */
-        key: string;
-        /**
-         * The type of the trait value
-         */
-        type: 'string' | 'text' | 'image' | 'url' | 'field' | 'number' | 'address' | 'map' | 'tree';
-        /**
-         * The trait value, can be a string or complex object depending on type
-         */
-        value: string | {
-            [key: string]: unknown;
-        };
-        /**
-         * Optional flag indicating if this trait is private
-         */
-        isPrivate?: boolean;
-    }>;
+    /**
+     * Array of traits associated with the NFT
+     */
+    traits?: Array<Trait>;
 };
 
 export type NftData = {
     /**
      * The public key of the owner of the NFT
      */
-    owner: string;
+    owner?: string;
     /**
      * The public key of the approved address of the NFT
      */
@@ -763,6 +747,82 @@ export type NftData = {
      * Determines whether the owner's authorization is required to upgrade the NFT's verification key (readonly)
      */
     requireOwnerAuthorizationToUpgrade?: boolean;
+};
+
+export type Chain = {
+    /**
+     * The chain name
+     */
+    chain: 'mina' | 'zeko';
+    /**
+     * The network name
+     */
+    network: 'devnet' | 'mainnet';
+};
+
+export type Trait = {
+    /**
+     * The trait key/name
+     */
+    key: string;
+    /**
+     * The type of the trait value
+     */
+    type: 'string' | 'text' | 'image' | 'url' | 'field' | 'number' | 'address' | 'map' | 'tree';
+    /**
+     * The trait value, can be a string or complex object depending on type
+     */
+    value: string | {
+        [key: string]: unknown;
+    };
+    /**
+     * Optional flag indicating if this trait is private
+     */
+    isPrivate?: boolean;
+};
+
+export type CmsnftData = {
+    chain: Chain;
+    /**
+     * The address of the NFT collection
+     */
+    collectionAddress: string;
+    /**
+     * The symbol of the NFT
+     */
+    symbol?: string;
+    /**
+     * The name of the NFT
+     */
+    name: string;
+    /**
+     * Optional description of the NFT
+     */
+    description?: string;
+    /**
+     * URL to the NFT image
+     */
+    imageURL: string;
+    /**
+     * Array of traits associated with the NFT
+     */
+    traits?: Array<Trait>;
+    /**
+     * Data associated with the NFT
+     */
+    nftData?: NftData;
+    /**
+     * The price of the NFT
+     */
+    price?: number;
+    /**
+     * The start time of the minting period( unix timestamp in ms)
+     */
+    mintStart?: number;
+    /**
+     * The end time of the minting period( unix timestamp in ms)
+     */
+    mintEnd?: number;
 };
 
 export type NftTransferParams = {
@@ -2528,6 +2588,211 @@ export type TransferNftResponses = {
 };
 
 export type TransferNftResponse = TransferNftResponses[keyof TransferNftResponses];
+
+export type CmsStoreNftData = {
+    body: {
+        chain: Chain;
+        /**
+         * The expiry time of the request( unix timestamp in ms)
+         */
+        signatureExpiry: number;
+        /**
+         * The signature of the Collection creator
+         */
+        signature: string;
+        nft: CmsnftData;
+    };
+    path?: never;
+    query?: never;
+    url: '/nft/cms/store';
+};
+
+export type CmsStoreNftErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type CmsStoreNftError = CmsStoreNftErrors[keyof CmsStoreNftErrors];
+
+export type CmsStoreNftResponses = {
+    /**
+     * Successfully built transfer transaction.
+     */
+    200: {
+        /**
+         * Indicates whether the NFT was successfully stored in CMS
+         */
+        success?: boolean;
+    };
+};
+
+export type CmsStoreNftResponse = CmsStoreNftResponses[keyof CmsStoreNftResponses];
+
+export type CmsReadNftData = {
+    body: {
+        chain: Chain;
+        /**
+         * The address of the NFT collection
+         */
+        collectionAddress: string;
+        /**
+         * The name of the NFT. If not provided, all NFTs will be returned that can be minted now.
+         */
+        nftName?: string;
+        /**
+         * The expiry time of the request (unix timestamp in ms)
+         */
+        signatureExpiry?: number;
+        /**
+         * The signature of the Collection creator. Required to get NFTs that cannot be minted now.
+         */
+        signature?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/nft/cms/read';
+};
+
+export type CmsReadNftErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type CmsReadNftError = CmsReadNftErrors[keyof CmsReadNftErrors];
+
+export type CmsReadNftResponses = {
+    /**
+     * Successfully retrieved NFTs from CMS.
+     */
+    200: {
+        /**
+         * The NFTs data retrieved from CMS
+         */
+        nfts?: Array<CmsnftData>;
+    };
+};
+
+export type CmsReadNftResponse = CmsReadNftResponses[keyof CmsReadNftResponses];
+
+export type CmsReserveNftData = {
+    body: {
+        chain: Chain;
+        /**
+         * The address of the NFT collection
+         */
+        collectionAddress: string;
+        /**
+         * The name of the NFT
+         */
+        nftName: string;
+        /**
+         * Indicates whether the NFT should be reserved in CMS or the reserve should be removed. Default is true.
+         */
+        reserve?: boolean;
+        /**
+         * The expiry time of the request( unix timestamp in ms). Required if reserve is false.
+         */
+        signatureExpiry?: number;
+        /**
+         * The signature of the Collection creator. Required if reserve is false.
+         */
+        signature?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/nft/cms/reserve';
+};
+
+export type CmsReserveNftErrors = {
+    /**
+     * Bad request - invalid input parameters.
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - user not authenticated.
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - user doesn't have permission.
+     */
+    403: ErrorResponse;
+    /**
+     * Too many requests.
+     */
+    429: ErrorResponse;
+    /**
+     * Internal server error - something went wrong during the request.
+     */
+    500: ErrorResponse;
+    /**
+     * Service unavailable - blockchain or other external service is down.
+     */
+    503: ErrorResponse;
+};
+
+export type CmsReserveNftError = CmsReserveNftErrors[keyof CmsReserveNftErrors];
+
+export type CmsReserveNftResponses = {
+    /**
+     * Successfully built transfer transaction.
+     */
+    200: {
+        /**
+         * Indicates whether the NFT was successfully reserved in CMS
+         */
+        reserved?: boolean;
+        /**
+         * The NFT data retrieved from CMS
+         */
+        nft?: CmsnftData;
+    };
+};
+
+export type CmsReserveNftResponse = CmsReserveNftResponses[keyof CmsReserveNftResponses];
 
 export type ApproveNftData = {
     body: NftApproveTransactionParams;

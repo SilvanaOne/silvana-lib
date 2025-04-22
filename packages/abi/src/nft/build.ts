@@ -919,61 +919,13 @@ export async function buildNftMintTransaction(params: {
   if (typeof txType !== "string") throw new Error("Tx type must be a string");
   const sender = PublicKey.fromBase58(args.sender);
   const collectionAddress = PublicKey.fromBase58(args.collectionAddress);
-  if (args.nftMintParams.address === undefined) {
+  if (args?.nftMintParams?.address === undefined) {
     throw new Error("NFT address is required");
   }
+  if (args?.nftMintParams?.data?.owner === undefined) {
+    throw new Error("NFT owner is required");
+  }
   const nftAddress = PublicKey.fromBase58(args.nftMintParams.address);
-
-  // const offerAddress =
-  //   "offerAddress" in args && args.offerAddress
-  //     ? PublicKey.fromBase58(args.offerAddress)
-  //     : undefined;
-  // if (
-  //   !offerAddress &&
-  //   (txType === "token:offer:create" ||
-  //     txType === "token:offer:buy" ||
-  //     txType === "token:offer:withdraw")
-  // )
-  //   throw new Error("Offer address is required");
-
-  // const bidAddress =
-  //   "bidAddress" in args && args.bidAddress
-  //     ? PublicKey.fromBase58(args.bidAddress)
-  //     : undefined;
-  // if (
-  //   !bidAddress &&
-  //   (txType === "token:bid:create" ||
-  //     txType === "token:bid:sell" ||
-  //     txType === "token:bid:withdraw")
-  // )
-  //   throw new Error("Bid address is required");
-
-  // const to =
-  //   "to" in args && args.to ? PublicKey.fromBase58(args.to) : undefined;
-  // if (
-  //   !to &&
-  //   (txType === "token:transfer" ||
-  //     txType === "token:airdrop" ||
-  //     txType === "token:mint")
-  // )
-  //   throw new Error("To address is required");
-
-  // const from =
-  //   "from" in args && args.from ? PublicKey.fromBase58(args.from) : undefined;
-  // if (!from && txType === "token:burn")
-  //   throw new Error("From address is required for token:burn");
-
-  // const amount =
-  //   "amount" in args ? UInt64.from(Math.round(args.amount)) : undefined;
-  // const price =
-  //   "price" in args && args.price
-  //     ? UInt64.from(Math.round(args.price))
-  //     : undefined;
-  // const slippage = UInt32.from(
-  //   Math.round(
-  //     "slippage" in args && args.slippage !== undefined ? args.slippage : 50
-  //   )
-  // );
 
   await fetchMinaAccount({
     publicKey: sender,
@@ -1012,40 +964,13 @@ export async function buildNftMintTransaction(params: {
     ? PublicKey.fromBase58(params.developerAddress)
     : undefined;
 
-  //const adminContract = new FungibleTokenAdmin(adminContractAddress);
   const advancedAdminContract = new NFTAdvancedAdmin(adminContractAddress);
   const adminContract = new NFTAdmin(adminContractAddress);
   const collectionContract =
     adminType === "advanced" ? AdvancedCollection : Collection;
 
-  // if (
-  //   (txType === "token:admin:whitelist" ||
-  //     txType === "token:bid:whitelist" ||
-  //     txType === "token:offer:whitelist") &&
-  //   !args.whitelist
-  // ) {
-  //   throw new Error("Whitelist is required");
-  // }
-
-  // const whitelist =
-  //   "whitelist" in args && args.whitelist
-  //     ? typeof args.whitelist === "string"
-  //       ? Whitelist.fromString(args.whitelist)
-  //       : (await Whitelist.create({ list: args.whitelist, name: symbol }))
-  //           .whitelist
-  //     : Whitelist.empty();
-
   const zkCollection = new collectionContract(collectionAddress);
   const tokenId = zkCollection.deriveTokenId();
-
-  // if (
-  //   txType === "nft:mint" &&
-  //   adminType === "standard" &&
-  //   adminAddress.toBase58() !== sender.toBase58()
-  // )
-  //   throw new Error(
-  //     "Invalid sender for FungibleToken mint with standard admin"
-  //   );
 
   await fetchMinaAccount({
     publicKey: nftAddress,
@@ -1055,59 +980,6 @@ export async function buildNftMintTransaction(params: {
     ).includes(txType),
   });
 
-  // if (to) {
-  //   await fetchMinaAccount({
-  //     publicKey: to,
-  //     tokenId,
-  //     force: false,
-  //   });
-  // }
-
-  // if (from) {
-  //   await fetchMinaAccount({
-  //     publicKey: from,
-  //     tokenId,
-  //     force: false,
-  //   });
-  // }
-
-  // if (offerAddress)
-  //   await fetchMinaAccount({
-  //     publicKey: offerAddress,
-  //     tokenId,
-  //     force: (
-  //       [
-  //         "token:offer:whitelist",
-  //         "token:offer:buy",
-  //         "token:offer:withdraw",
-  //       ] satisfies TokenTransactionType[] as TokenTransactionType[]
-  //     ).includes(txType),
-  //   });
-  // if (bidAddress)
-  //   await fetchMinaAccount({
-  //     publicKey: bidAddress,
-  //     force: (
-  //       [
-  //         "token:bid:whitelist",
-  //         "token:bid:sell",
-  //         "token:bid:withdraw",
-  //       ] satisfies TokenTransactionType[] as TokenTransactionType[]
-  //     ).includes(txType),
-  //   });
-
-  // const offerContract = offerAddress
-  //   ? new FungibleTokenOfferContract(offerAddress, tokenId)
-  //   : undefined;
-
-  // const bidContract = bidAddress
-  //   ? new FungibleTokenBidContract(bidAddress)
-  //   : undefined;
-  // const offerContractDeployment = offerAddress
-  //   ? new FungibleTokenOfferContract(offerAddress, tokenId)
-  //   : undefined;
-  // const bidContractDeployment = bidAddress
-  //   ? new FungibleTokenBidContract(bidAddress)
-  //   : undefined;
   const vk =
     tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
   if (
@@ -1129,133 +1001,6 @@ export async function buildNftMintTransaction(params: {
     !vk.NFTAdvancedAdmin.data
   )
     throw new Error("Cannot get verification key from vk");
-
-  // const offerVerificationKey = FungibleTokenOfferContract._verificationKey ?? {
-  //   hash: Field(vk.FungibleTokenOfferContract.hash),
-  //   data: vk.FungibleTokenOfferContract.data,
-  // };
-  // const bidVerificationKey = FungibleTokenBidContract._verificationKey ?? {
-  //   hash: Field(vk.FungibleTokenBidContract.hash),
-  //   data: vk.FungibleTokenBidContract.data,
-  // };
-
-  // const isNewBidOfferAccount =
-  //   txType === "token:offer:create" && offerAddress
-  //     ? !Mina.hasAccount(offerAddress, tokenId)
-  //     : txType === "token:bid:create" && bidAddress
-  //     ? !Mina.hasAccount(bidAddress)
-  //     : false;
-
-  // const isNewBuyAccount =
-  //   txType === "token:offer:buy" ? !Mina.hasAccount(sender, tokenId) : false;
-  // let isNewSellAccount: boolean = false;
-  // if (txType === "token:bid:sell") {
-  //   if (!bidAddress || !bidContract) throw new Error("Bid address is required");
-  //   await fetchMinaAccount({
-  //     publicKey: bidAddress,
-  //     force: true,
-  //   });
-  //   const buyer = bidContract.buyer.get();
-  //   await fetchMinaAccount({
-  //     publicKey: buyer,
-  //     tokenId,
-  //     force: false,
-  //   });
-  //   isNewSellAccount = !Mina.hasAccount(buyer, tokenId);
-  // }
-
-  // if (txType === "token:burn") {
-  //   await fetchMinaAccount({
-  //     publicKey: sender,
-  //     force: true,
-  //   });
-  //   await fetchMinaAccount({
-  //     publicKey: sender,
-  //     tokenId,
-  //     force: false,
-  //   });
-  //   if (!Mina.hasAccount(sender, tokenId))
-  //     throw new Error("Sender does not have tokens to burn");
-  // }
-
-  // const isNewTransferMintAccount =
-  //   (txType === "token:transfer" ||
-  //     txType === "token:airdrop" ||
-  //     txType === "token:mint") &&
-  //   to
-  //     ? !Mina.hasAccount(to, tokenId)
-  //     : false;
-
-  // const accountCreationFee =
-  //   (isNewBidOfferAccount ? 1_000_000_000 : 0) +
-  //   (isNewBuyAccount ? 1_000_000_000 : 0) +
-  //   (isNewSellAccount ? 1_000_000_000 : 0) +
-  //   (isNewTransferMintAccount ? 1_000_000_000 : 0) +
-  //   (isToNewAccount &&
-  //   txType === "token:mint" &&
-  //   adminType === "advanced" &&
-  //   advancedAdminContract.whitelist.get().isSome().toBoolean()
-  //     ? 1_000_000_000
-  //     : 0);
-  // console.log("accountCreationFee", accountCreationFee / 1_000_000_000);
-
-  // switch (txType) {
-  //   case "token:offer:buy":
-  //   case "token:offer:withdraw":
-  //   case "token:offer:whitelist":
-  //     if (offerContract === undefined)
-  //       throw new Error("Offer contract is required");
-  //     if (
-  //       Mina.getAccount(
-  //         offerContract.address,
-  //         tokenId
-  //       ).zkapp?.verificationKey?.hash.toJSON() !==
-  //       vk.FungibleTokenOfferContract.hash
-  //     )
-  //       throw new Error(
-  //         "Invalid offer verification key, offer contract has to be upgraded"
-  //       );
-  //     break;
-  // }
-  // switch (txType) {
-  //   case "token:bid:sell":
-  //   case "token:bid:withdraw":
-  //   case "token:bid:whitelist":
-  //     if (bidContract === undefined)
-  //       throw new Error("Bid contract is required");
-  //     if (
-  //       Mina.getAccount(
-  //         bidContract.address
-  //       ).zkapp?.verificationKey?.hash.toJSON() !==
-  //       vk.FungibleTokenBidContract.hash
-  //     )
-  //       throw new Error(
-  //         "Invalid bid verification key, bid contract has to be upgraded"
-  //       );
-  //     break;
-  // }
-
-  // switch (txType) {
-  //   case "token:mint":
-  //   case "token:burn":
-  //   case "token:redeem":
-  //   case "token:transfer":
-  //   case "token:airdrop":
-  //   case "token:offer:create":
-  //   case "token:bid:create":
-  //   case "token:offer:buy":
-  //   case "token:offer:withdraw":
-  //   case "token:bid:sell":
-  //     if (
-  //       Mina.getAccount(
-  //         zkToken.address
-  //       ).zkapp?.verificationKey?.hash.toJSON() !== vk.FungibleToken.hash
-  //     )
-  //       throw new Error(
-  //         "Invalid token verification key, token contract has to be upgraded"
-  //       );
-  //     break;
-  // }
 
   const { name, ipfsHash, metadataRoot, privateMetadata, serializedMap } =
     typeof args.nftMintParams.metadata === "string"
@@ -1284,7 +1029,11 @@ export async function buildNftMintTransaction(params: {
     UInt32.from(chain === "mainnet" || chain === "devnet" ? 20 : 100000)
   );
 
-  const nftData = NFTData.new(args.nftMintParams.data);
+  const nftDataArgs = args.nftMintParams.data;
+  if (nftDataArgs.owner === undefined) {
+    throw new Error("NFT owner is required");
+  }
+  const nftData = NFTData.new({ ...nftDataArgs, owner: nftDataArgs.owner });
 
   if (!args.nftMintParams.address) throw new Error("NFT address is required");
 
