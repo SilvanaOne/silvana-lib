@@ -752,6 +752,181 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /nft/cms/store:
+    post:
+      tags:
+        - NFT
+      summary: Store on-demand NFT in CMS
+      description: |
+        The `store` endpoint allows collection creators to store on-demand NFT in CMS.
+      operationId: cmsStoreNFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chain
+                - nft
+                - signatureExpiry
+                - signature
+              properties:
+                chain:
+                  $ref: "#/components/schemas/Chain"
+                signatureExpiry:
+                  type: number
+                  format: int64
+                  description: The expiry time of the request( unix timestamp in ms)
+                signature:
+                  type: string
+                  description: The signature of the Collection creator
+                nft:
+                  $ref: "#/components/schemas/CMSNFTData"
+      responses:
+        "200":
+          description: Successfully built transfer transaction.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the NFT was successfully stored in CMS
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /nft/cms/read:
+    post:
+      tags:
+        - NFT
+      summary: Read on-demand NFT from CMS
+      description: |
+        The `read` endpoint allows collection creators to read on-demand NFT from CMS.
+      operationId: cmsReadNFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chain
+                - collectionAddress
+              properties:
+                chain:
+                  $ref: "#/components/schemas/Chain"
+                collectionAddress:
+                  type: string
+                  description: The address of the NFT collection
+                nftName:
+                  type: string
+                  description: The name of the NFT. If not provided, all NFTs will be returned that can be minted now.
+                signatureExpiry:
+                  type: number
+                  format: int64
+                  description: The expiry time of the request (unix timestamp in ms)
+                signature:
+                  type: string
+                  description: The signature of the Collection creator. Required to get NFTs that cannot be minted now.
+      responses:
+        "200":
+          description: Successfully retrieved NFTs from CMS.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nfts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CMSNFTData'
+                    description: The NFTs data retrieved from CMS
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /nft/cms/reserve:
+    post:
+      tags:
+        - NFT
+      summary: Reserve or remove reserve of on-demand NFT in CMS
+      description: |
+        The `reserve` endpoint allows collection admins to reserve or remove reserve of on-demand NFT in CMS.
+      operationId: cmsReserveNFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chain
+                - collectionAddress
+                - nftName
+              properties:
+                chain:
+                  $ref: "#/components/schemas/Chain"
+                collectionAddress:
+                  type: string
+                  description: The address of the NFT collection
+                nftName:
+                  type: string
+                  description: The name of the NFT
+                reserve:
+                  type: boolean
+                  description: Indicates whether the NFT should be reserved in CMS or the reserve should be removed. Default is true.
+                signatureExpiry:
+                  type: number
+                  format: int64
+                  description: The expiry time of the request( unix timestamp in ms). Required if reserve is false.
+                signature:
+                  type: string
+                  description: The signature of the Collection creator. Required if reserve is false.
+      responses:
+        "200":
+          description: Successfully built transfer transaction.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reserved:
+                    type: boolean
+                    description: Indicates whether the NFT was successfully reserved in CMS
+                  nft:
+                    $ref: '#/components/schemas/CMSNFTData'
+                    description: The NFT data retrieved from CMS
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /nft/approve:
     post:
       tags:
@@ -2295,40 +2470,10 @@ components:
         traits:
           type: array
           items:
-            type: object
-            required:
-              - key
-              - type
-              - value
-            properties:
-              key:
-                type: string
-                description: The trait key/name
-              type:
-                type: string
-                enum:
-                  - string
-                  - text
-                  - image
-                  - url
-                  - field
-                  - number
-                  - address
-                  - map
-                  - tree
-                description: The type of the trait value
-              value:
-                oneOf:
-                  - type: string
-                  - type: object
-                description: The trait value, can be a string or complex object depending on type
-              isPrivate:
-                type: boolean
-                description: Optional flag indicating if this trait is private
+            $ref: '#/components/schemas/Trait'
+          description: Array of traits associated with the NFT
     NftData:
       type: object
-      required:
-        - owner
       properties:
         owner:
           type: string
@@ -2373,6 +2518,102 @@ components:
         requireOwnerAuthorizationToUpgrade:
           type: boolean
           description: Determines whether the owner's authorization is required to upgrade the NFT's verification key (readonly)
+    Chain:
+      type: object
+      required:
+        - chain
+        - network
+      properties:
+        chain:
+          type: string
+          enum:
+            - mina
+            - zeko
+          description: The chain name
+        network:
+          type: string
+          enum:
+            - devnet
+            - mainnet
+          description: The network name
+    Trait:
+      type: object
+      required:
+        - key
+        - type
+        - value
+      properties:
+        key:
+          type: string
+          description: The trait key/name
+        type:
+          type: string
+          enum:
+            - string
+            - text
+            - image
+            - url
+            - field
+            - number
+            - address
+            - map
+            - tree
+          description: The type of the trait value
+        value:
+          oneOf:
+            - type: string
+            - type: object
+          description: The trait value, can be a string or complex object depending on type
+        isPrivate:
+          type: boolean
+          description: Optional flag indicating if this trait is private
+    CMSNFTData:
+      type: object
+      required:
+        - chain
+        - collectionAddress
+        - name
+        - imageURL
+      properties:
+        chain:
+          $ref: "#/components/schemas/Chain"
+        collectionAddress:
+          type: string
+          description: The address of the NFT collection
+        symbol:
+          type: string
+          description: The symbol of the NFT
+        name:
+          type: string
+          description: The name of the NFT
+        description:
+          type: string
+          description: Optional description of the NFT
+        imageURL:
+          type: string
+          description: URL to the NFT image
+        traits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trait'
+          description: Array of traits associated with the NFT
+        nftData:
+          $ref: '#/components/schemas/NftData'
+          description: Data associated with the NFT
+        price:
+          type: number
+          format: double
+          description: The price of the NFT
+        mintStart:
+          type: number
+          format: int64
+          description: The start time of the minting period( unix timestamp in ms)
+        mintEnd:
+          type: number
+          format: int64
+          description: The end time of the minting period( unix timestamp in ms)
+    
+    
     NftTransferParams:
       type: object
       required:

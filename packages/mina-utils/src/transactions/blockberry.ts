@@ -1,5 +1,7 @@
 import { BlockBerryChain } from "./chain.js";
 
+const TIMEOUT = 10000; // 10 seconds timeout
+
 export async function getZkAppTxsFromBlockBerry(params: {
   account: string;
   chain: BlockBerryChain;
@@ -15,7 +17,7 @@ export async function getZkAppTxsFromBlockBerry(params: {
   };
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT); // 10 seconds timeout
 
     const response = await fetch(
       `https://api.blockberry.one/mina-${chain}/v1/zkapps/accounts/${account}/txs?size=10&orderBy=DESC&sortBy=AGE`,
@@ -65,7 +67,7 @@ export async function getPaymentTxsFromBlockBerry(params: {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT); // 10 seconds timeout
 
     const response = await fetch(
       `https://api.blockberry.one/mina-${chain}/v1/accounts/` +
@@ -116,7 +118,7 @@ export async function getZkAppTxFromBlockBerry(params: {
   };
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 10 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT); // 10 seconds timeout
 
     const response = await fetch(
       `https://api.blockberry.one/mina-${chain}/v1/zkapps/txs/${hash}`,
@@ -163,7 +165,7 @@ export async function getZkAppFromBlockBerry(params: {
   };
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT); // 10 seconds timeout
 
     const response = await fetch(
       `https://api.blockberry.one/mina-${chain}/v1/zkapps/${account}`,
