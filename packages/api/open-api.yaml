@@ -767,17 +767,9 @@ paths:
             schema:
               type: object
               required:
-                - chain
                 - nft
-                - signatureExpiry
                 - signature
               properties:
-                chain:
-                  $ref: "#/components/schemas/Chain"
-                signatureExpiry:
-                  type: number
-                  format: int64
-                  description: The expiry time of the request( unix timestamp in ms)
                 signature:
                   type: string
                   description: The signature of the Collection creator
@@ -821,21 +813,14 @@ paths:
             schema:
               type: object
               required:
-                - chain
                 - collectionAddress
               properties:
-                chain:
-                  $ref: "#/components/schemas/Chain"
                 collectionAddress:
                   type: string
                   description: The address of the NFT collection
                 nftName:
                   type: string
                   description: The name of the NFT. If not provided, all NFTs will be returned that can be minted now.
-                signatureExpiry:
-                  type: number
-                  format: int64
-                  description: The expiry time of the request (unix timestamp in ms)
                 signature:
                   type: string
                   description: The signature of the Collection creator. Required to get NFTs that cannot be minted now.
@@ -879,12 +864,9 @@ paths:
             schema:
               type: object
               required:
-                - chain
                 - collectionAddress
                 - nftName
               properties:
-                chain:
-                  $ref: "#/components/schemas/Chain"
                 collectionAddress:
                   type: string
                   description: The address of the NFT collection
@@ -894,10 +876,6 @@ paths:
                 reserve:
                   type: boolean
                   description: Indicates whether the NFT should be reserved in CMS or the reserve should be removed. Default is true.
-                signatureExpiry:
-                  type: number
-                  format: int64
-                  description: The expiry time of the request( unix timestamp in ms). Required if reserve is false.
                 signature:
                   type: string
                   description: The signature of the Collection creator. Required if reserve is false.
@@ -2518,24 +2496,6 @@ components:
         requireOwnerAuthorizationToUpgrade:
           type: boolean
           description: Determines whether the owner's authorization is required to upgrade the NFT's verification key (readonly)
-    Chain:
-      type: object
-      required:
-        - chain
-        - network
-      properties:
-        chain:
-          type: string
-          enum:
-            - mina
-            - zeko
-          description: The chain name
-        network:
-          type: string
-          enum:
-            - devnet
-            - mainnet
-          description: The network name
     Trait:
       type: object
       required:
@@ -2570,13 +2530,10 @@ components:
     CMSNFTData:
       type: object
       required:
-        - chain
         - collectionAddress
         - name
         - imageURL
       properties:
-        chain:
-          $ref: "#/components/schemas/Chain"
         collectionAddress:
           type: string
           description: The address of the NFT collection

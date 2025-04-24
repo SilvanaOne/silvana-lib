@@ -749,17 +749,6 @@ export type NftData = {
     requireOwnerAuthorizationToUpgrade?: boolean;
 };
 
-export type Chain = {
-    /**
-     * The chain name
-     */
-    chain: 'mina' | 'zeko';
-    /**
-     * The network name
-     */
-    network: 'devnet' | 'mainnet';
-};
-
 export type Trait = {
     /**
      * The trait key/name
@@ -782,7 +771,6 @@ export type Trait = {
 };
 
 export type CmsnftData = {
-    chain: Chain;
     /**
      * The address of the NFT collection
      */
@@ -2591,11 +2579,6 @@ export type TransferNftResponse = TransferNftResponses[keyof TransferNftResponse
 
 export type CmsStoreNftData = {
     body: {
-        chain: Chain;
-        /**
-         * The expiry time of the request( unix timestamp in ms)
-         */
-        signatureExpiry: number;
         /**
          * The signature of the Collection creator
          */
@@ -2652,7 +2635,6 @@ export type CmsStoreNftResponse = CmsStoreNftResponses[keyof CmsStoreNftResponse
 
 export type CmsReadNftData = {
     body: {
-        chain: Chain;
         /**
          * The address of the NFT collection
          */
@@ -2661,10 +2643,6 @@ export type CmsReadNftData = {
          * The name of the NFT. If not provided, all NFTs will be returned that can be minted now.
          */
         nftName?: string;
-        /**
-         * The expiry time of the request (unix timestamp in ms)
-         */
-        signatureExpiry?: number;
         /**
          * The signature of the Collection creator. Required to get NFTs that cannot be minted now.
          */
@@ -2720,7 +2698,6 @@ export type CmsReadNftResponse = CmsReadNftResponses[keyof CmsReadNftResponses];
 
 export type CmsReserveNftData = {
     body: {
-        chain: Chain;
         /**
          * The address of the NFT collection
          */
@@ -2733,10 +2710,6 @@ export type CmsReserveNftData = {
          * Indicates whether the NFT should be reserved in CMS or the reserve should be removed. Default is true.
          */
         reserve?: boolean;
-        /**
-         * The expiry time of the request( unix timestamp in ms). Required if reserve is false.
-         */
-        signatureExpiry?: number;
         /**
          * The signature of the Collection creator. Required if reserve is false.
          */

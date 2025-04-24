@@ -84,6 +84,8 @@ export async function buildNftCollectionLaunchTransaction(params: {
   map?: IndexedMapSerialized;
 }> {
   const { chain, args } = params;
+  const ACCOUNT_CREATION_FEE: bigint =
+    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
   const {
     url = chain === "mainnet"
       ? "https://minanft.io"
@@ -276,7 +278,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
     },
     async () => {
       const feeAccountUpdate = AccountUpdate.createSigned(sender);
-      feeAccountUpdate.balance.subInPlace(3_000_000_000);
+      feeAccountUpdate.balance.subInPlace(3n * ACCOUNT_CREATION_FEE);
 
       if (provingFee && provingKey)
         feeAccountUpdate.send({
@@ -366,6 +368,8 @@ export async function buildNftTransaction(params: {
   map?: IndexedMapSerialized;
 }> {
   const { chain, args } = params;
+  const ACCOUNT_CREATION_FEE: bigint =
+    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
   const { nonce, txType } = args;
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
@@ -792,7 +796,7 @@ export async function buildNftTransaction(params: {
   //     break;
   // }
 
-  const accountCreationFee = txType === "nft:sell" ? 1_000_000_000 : 0;
+  const accountCreationFee = txType === "nft:sell" ? ACCOUNT_CREATION_FEE : 0n;
   const zkOffer = offerAddress ? new Offer(offerAddress) : undefined;
 
   const tx = await Mina.transaction({ sender, fee, memo, nonce }, async () => {
@@ -912,6 +916,8 @@ export async function buildNftMintTransaction(params: {
   map?: IndexedMapSerialized;
 }> {
   const { chain, args } = params;
+  const ACCOUNT_CREATION_FEE: bigint =
+    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
   const { nonce, txType } = args;
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
@@ -1055,12 +1061,12 @@ export async function buildNftMintTransaction(params: {
       : expiry,
   });
 
-  const accountCreationFee = 0;
-
   const tx = await Mina.transaction({ sender, fee, memo, nonce }, async () => {
     const feeAccountUpdate = AccountUpdate.createSigned(sender);
-    if (accountCreationFee > 0) {
-      feeAccountUpdate.balance.subInPlace(accountCreationFee);
+    if (ACCOUNT_CREATION_FEE < 1_000_000_000n) {
+      feeAccountUpdate.balance.addInPlace(
+        1_000_000_000n - ACCOUNT_CREATION_FEE
+      );
     }
     if (provingKey && provingFee)
       feeAccountUpdate.send({
