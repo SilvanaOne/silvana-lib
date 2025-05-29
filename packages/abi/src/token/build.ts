@@ -54,6 +54,8 @@ export async function buildTokenLaunchTransaction(params: {
   verificationKeyHashes: string[];
 }> {
   const { chain, args } = params;
+  const ACCOUNT_CREATION_FEE: bigint =
+    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
   const { uri, symbol, memo, nonce, adminContract: adminType } = args;
   if (memo && typeof memo !== "string")
     throw new Error("Memo must be a string");
@@ -203,10 +205,17 @@ export async function buildTokenLaunchTransaction(params: {
           launchFee: UInt64.from(10_000_000_000),
           numberOfNewAccounts: UInt64.from(4),
         });
+        if (ACCOUNT_CREATION_FEE < 1_000_000_000n) {
+          const feeAccountUpdate = AccountUpdate.createSigned(sender);
+          feeAccountUpdate.balance.addInPlace(
+            (1_000_000_000n - ACCOUNT_CREATION_FEE) * 4n
+          );
+        }
       } else {
         const feeAccountUpdate = AccountUpdate.createSigned(sender);
         feeAccountUpdate.balance.subInPlace(
-          3_000_000_000 + (adminType === "advanced" ? 1_000_000_000 : 0)
+          ACCOUNT_CREATION_FEE * 3n +
+            (adminType === "advanced" ? ACCOUNT_CREATION_FEE : 0n)
         );
 
         if (provingFee && provingKey)
@@ -300,6 +309,8 @@ export async function buildTokenTransaction(params: {
   verificationKeyHashes: string[];
 }> {
   const { chain, args } = params;
+  const ACCOUNT_CREATION_FEE: bigint =
+    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
   const { nonce, txType } = args;
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
@@ -590,17 +601,27 @@ export async function buildTokenTransaction(params: {
       : false;
 
   const accountCreationFee =
-    (isNewBidOfferAccount ? 1_000_000_000 : 0) +
-    (isNewBuyAccount ? 1_000_000_000 : 0) +
-    (isNewSellAccount ? 1_000_000_000 : 0) +
-    (isNewTransferMintAccount ? 1_000_000_000 : 0) +
+    (isNewBidOfferAccount ? ACCOUNT_CREATION_FEE : 0n) +
+    (isNewBuyAccount ? ACCOUNT_CREATION_FEE : 0n) +
+    (isNewSellAccount ? ACCOUNT_CREATION_FEE : 0n) +
+    (isNewTransferMintAccount ? ACCOUNT_CREATION_FEE : 0n) +
     (isToNewAccount &&
     txType === "token:mint" &&
     adminType === "advanced" &&
     advancedAdminContract.whitelist.get().isSome().toBoolean()
-      ? 1_000_000_000
-      : 0);
-  console.log("accountCreationFee", accountCreationFee / 1_000_000_000);
+      ? ACCOUNT_CREATION_FEE
+      : 0n);
+  console.log("accountCreationFee", accountCreationFee / 1_000_000_000n);
+
+  let isNewMintAccountBondingCurve = false;
+  if (txType === "token:mint" && adminType === "bondingCurve" && to) {
+    await fetchMinaAccount({
+      publicKey: to,
+      tokenId,
+      force: false,
+    });
+    isNewMintAccountBondingCurve = !Mina.hasAccount(to, tokenId);
+  }
 
   switch (txType) {
     case "token:offer:buy":
@@ -686,6 +707,15 @@ export async function buildTokenTransaction(params: {
         if (amount === undefined) throw new Error("Error: Amount is required");
         if (to === undefined) throw new Error("Error: To address is required");
         if (adminType === "bondingCurve") {
+          if (
+            isNewMintAccountBondingCurve &&
+            ACCOUNT_CREATION_FEE < 1_000_000_000n
+          ) {
+            const feeAccountUpdate = AccountUpdate.createSigned(sender);
+            feeAccountUpdate.balance.addInPlace(
+              1_000_000_000n - ACCOUNT_CREATION_FEE
+            );
+          }
           if (price === undefined)
             throw new Error("Error: Price is required for bonding curve mint");
           await bondingCurveAdminContract.mint(to, amount, price);

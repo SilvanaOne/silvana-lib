@@ -38,7 +38,7 @@ export class NftAPI {
       const transaction = JSON.stringify(tx, null, 2);
       transactions.push(transaction);
     }
-    const { request, symbol } = params[0];
+    const { request, symbol, nftName } = params[0];
     const { txType } = request;
 
     const answer = await this.client.execute({
@@ -50,7 +50,9 @@ export class NftAPI {
         collectionAddress: params[0].request.collectionAddress,
       }),
       metadata: `${params.length > 1 ? "mint" : txType.replace(/^nft:/, "")} ${
-        symbol ? ` ${symbol}` : ""
+        symbol
+          ? ` ${symbol ?? ""} ${params.length === 1 ? nftName ?? "" : ""}`
+          : ""
       } ${
         params.length > 1
           ? `(${params.length} txs)`

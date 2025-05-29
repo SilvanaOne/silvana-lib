@@ -80,9 +80,19 @@ const Devnet: MinaNetwork = {
   faucet: "https://faucet.minaprotocol.com",
 };
 
+// const Zeko: MinaNetwork = {
+//   mina: ["https://devnet.zeko.io/graphql"],
+//   archive: ["https://devnet.zeko.io/graphql"],
+//   explorerAccountUrl: "https://zekoscan.io/devnet/account/",
+//   explorerTransactionUrl: "https://zekoscan.io/devnet/tx/",
+//   chainId: "zeko",
+//   name: "Zeko",
+//   faucet: "https://zeko.io/faucet",
+// };
+
 const Zeko: MinaNetwork = {
-  mina: ["https://devnet.zeko.io/graphql"],
-  archive: ["https://devnet.zeko.io/graphql"],
+  mina: ["http://m1.zeko.io/graphql"],
+  archive: ["http://m1.zeko.io/graphql"],
   explorerAccountUrl: "https://zekoscan.io/devnet/account/",
   explorerTransactionUrl: "https://zekoscan.io/devnet/tx/",
   chainId: "zeko",

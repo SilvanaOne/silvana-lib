@@ -1,16 +1,16 @@
 {
   "name": "@silvana-one/api",
   "description": "Silvana API",
-  "version": "1.0.10",
+  "version": "1.0.12",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "@hey-api/client-fetch": "^0.10.0"
+    "@hey-api/client-fetch": "^0.10.2"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.66.4",
-    "@types/node": "^22.14.1",
-    "esbuild": "^0.25.2",
+    "@hey-api/openapi-ts": "^0.68.1",
+    "@types/node": "^22.15.24",
+    "esbuild": "^0.25.5",
     "typescript": "^5.8.3"
   },
   "engines": {
