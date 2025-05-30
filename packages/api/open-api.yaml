@@ -2546,6 +2546,9 @@ components:
         description:
           type: string
           description: Optional description of the NFT
+        metadataVerificationKeyHash:
+          type: string
+          description: The hash of the verification key used for metadata proofs, Field as a string
         imageURL:
           type: string
           description: URL to the NFT image

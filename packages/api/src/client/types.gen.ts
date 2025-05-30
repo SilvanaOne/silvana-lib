@@ -788,6 +788,10 @@ export type CmsnftData = {
      */
     description?: string;
     /**
+     * The hash of the verification key used for metadata proofs, Field as a string
+     */
+    metadataVerificationKeyHash?: string;
+    /**
      * URL to the NFT image
      */
     imageURL: string;
