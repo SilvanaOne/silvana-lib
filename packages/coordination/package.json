@@ -1,0 +1,52 @@
+{
+  "name": "@silvana-one/coordination",
+  "description": "Silvana Coordination Client",
+  "version": "1.0.14",
+  "author": "DFST",
+  "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.15.24",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "exports": {
+    "types": "./dist/node/index.d.ts",
+    "node": {
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.cjs"
+    },
+    "browser": "./dist/web/index.js",
+    "default": "./dist/web/index.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://docs.silvana.one",
+  "keywords": [
+    "cloud",
+    "silvana",
+    "coordination",
+    "client",
+    "typescript"
+  ],
+  "license": "Apache-2.0",
+  "main": "dist/web/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": "SilvanaOne/silvana-lib.git",
+  "scripts": {
+    "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
+    "release": "npm publish --access public"
+  },
+  "type": "module",
+  "types": "./dist/node/index.d.ts"
+}
