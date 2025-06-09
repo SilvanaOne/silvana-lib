@@ -4,3 +4,6 @@ export * from "./publish.js";
 export * from "./sui-client.js";
 export * from "./sleep.js";
 export * from "./upgrade.js";
+export * from "./mvr.js";
+export * from "./agent.js";
+export * from "./fetch.js";

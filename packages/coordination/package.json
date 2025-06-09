@@ -51,7 +51,8 @@
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
     "release": "npm publish --access public",
     "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test",
-    "mvr": "SUI_CHAIN=testnet npm run test test/contract.test.ts"
+    "mvr": "SUI_CHAIN=testnet npm run test test/mvr.test.ts",
+    "agent": "SUI_CHAIN=testnet npm run test test/agent.test.ts"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"

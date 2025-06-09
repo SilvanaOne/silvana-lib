@@ -1,10 +1,10 @@
 import { SuiEvent, SuiTransactionBlockResponse } from "@mysten/sui/client";
-import { SignatureWithBytes } from "@mysten/sui/cryptography";
 import {
   ParallelTransactionExecutor,
   Transaction,
 } from "@mysten/sui/transactions";
 import { Secp256k1Keypair } from "@mysten/sui/keypairs/secp256k1";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { suiClient } from "./sui-client.js";
 import { nanoid } from "nanoid";
 import { sleep } from "./sleep.js";
@@ -40,7 +40,7 @@ async function releaseLock(params: { address: string; id: string }) {
   }
 }
 
-function getExecutor(keyPair: Secp256k1Keypair) {
+function getExecutor(keyPair: Secp256k1Keypair | Ed25519Keypair) {
   const keyPairId = keyPair.toSuiAddress();
   if (!executors[keyPairId]) {
     executors[keyPairId] = new ParallelTransactionExecutor({
@@ -57,7 +57,7 @@ function getExecutor(keyPair: Secp256k1Keypair) {
 
 export async function executeTx(params: {
   tx: Transaction;
-  keyPair: Secp256k1Keypair;
+  keyPair: Secp256k1Keypair | Ed25519Keypair;
   useParallelExecutor?: boolean;
   showErrors?: boolean;
 }): Promise<
