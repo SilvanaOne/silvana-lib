@@ -1,12 +1,16 @@
 {
   "name": "@silvana-one/coordination",
   "description": "Silvana Coordination Client",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
-  "dependencies": {},
+  "dependencies": {
+    "@mysten/sui": "^1.30.5",
+    "mina-signer": "^3.0.7",
+    "nanoid": "^5.1.5"
+  },
   "devDependencies": {
-    "@types/node": "^22.15.24",
+    "@types/node": "^22.15.30",
     "esbuild": "^0.25.5",
     "typescript": "^5.8.3"
   },
@@ -45,7 +49,9 @@
   "repository": "SilvanaOne/silvana-lib.git",
   "scripts": {
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
-    "release": "npm publish --access public"
+    "release": "npm publish --access public",
+    "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test",
+    "mvr": "SUI_CHAIN=testnet npm run test test/contract.test.ts"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"

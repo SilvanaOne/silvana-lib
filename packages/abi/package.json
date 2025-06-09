@@ -1,20 +1,20 @@
 {
   "name": "@silvana-one/abi",
   "description": "Silvana ABI Experimental Library",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@silvana-one/api": "1.0.14",
-    "@silvana-one/nft": "1.0.14",
-    "@silvana-one/storage": "1.0.14",
-    "@silvana-one/token": "1.0.14",
-    "@types/node": "^22.15.24",
+    "@silvana-one/api": "1.0.15",
+    "@silvana-one/nft": "1.0.15",
+    "@silvana-one/storage": "1.0.15",
+    "@silvana-one/token": "1.0.15",
+    "@types/node": "^22.15.30",
     "esbuild": "^0.25.5",
-    "o1js": "^2.5.0",
+    "o1js": "^2.6.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
@@ -51,10 +51,10 @@
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
   "peerDependencies": {
-    "@silvana-one/api": "1.0.14",
-    "@silvana-one/nft": "1.0.14",
-    "@silvana-one/storage": "1.0.14",
-    "@silvana-one/token": "1.0.14",
+    "@silvana-one/api": "1.0.15",
+    "@silvana-one/nft": "1.0.15",
+    "@silvana-one/storage": "1.0.15",
+    "@silvana-one/token": "1.0.15",
     "o1js": "^2.4.0"
   },
   "publishConfig": {

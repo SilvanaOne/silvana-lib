@@ -1,16 +1,16 @@
 {
   "name": "@silvana-one/mina-utils",
   "description": "Silvana Mina Utils",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@types/node": "^22.15.24",
+    "@types/node": "^22.15.30",
     "esbuild": "^0.25.5",
-    "o1js": "^2.5.0",
+    "o1js": "^2.6.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
