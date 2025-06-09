@@ -20,6 +20,7 @@ import readline from "readline";
 
   // List of your packages
   const packages: string[] = [
+    "@silvana-one/coordination",
     "@silvana-one/api",
     "@silvana-one/storage",
     "@silvana-one/token",
