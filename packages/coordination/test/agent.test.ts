@@ -7,7 +7,8 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 const REGISTRY_NAME = "Silvana Agent Registry Testnet";
 const REGISTRY_ADDRESS =
-  "0xc286831498461eca1598c10406e9d4ee6d14cb4f4ff7dfb7d68b4a4f77fb08c4";
+  "0x74e2b7e5514355a8255fccaac571ad4e0a9315b8e479e2d10adfcce113c2082d";
+const create = false;
 
 describe("Agent Registry", async () => {
   it.skip("should create agent registry", async () => {
@@ -32,7 +33,7 @@ describe("Agent Registry", async () => {
     console.log("Objects:", result?.tx?.objectChanges);
     if (result?.digest) await waitTx(result.digest);
   });
-  it.skip("should create developer", async () => {
+  it("should create developer", { skip: !create }, async () => {
     console.log("creating developer on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -60,7 +61,7 @@ describe("Agent Registry", async () => {
     console.log("Objects:", result?.tx?.objectChanges);
     if (result?.digest) await waitTx(result.digest);
   });
-  it.skip("should create agent", async () => {
+  it("should create agent", { skip: !create }, async () => {
     console.log("creating agent on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -79,6 +80,7 @@ describe("Agent Registry", async () => {
       min_memory_gb: 8,
       min_cpu_cores: 4,
       supports_tee: false,
+      chains: ["sui-mainnet", "sui-testnet"],
     });
     tx.setSender(address);
     tx.setGasBudget(100_000_000);
@@ -90,7 +92,7 @@ describe("Agent Registry", async () => {
     console.log("Objects:", result?.tx?.objectChanges);
     if (result?.digest) await waitTx(result.digest);
   });
-  it.skip("should update developer", async () => {
+  it("should update developer", { skip: !create }, async () => {
     console.log("updating developer on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -119,7 +121,7 @@ describe("Agent Registry", async () => {
     console.log("Objects:", result?.tx?.objectChanges);
     if (result?.digest) await waitTx(result.digest);
   });
-  it.skip("should update agent", async () => {
+  it("should update agent", { skip: !create }, async () => {
     console.log("updating agent on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -138,6 +140,7 @@ describe("Agent Registry", async () => {
       min_memory_gb: 8,
       min_cpu_cores: 4,
       supports_tee: false,
+      chains: ["sui-mainnet", "sui-testnet"],
     });
     tx.setSender(address);
     tx.setGasBudget(100_000_000);
@@ -149,14 +152,82 @@ describe("Agent Registry", async () => {
     console.log("Objects:", result?.tx?.objectChanges);
     if (result?.digest) await waitTx(result.digest);
   });
-  it.skip("should get developer", async () => {
+  it.skip("should remove agent", async () => {
+    console.log("removing agent on chain", process.env.SUI_CHAIN);
+    const key = process.env.SUI_KEY;
+    if (!key) {
+      throw new Error("SUI_KEY is not set");
+    }
+    const keyPair = Ed25519Keypair.fromSecretKey(key);
+    const address = keyPair.toSuiAddress();
+    console.log("sender address", address);
+    const registry = new AgentRegistry({
+      registry: REGISTRY_ADDRESS,
+    });
+    const tx = registry.removeAgent({
+      developer: "DFST",
+      agent: "Test Agent 4",
+    });
+    tx.setSender(address);
+    tx.setGasBudget(100_000_000);
+    const result = await executeTx({
+      tx,
+      keyPair,
+    });
+    console.log("Result", result);
+    console.log("Objects:", result?.tx?.objectChanges);
+    if (result?.digest) await waitTx(result.digest);
+  });
+  it.skip("should remove developer", async () => {
+    console.log("removing developer on chain", process.env.SUI_CHAIN);
+    const key = process.env.SUI_KEY;
+    if (!key) {
+      throw new Error("SUI_KEY is not set");
+    }
+    const keyPair = Ed25519Keypair.fromSecretKey(key);
+    const address = keyPair.toSuiAddress();
+    console.log("sender address", address);
+    const registry = new AgentRegistry({
+      registry: REGISTRY_ADDRESS,
+    });
+    const tx = registry.removeDeveloper({
+      name: "DFST",
+      agentNames: ["Test Agent 5"],
+    });
+    tx.setSender(address);
+    tx.setGasBudget(100_000_000);
+    const result = await executeTx({
+      tx,
+      keyPair,
+    });
+    console.log("Result", result);
+    console.log("Objects:", result?.tx?.objectChanges);
+    if (result?.digest) await waitTx(result.digest);
+  });
+  it("should get developer", async () => {
     const registry = new AgentRegistry({
       registry: REGISTRY_ADDRESS,
     });
     const developer = await registry.getDeveloper({ name: "DFST" });
     console.log("Developer", developer);
   });
-  it.skip("should get agent", async () => {
+  it("should get developer names", async () => {
+    const key = process.env.SUI_KEY;
+    if (!key) {
+      throw new Error("SUI_KEY is not set");
+    }
+    const keyPair = Ed25519Keypair.fromSecretKey(key);
+    const address = keyPair.toSuiAddress();
+    console.log("developer address", address);
+    const registry = new AgentRegistry({
+      registry: REGISTRY_ADDRESS,
+    });
+    const developerNames = await registry.getDeveloperNames({
+      developerAddress: address,
+    });
+    console.log("Developer Names", developerNames);
+  });
+  it("should get agent", async () => {
     const registry = new AgentRegistry({
       registry: REGISTRY_ADDRESS,
     });

@@ -6,8 +6,8 @@ import { executeTx } from "../src/execute.js";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 const UPGRADE_CAP =
-  "0x4f7e644fc5cf4998611a13871e85f9425d7f2ab1e72a6018405b1b147b4e2327";
-const PACKAGE_NAME = "Silvana Agent Registry";
+  "0x5be8662ac9e1ada2e56a5ce76e433dffa2b9b2e636451892e14a4a91a63173ea";
+const PACKAGE_NAME = "Silvana Agent Registry V4";
 const MVR_NAME = "@silvana/agent";
 const SAFE_ADDRESS =
   "0xb11e20ecdc1ddaccde1d84b865100cc8d549e780dc8394ca9c982218f93d108d";
