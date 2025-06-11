@@ -2,6 +2,26 @@ import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { fetchSuiDynamicField } from "./fetch.js";
 
+type AgentChain =
+  | "ethereum-mainnet"
+  | "ethereum-seplolia"
+  | "ethereum-holesky"
+  | "ethereum-hoodi"
+  | "mina-mainnet"
+  | "mina-devnet"
+  | "zeko-testnet"
+  | "zeko-alphanet"
+  | "sui-mainnet"
+  | "sui-testnet"
+  | "sui-devnet"
+  | "solana-mainnet"
+  | "solana-testnet"
+  | "solana-devnet"
+  | "solana-devnet"
+  | "walrus-mainnet"
+  | "walrus-testnet"
+  | string; // other chains
+
 export interface Agent {
   id: string;
   name: string;
@@ -13,8 +33,10 @@ export interface Agent {
   minMemoryGb: number;
   minCpuCores: number;
   supportsTEE: boolean;
+  chains: AgentChain[];
   createdAt: number;
   updatedAt: number;
+  version: number;
 }
 
 export interface Developer {
@@ -27,6 +49,14 @@ export interface Developer {
   owner: string;
   createdAt: number;
   updatedAt: number;
+  version: number;
+}
+
+export interface DeveloperNames {
+  id: string;
+  developer_address: string;
+  names: string[];
+  version: number;
 }
 
 export class AgentRegistry {
@@ -99,13 +129,18 @@ export class AgentRegistry {
     return tx;
   }
 
-  removeDeveloper(params: { name: string }): Transaction {
-    const { name } = params;
+  removeDeveloper(params: { name: string; agentNames: string[] }): Transaction {
+    const { name, agentNames } = params;
     const tx = new Transaction();
 
     tx.moveCall({
       target: `@silvana/agent::registry::remove_developer`,
-      arguments: [tx.object(this.registry), tx.pure.string(name)],
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(name),
+        tx.pure.vector("string", agentNames),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
     });
 
     return tx;
@@ -122,6 +157,7 @@ export class AgentRegistry {
     min_memory_gb: number;
     min_cpu_cores: number;
     supports_tee: boolean;
+    chains: AgentChain[];
   }): Transaction {
     const {
       developer,
@@ -134,6 +170,7 @@ export class AgentRegistry {
       min_memory_gb,
       min_cpu_cores,
       supports_tee,
+      chains,
     } = params;
     const tx = new Transaction();
 
@@ -151,6 +188,7 @@ export class AgentRegistry {
         tx.pure.u16(min_memory_gb),
         tx.pure.u16(min_cpu_cores),
         tx.pure.bool(supports_tee),
+        tx.pure.vector("string", chains),
         tx.object(SUI_CLOCK_OBJECT_ID),
       ],
     });
@@ -169,6 +207,7 @@ export class AgentRegistry {
     min_memory_gb: number;
     min_cpu_cores: number;
     supports_tee: boolean;
+    chains: AgentChain[];
   }): Transaction {
     const {
       developer,
@@ -181,6 +220,7 @@ export class AgentRegistry {
       min_memory_gb,
       min_cpu_cores,
       supports_tee,
+      chains,
     } = params;
     const tx = new Transaction();
 
@@ -198,6 +238,7 @@ export class AgentRegistry {
         tx.pure.u16(min_memory_gb),
         tx.pure.u16(min_cpu_cores),
         tx.pure.bool(supports_tee),
+        tx.pure.vector("string", chains),
         tx.object(SUI_CLOCK_OBJECT_ID),
       ],
     });
@@ -215,6 +256,7 @@ export class AgentRegistry {
         tx.object(this.registry),
         tx.pure.string(developer),
         tx.pure.string(agent),
+        tx.object(SUI_CLOCK_OBJECT_ID),
       ],
     });
 
@@ -241,6 +283,7 @@ export class AgentRegistry {
       owner: (developerObject as any).owner,
       createdAt: Number((developerObject as any).created_at),
       updatedAt: Number((developerObject as any).updated_at),
+      version: Number((developerObject as any).version),
     };
     if (
       !developer.id ||
@@ -253,6 +296,30 @@ export class AgentRegistry {
       return undefined;
     }
     return developer as Developer;
+  }
+
+  async getDeveloperNames(params: {
+    developerAddress: string;
+  }): Promise<DeveloperNames | undefined> {
+    const developerObject = await fetchSuiDynamicField({
+      objectID: this.registry,
+      fieldName: "developers_index",
+      type: "address",
+      key: params.developerAddress,
+    });
+    if (!developerObject) {
+      return undefined;
+    }
+    const developer = {
+      id: (developerObject as any)?.id?.id,
+      developer_address: (developerObject as any).developer,
+      names: (developerObject as any).names,
+      version: Number((developerObject as any).version),
+    };
+    if (!developer.id || !developer.developer_address || !developer.names) {
+      return undefined;
+    }
+    return developer as DeveloperNames;
   }
 
   async getAgent(params: {
@@ -293,6 +360,7 @@ export class AgentRegistry {
       supportsTEE: Boolean((agentObject as any).supports_tee),
       createdAt: Number((agentObject as any).created_at),
       updatedAt: Number((agentObject as any).updated_at),
+      version: Number((agentObject as any).version),
     };
     if (
       !agent.id ||
