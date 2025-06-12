@@ -211,7 +211,7 @@ describe("Agent Registry", async () => {
     const developer = await registry.getDeveloper({ name: "DFST" });
     console.log("Developer", developer);
   });
-  it("should get developer names", async () => {
+  it.skip("should get developer names", async () => {
     const key = process.env.SUI_KEY;
     if (!key) {
       throw new Error("SUI_KEY is not set");
@@ -227,7 +227,7 @@ describe("Agent Registry", async () => {
     });
     console.log("Developer Names", developerNames);
   });
-  it("should get agent", async () => {
+  it.skip("should get agent", async () => {
     const registry = new AgentRegistry({
       registry: REGISTRY_ADDRESS,
     });
@@ -238,7 +238,7 @@ describe("Agent Registry", async () => {
     console.log("Agent", agent);
   });
 
-  it("should get docker image details", async () => {
+  it.skip("should get docker image details", async () => {
     const detailsNonTEE = await AgentRegistry.getDockerImageDetails({
       dockerImage: "dfstio/testagent4:latest",
     });

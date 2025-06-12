@@ -1,6 +1,10 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
-import { fetchSuiDynamicField } from "./fetch.js";
+import {
+  fetchSuiDynamicField,
+  fetchSuiDynamicFieldsList,
+  fetchSuiObject,
+} from "./fetch.js";
 
 type AgentChain =
   | "ethereum-mainnet"
@@ -47,6 +51,7 @@ export interface Developer {
   description?: string;
   site?: string;
   owner: string;
+  agents: string[];
   createdAt: number;
   updatedAt: number;
   version: number;
@@ -273,6 +278,20 @@ export class AgentRegistry {
     if (!developerObject) {
       return undefined;
     }
+    let agents: string[] = [];
+    const agentsObject = (developerObject as any)?.agents?.fields?.id?.id;
+    if (agentsObject) {
+      const agentsList = await fetchSuiDynamicFieldsList(agentsObject);
+      const agentsArray = agentsList?.data as any;
+      if (Array.isArray(agentsArray)) {
+        agents = agentsArray
+          .map((agent: any) => agent?.name?.value)
+          .filter(
+            (agent: any) => agent !== undefined && typeof agent === "string"
+          );
+      }
+    }
+
     const developer = {
       id: (developerObject as any)?.id?.id,
       name: (developerObject as any).name,
@@ -281,6 +300,7 @@ export class AgentRegistry {
       description: (developerObject as any)?.description ?? undefined,
       site: (developerObject as any)?.site ?? undefined,
       owner: (developerObject as any).owner,
+      agents,
       createdAt: Number((developerObject as any).created_at),
       updatedAt: Number((developerObject as any).updated_at),
       version: Number((developerObject as any).version),
