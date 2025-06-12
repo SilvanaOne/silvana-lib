@@ -10,6 +10,13 @@ export async function fetchSuiObject(objectID: string) {
   return data;
 }
 
+export async function fetchSuiDynamicFieldsList(objectID: string) {
+  const data = await suiClient.getDynamicFields({
+    parentId: objectID,
+  });
+  return data;
+}
+
 export async function fetchSuiDynamicField(params: {
   objectID?: string;
   parentID?: string;
