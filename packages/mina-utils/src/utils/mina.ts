@@ -110,8 +110,14 @@ async function initBlockchain(
   }
 
   const networkInstance = Mina.Network({
-    mina: network.mina,
-    archive: network.archive,
+    mina:
+      process.env.MINA_NODE_URL ??
+      process.env.NEXT_PUBLIC_MINA_NODE_URL ??
+      network.mina,
+    archive:
+      process.env.MINA_ARCHIVE_NODE_URL ??
+      process.env.NEXT_PUBLIC_MINA_ARCHIVE_NODE_URL ??
+      network.archive,
     lightnetAccountManager: network.accountManager,
     networkId: instance === "mainnet" ? "mainnet" : "testnet",
   });
