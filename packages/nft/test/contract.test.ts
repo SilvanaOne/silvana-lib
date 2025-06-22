@@ -684,6 +684,10 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
           fee: UInt64.from(10_000_000_000),
           storage: Storage.fromString(ipfsHash),
         });
+        if (chain === "zeko") {
+          const au = AccountUpdate.createSigned(creator);
+          au.balance.addInPlace(900_000_000n);
+        }
       }
     );
     await tx.prove();
@@ -911,6 +915,10 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
           UInt64.from(5_000_000_000),
           UInt64.from(1000)
         );
+        if (chain === "zeko") {
+          const au = AccountUpdate.createSigned(buyer);
+          au.balance.addInPlace(900_000_000n);
+        }
       }
     );
     await tx.prove();
@@ -1702,6 +1710,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     Memory.info("before NFT upgrade");
     console.time("upgraded NFT");
     await fetchMinaAccount({ publicKey: owner, force: true });
+    await fetchMinaAccount({ publicKey: creator, force: true });
     await fetchMinaAccount({ publicKey: zkCollectionKey, force: true });
     await fetchMinaAccount({ publicKey: zkAdminKey, force: true });
     await fetchMinaAccount({ publicKey: zkNFTKey, tokenId, force: true });
