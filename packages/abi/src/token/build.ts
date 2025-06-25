@@ -185,12 +185,6 @@ export async function buildTokenLaunchTransaction(params: {
     { sender, fee, memo: memo ?? `launch ${symbol}`, nonce },
     async () => {
       if (zkAdmin instanceof FungibleTokenBondingCurveAdmin) {
-        console.log("deploying bonding curve admin", {
-          verificationKey: adminVerificationKey.hash,
-          tokenAddress: tokenAddress.toBase58(),
-          feeMaster: provingKey.toBase58(),
-          adminContractAddress: adminContractAddress.toBase58(),
-        });
         await zkAdmin.deploy({
           verificationKey: adminVerificationKey,
         });
@@ -210,7 +204,7 @@ export async function buildTokenLaunchTransaction(params: {
         if (ACCOUNT_CREATION_FEE < 1_000_000_000n) {
           // patch Zeko Account Creation Fee
           const feeAccountUpdate = AccountUpdate.createSigned(sender);
-          feeAccountUpdate.balance.addInPlace(ACCOUNT_CREATION_FEE * 4n);
+          feeAccountUpdate.balance.subInPlace(ACCOUNT_CREATION_FEE * 4n);
         }
       } else {
         const feeAccountUpdate = AccountUpdate.createSigned(sender);
