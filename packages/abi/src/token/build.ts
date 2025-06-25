@@ -68,7 +68,7 @@ export async function buildTokenLaunchTransaction(params: {
   const sender = PublicKey.fromBase58(args.sender);
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
-  const fee = 100_000_000;
+  const fee = 200_000_000;
   if (uri && typeof uri !== "string") throw new Error("Uri must be a string");
   if (!args.tokenAddress || typeof args.tokenAddress !== "string")
     throw new Error("tokenAddress is required");
@@ -203,13 +203,14 @@ export async function buildTokenLaunchTransaction(params: {
           feeMaster: provingKey,
           fee: UInt32.from(1000), // 1000 = 1%
           launchFee: UInt64.from(10_000_000_000),
-          numberOfNewAccounts: UInt64.from(4),
+          numberOfNewAccounts: UInt64.from(
+            ACCOUNT_CREATION_FEE < 1_000_000_000n ? 0 : 4
+          ), // patch Zeko Account Creation Fee
         });
         if (ACCOUNT_CREATION_FEE < 1_000_000_000n) {
+          // patch Zeko Account Creation Fee
           const feeAccountUpdate = AccountUpdate.createSigned(sender);
-          feeAccountUpdate.balance.addInPlace(
-            (1_000_000_000n - ACCOUNT_CREATION_FEE) * 4n
-          );
+          feeAccountUpdate.balance.addInPlace(ACCOUNT_CREATION_FEE * 4n);
         }
       } else {
         const feeAccountUpdate = AccountUpdate.createSigned(sender);
@@ -394,7 +395,7 @@ export async function buildTokenTransaction(params: {
     bidAddress,
   });
   const memo = args.memo ?? `${txType} ${symbol}`;
-  const fee = 100_000_000;
+  const fee = 200_000_000;
   const provingKey = params.provingKey
     ? PublicKey.fromBase58(params.provingKey)
     : sender;
