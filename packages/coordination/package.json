@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/coordination",
   "description": "Silvana Coordination Client",
-  "version": "1.0.20",
+  "version": "1.0.22",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {

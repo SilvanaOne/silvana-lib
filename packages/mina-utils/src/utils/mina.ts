@@ -120,6 +120,7 @@ async function initBlockchain(
       network.archive,
     lightnetAccountManager: network.accountManager,
     networkId: instance === "mainnet" ? "mainnet" : "testnet",
+    bypassTransactionLimits: instance === "zeko",
   });
   Mina.setActiveInstance(networkInstance);
 

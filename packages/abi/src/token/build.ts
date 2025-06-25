@@ -203,13 +203,14 @@ export async function buildTokenLaunchTransaction(params: {
           feeMaster: provingKey,
           fee: UInt32.from(1000), // 1000 = 1%
           launchFee: UInt64.from(10_000_000_000),
-          numberOfNewAccounts: UInt64.from(4),
+          numberOfNewAccounts: UInt64.from(
+            ACCOUNT_CREATION_FEE < 1_000_000_000n ? 0 : 4
+          ), // patch Zeko Account Creation Fee
         });
         if (ACCOUNT_CREATION_FEE < 1_000_000_000n) {
+          // patch Zeko Account Creation Fee
           const feeAccountUpdate = AccountUpdate.createSigned(sender);
-          feeAccountUpdate.balance.addInPlace(
-            (1_000_000_000n - ACCOUNT_CREATION_FEE) * 4n
-          );
+          feeAccountUpdate.balance.addInPlace(ACCOUNT_CREATION_FEE * 4n);
         }
       } else {
         const feeAccountUpdate = AccountUpdate.createSigned(sender);
