@@ -4,3 +4,4 @@ export * from "./transactions/index.js";
 export * from "./utils/index.js";
 export * from "./config.js";
 export * from "./networks.js";
+export * from "./commitment/index.js";

@@ -1,14 +1,14 @@
 {
   "name": "silvana-lib",
   "description": "Silvana Library",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "author": "DFST",
   "devDependencies": {
-    "@types/node": "^24.0.1",
-    "o1js": "^2.6.0",
+    "@types/node": "^24.0.14",
+    "o1js": "^2.7.0",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.28.5",
-    "typedoc-plugin-markdown": "^4.6.4",
+    "typedoc": "^0.28.7",
+    "typedoc-plugin-markdown": "^4.7.0",
     "typescript": "^5.8.3"
   },
   "license": "Apache-2.0",
