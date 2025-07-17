@@ -1,13 +1,14 @@
 {
   "name": "@silvana-one/coordination",
   "description": "Silvana Coordination Client",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
     "@mysten/sui": "^1.36.0",
     "mina-signer": "^3.0.7",
-    "nanoid": "^5.1.5"
+    "nanoid": "^5.1.5",
+    "pinata": "^2.4.9"
   },
   "devDependencies": {
     "@types/node": "^24.0.14",
