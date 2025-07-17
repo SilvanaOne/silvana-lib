@@ -1,11 +1,5 @@
 import { Secp256k1Keypair } from "@mysten/sui/keypairs/secp256k1";
-import {
-  Transaction,
-  TransactionResult,
-  UpgradePolicy,
-} from "@mysten/sui/transactions";
-import { UpgradeInfo } from "@mysten/sui/client";
-import { SignatureWithBytes } from "@mysten/sui/cryptography";
+import { Transaction, UpgradePolicy } from "@mysten/sui/transactions";
 import { suiClient } from "./sui-client.js";
 
 export async function buildUpgradeTx(params: {
@@ -43,12 +37,10 @@ export async function buildUpgradeTx(params: {
     modules,
     dependencies,
   });
-  //console.log("upgradeData", upgradeData);
   const commitData = tx.moveCall({
     target: "0x2::package::commit_upgrade",
     arguments: [tx.object(upgradeCap), upgradeData],
   });
-  //console.log("commitData", commitData);
   const paginatedCoins = await suiClient.getCoins({
     owner: address,
   });
@@ -59,20 +51,11 @@ export async function buildUpgradeTx(params: {
       digest: coin.digest,
     };
   });
-  //console.log("coins", coins);
 
   tx.setSender(address);
   tx.setGasOwner(address);
   tx.setGasPayment(coins);
-  //console.log("tx", await tx.toJSON());
   tx.setGasBudget(300_000_000);
 
-  //console.log("tx", await tx.toJSON());
-  console.time("sign");
-  // const signedTx = await tx.sign({
-  //   signer: keypair,
-  //   client: suiClient,
-  // });
-  console.timeEnd("sign");
   return { tx };
 }

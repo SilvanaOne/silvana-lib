@@ -1,7 +1,5 @@
 import { Secp256k1Keypair } from "@mysten/sui/keypairs/secp256k1";
 import { Transaction } from "@mysten/sui/transactions";
-import { SignatureWithBytes } from "@mysten/sui/cryptography";
-import { suiClient } from "./sui-client.js";
 
 export async function buildPublishTx(params: {
   modules: string[];

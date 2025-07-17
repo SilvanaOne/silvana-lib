@@ -7,3 +7,8 @@ export * from "./upgrade.js";
 export * from "./mvr.js";
 export * from "./agent.js";
 export * from "./fetch.js";
+export * from "./build.js";
+export * from "./walrus.js";
+export * from "./faucet.js";
+export * from "./ipfs.js";
+export * from "./public-key.js";
