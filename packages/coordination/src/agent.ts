@@ -5,6 +5,7 @@ import {
   fetchSuiDynamicFieldsList,
   fetchSuiObject,
 } from "./fetch.js";
+import { silvanaRegistryPackage } from "./package.js";
 
 type AgentChain =
   | "ethereum-mainnet"
@@ -75,7 +76,7 @@ export class AgentRegistry {
     console.log("Creating agent registry", params.name);
     const transaction = new Transaction();
     transaction.moveCall({
-      target: `@silvana/agent::registry::create_registry`,
+      target: `${silvanaRegistryPackage}::registry::create_registry`,
       arguments: [transaction.pure.string(params.name)],
     });
 
@@ -93,7 +94,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::add_developer`,
+      target: `${silvanaRegistryPackage}::registry::add_developer`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(name),
@@ -119,7 +120,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::update_developer`,
+      target: `${silvanaRegistryPackage}::registry::update_developer`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(name),
@@ -139,7 +140,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::remove_developer`,
+      target: `${silvanaRegistryPackage}::registry::remove_developer`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(name),
@@ -180,7 +181,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::add_agent`,
+      target: `${silvanaRegistryPackage}::registry::add_agent`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(developer),
@@ -230,7 +231,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::update_agent`,
+      target: `${silvanaRegistryPackage}::registry::update_agent`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(developer),
@@ -256,7 +257,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::remove_agent`,
+      target: `${silvanaRegistryPackage}::registry::remove_agent`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(developer),

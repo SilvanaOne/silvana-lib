@@ -32,7 +32,8 @@ export function processArguments(): {
     chainName !== "local" &&
     chainName !== "devnet" &&
     chainName !== "lightnet" &&
-    chainName !== "zeko"
+    chainName !== "zeko" &&
+    chainName !== "zeko:alphanet"
   )
     throw new Error("Invalid chain name");
 

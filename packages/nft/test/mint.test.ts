@@ -218,7 +218,7 @@ describe(`NFT mint tests: ${chain} ${approveTransfer ? "approve " : ""}${
         : chain === "zeko"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
-    const expiry = slot.add(UInt32.from(100000));
+    const expiry = slot.add(UInt32.from(1000000000));
     const masterNFT = new MintParams({
       name: fieldFromString(name),
       address: zkCollectionKey,

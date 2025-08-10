@@ -40,6 +40,7 @@ const zkBulletinBoard = new BulletinBoard(zkBulletinBoardKey);
 const NUMBER_OF_USERS = 1;
 let admin: TestPublicKey;
 let user: TestPublicKey;
+const FEE = 500_000_000;
 
 describe(`Bulletin Board contract tests: ${chain} ${
   noLog ? "noLog" : ""
@@ -108,7 +109,7 @@ describe(`Bulletin Board contract tests: ${chain} ${
     const tx = await Mina.transaction(
       {
         sender: admin,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Deploy BulletinBoard`,
       },
       async () => {
@@ -173,7 +174,7 @@ describe(`Bulletin Board contract tests: ${chain} ${
       const tx = await Mina.transaction(
         {
           sender,
-          fee: 100_000_000,
+          fee: FEE,
           memo: message,
         },
         async () => {
