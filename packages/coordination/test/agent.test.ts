@@ -6,12 +6,11 @@ import { executeTx, waitTx } from "../src/execute.js";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 const REGISTRY_NAME = "Silvana Agent Registry Testnet";
-const REGISTRY_ADDRESS =
-  "0x74e2b7e5514355a8255fccaac571ad4e0a9315b8e479e2d10adfcce113c2082d";
-const create = false;
+let REGISTRY_ADDRESS: string | undefined = process.env.SILVANA_REGISTRY_ADDRESS;
+const create = true;
 
 describe("Agent Registry", async () => {
-  it.skip("should create agent registry", async () => {
+  it("should create agent registry", { skip: !create }, async () => {
     console.log("creating agent registry on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -31,9 +30,32 @@ describe("Agent Registry", async () => {
     });
     console.log("Result", result);
     console.log("Objects:", result?.tx?.objectChanges);
+
+    // Find the created registry object
+    if (result?.tx?.objectChanges) {
+      const registryObject = result.tx.objectChanges.find(
+        (obj: any) =>
+          obj.type === "created" &&
+          obj.objectType?.includes("::registry::SilvanaRegistry")
+      );
+      if (registryObject && "objectId" in registryObject) {
+        REGISTRY_ADDRESS = registryObject.objectId;
+        console.log("Registry created with address:", REGISTRY_ADDRESS);
+      }
+    }
+
     if (result?.digest) await waitTx(result.digest);
+
+    if (!REGISTRY_ADDRESS) {
+      throw new Error("Failed to create registry or extract registry address");
+    }
   });
   it("should create developer", { skip: !create }, async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     console.log("creating developer on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -62,6 +84,11 @@ describe("Agent Registry", async () => {
     if (result?.digest) await waitTx(result.digest);
   });
   it("should create agent", { skip: !create }, async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     console.log("creating agent on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -76,10 +103,8 @@ describe("Agent Registry", async () => {
     const tx = registry.createAgent({
       developer: "DFST",
       name: "Test Agent 4",
-      docker_image: "dfstio/testagent4:latest",
-      min_memory_gb: 8,
-      min_cpu_cores: 4,
-      supports_tee: false,
+      image: "https://example.com/agent-logo.png",
+      description: "Test agent for coordination",
       chains: ["sui-mainnet", "sui-testnet"],
     });
     tx.setSender(address);
@@ -93,6 +118,11 @@ describe("Agent Registry", async () => {
     if (result?.digest) await waitTx(result.digest);
   });
   it("should update developer", { skip: !create }, async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     console.log("updating developer on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -122,6 +152,11 @@ describe("Agent Registry", async () => {
     if (result?.digest) await waitTx(result.digest);
   });
   it("should update agent", { skip: !create }, async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     console.log("updating agent on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -136,11 +171,9 @@ describe("Agent Registry", async () => {
     const tx = registry.updateAgent({
       developer: "DFST",
       name: "Test Agent 4",
-      docker_image: "dfstio/testagent4:latest",
-      min_memory_gb: 8,
-      min_cpu_cores: 4,
-      supports_tee: false,
-      chains: ["sui-mainnet", "sui-testnet"],
+      image: "https://example.com/agent-logo-updated.png",
+      description: "Updated test agent for coordination",
+      chains: ["sui-mainnet", "sui-testnet", "sui-devnet"],
     });
     tx.setSender(address);
     tx.setGasBudget(100_000_000);
@@ -152,7 +185,12 @@ describe("Agent Registry", async () => {
     console.log("Objects:", result?.tx?.objectChanges);
     if (result?.digest) await waitTx(result.digest);
   });
-  it.skip("should remove agent", async () => {
+  it("should remove agent", async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     console.log("removing agent on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -178,7 +216,12 @@ describe("Agent Registry", async () => {
     console.log("Objects:", result?.tx?.objectChanges);
     if (result?.digest) await waitTx(result.digest);
   });
-  it.skip("should remove developer", async () => {
+  it("should remove developer", async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     console.log("removing developer on chain", process.env.SUI_CHAIN);
     const key = process.env.SUI_KEY;
     if (!key) {
@@ -205,13 +248,23 @@ describe("Agent Registry", async () => {
     if (result?.digest) await waitTx(result.digest);
   });
   it("should get developer", async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     const registry = new AgentRegistry({
       registry: REGISTRY_ADDRESS,
     });
     const developer = await registry.getDeveloper({ name: "DFST" });
     console.log("Developer", developer);
   });
-  it.skip("should get developer names", async () => {
+  it("should get developer names", async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     const key = process.env.SUI_KEY;
     if (!key) {
       throw new Error("SUI_KEY is not set");
@@ -227,7 +280,12 @@ describe("Agent Registry", async () => {
     });
     console.log("Developer Names", developerNames);
   });
-  it.skip("should get agent", async () => {
+  it("should get agent", async () => {
+    if (!REGISTRY_ADDRESS) {
+      throw new Error(
+        "Registry address not set - run create registry test first"
+      );
+    }
     const registry = new AgentRegistry({
       registry: REGISTRY_ADDRESS,
     });
@@ -238,7 +296,7 @@ describe("Agent Registry", async () => {
     console.log("Agent", agent);
   });
 
-  it.skip("should get docker image details", async () => {
+  it("should get docker image details", async () => {
     const detailsNonTEE = await AgentRegistry.getDockerImageDetails({
       dockerImage: "dfstio/testagent4:latest",
     });
