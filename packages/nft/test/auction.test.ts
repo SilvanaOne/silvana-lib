@@ -618,7 +618,8 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
         : chain === "zeko"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
-    const expiry = slot.add(UInt32.from(100000));
+    const expiry = slot.add(UInt32.from(1_000_000n));
+    console.log("expiry", expiry.toBigint());
     const masterNFT = new MintParams({
       name: fieldFromString(name),
       address: zkCollectionKey,
@@ -742,7 +743,8 @@ describe(`Auction contracts tests: ${chain} ${withdraw ? "withdraw " : ""}${
         : chain === "zeko"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
-    const expiry = slot.add(UInt32.from(100000));
+    const expiry = slot.add(UInt32.from(1_000_000n));
+    console.log("expiry", expiry.toBigint());
     const tx = await Mina.transaction(
       {
         sender: creator,

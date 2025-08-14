@@ -5,6 +5,7 @@ import {
   fetchSuiDynamicFieldsList,
   fetchSuiObject,
 } from "./fetch.js";
+import { silvanaRegistryPackage } from "./package.js";
 
 type AgentChain =
   | "ethereum-mainnet"
@@ -26,18 +27,23 @@ type AgentChain =
   | "walrus-testnet"
   | string; // other chains
 
+export interface AgentMethod {
+  dockerImage: string;
+  dockerSha256?: string;
+  minMemoryGb: number;
+  minCpuCores: number;
+  requiresTee: boolean;
+}
+
 export interface Agent {
   id: string;
   name: string;
   image?: string;
   description?: string;
   site?: string;
-  dockerImage: string;
-  dockerSha256?: string;
-  minMemoryGb: number;
-  minCpuCores: number;
-  supportsTEE: boolean;
   chains: AgentChain[];
+  methods: Record<string, AgentMethod>;
+  defaultMethod?: AgentMethod;
   createdAt: number;
   updatedAt: number;
   version: number;
@@ -75,7 +81,7 @@ export class AgentRegistry {
     console.log("Creating agent registry", params.name);
     const transaction = new Transaction();
     transaction.moveCall({
-      target: `@silvana/agent::registry::create_registry`,
+      target: `${silvanaRegistryPackage}::registry::create_registry`,
       arguments: [transaction.pure.string(params.name)],
     });
 
@@ -93,7 +99,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::add_developer`,
+      target: `${silvanaRegistryPackage}::registry::add_developer`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(name),
@@ -119,7 +125,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::update_developer`,
+      target: `${silvanaRegistryPackage}::registry::update_developer`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(name),
@@ -139,7 +145,7 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::remove_developer`,
+      target: `${silvanaRegistryPackage}::registry::remove_developer`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(name),
@@ -157,11 +163,6 @@ export class AgentRegistry {
     image?: string;
     description?: string;
     site?: string;
-    docker_image: string;
-    docker_sha256?: string;
-    min_memory_gb: number;
-    min_cpu_cores: number;
-    supports_tee: boolean;
     chains: AgentChain[];
   }): Transaction {
     const {
@@ -170,17 +171,12 @@ export class AgentRegistry {
       image,
       description,
       site,
-      docker_image,
-      docker_sha256,
-      min_memory_gb,
-      min_cpu_cores,
-      supports_tee,
       chains,
     } = params;
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::add_agent`,
+      target: `${silvanaRegistryPackage}::registry::add_agent`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(developer),
@@ -188,11 +184,6 @@ export class AgentRegistry {
         tx.pure.option("string", image ?? null),
         tx.pure.option("string", description ?? null),
         tx.pure.option("string", site ?? null),
-        tx.pure.string(docker_image),
-        tx.pure.option("string", docker_sha256 ?? null),
-        tx.pure.u16(min_memory_gb),
-        tx.pure.u16(min_cpu_cores),
-        tx.pure.bool(supports_tee),
         tx.pure.vector("string", chains),
         tx.object(SUI_CLOCK_OBJECT_ID),
       ],
@@ -207,11 +198,6 @@ export class AgentRegistry {
     image?: string;
     description?: string;
     site?: string;
-    docker_image: string;
-    docker_sha256?: string;
-    min_memory_gb: number;
-    min_cpu_cores: number;
-    supports_tee: boolean;
     chains: AgentChain[];
   }): Transaction {
     const {
@@ -220,17 +206,12 @@ export class AgentRegistry {
       image,
       description,
       site,
-      docker_image,
-      docker_sha256,
-      min_memory_gb,
-      min_cpu_cores,
-      supports_tee,
       chains,
     } = params;
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::update_agent`,
+      target: `${silvanaRegistryPackage}::registry::update_agent`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(developer),
@@ -238,11 +219,6 @@ export class AgentRegistry {
         tx.pure.option("string", image ?? null),
         tx.pure.option("string", description ?? null),
         tx.pure.option("string", site ?? null),
-        tx.pure.string(docker_image),
-        tx.pure.option("string", docker_sha256 ?? null),
-        tx.pure.u16(min_memory_gb),
-        tx.pure.u16(min_cpu_cores),
-        tx.pure.bool(supports_tee),
         tx.pure.vector("string", chains),
         tx.object(SUI_CLOCK_OBJECT_ID),
       ],
@@ -256,7 +232,153 @@ export class AgentRegistry {
     const tx = new Transaction();
 
     tx.moveCall({
-      target: `@silvana/agent::registry::remove_agent`,
+      target: `${silvanaRegistryPackage}::registry::remove_agent`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(developer),
+        tx.pure.string(agent),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+
+    return tx;
+  }
+
+  addAgentMethod(params: {
+    developer: string;
+    agent: string;
+    method: string;
+    dockerImage: string;
+    dockerSha256?: string;
+    minMemoryGb: number;
+    minCpuCores: number;
+    requiresTee: boolean;
+  }): Transaction {
+    const {
+      developer,
+      agent,
+      method,
+      dockerImage,
+      dockerSha256,
+      minMemoryGb,
+      minCpuCores,
+      requiresTee,
+    } = params;
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::add_method`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(developer),
+        tx.pure.string(agent),
+        tx.pure.string(method),
+        tx.pure.string(dockerImage),
+        tx.pure.option("string", dockerSha256 ?? null),
+        tx.pure.u16(minMemoryGb),
+        tx.pure.u16(minCpuCores),
+        tx.pure.bool(requiresTee),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+
+    return tx;
+  }
+
+  updateAgentMethod(params: {
+    developer: string;
+    agent: string;
+    method: string;
+    dockerImage: string;
+    dockerSha256?: string;
+    minMemoryGb: number;
+    minCpuCores: number;
+    requiresTee: boolean;
+  }): Transaction {
+    const {
+      developer,
+      agent,
+      method,
+      dockerImage,
+      dockerSha256,
+      minMemoryGb,
+      minCpuCores,
+      requiresTee,
+    } = params;
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::update_method`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(developer),
+        tx.pure.string(agent),
+        tx.pure.string(method),
+        tx.pure.string(dockerImage),
+        tx.pure.option("string", dockerSha256 ?? null),
+        tx.pure.u16(minMemoryGb),
+        tx.pure.u16(minCpuCores),
+        tx.pure.bool(requiresTee),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+
+    return tx;
+  }
+
+  removeAgentMethod(params: {
+    developer: string;
+    agent: string;
+    method: string;
+  }): Transaction {
+    const { developer, agent, method } = params;
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::remove_method`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(developer),
+        tx.pure.string(agent),
+        tx.pure.string(method),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+
+    return tx;
+  }
+
+  setDefaultMethod(params: {
+    developer: string;
+    agent: string;
+    method: string;
+  }): Transaction {
+    const { developer, agent, method } = params;
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::set_default_method`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(developer),
+        tx.pure.string(agent),
+        tx.pure.string(method),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+
+    return tx;
+  }
+
+  removeDefaultMethod(params: {
+    developer: string;
+    agent: string;
+  }): Transaction {
+    const { developer, agent } = params;
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::remove_default_method`,
       arguments: [
         tx.object(this.registry),
         tx.pure.string(developer),
@@ -367,32 +489,58 @@ export class AgentRegistry {
     if (!agentObject) {
       return undefined;
     }
+    
+    // Parse methods from VecMap structure
+    const methods: Record<string, AgentMethod> = {};
+    const methodsData = (agentObject as any)?.methods?.fields?.contents;
+    if (methodsData && Array.isArray(methodsData)) {
+      for (const entry of methodsData) {
+        const key = entry?.fields?.key;
+        const value = entry?.fields?.value;
+        if (key && value) {
+          methods[key] = {
+            dockerImage: value.docker_image,
+            dockerSha256: value.docker_sha256 ?? undefined,
+            minMemoryGb: Number(value.min_memory_gb),
+            minCpuCores: Number(value.min_cpu_cores),
+            requiresTee: Boolean(value.requires_tee),
+          };
+        }
+      }
+    }
+    
+    // Parse default method if it exists
+    let defaultMethod: AgentMethod | undefined;
+    const defaultMethodData = (agentObject as any)?.default_method;
+    if (defaultMethodData && typeof defaultMethodData === 'object' && !Array.isArray(defaultMethodData)) {
+      defaultMethod = {
+        dockerImage: defaultMethodData.docker_image,
+        dockerSha256: defaultMethodData.docker_sha256 ?? undefined,
+        minMemoryGb: Number(defaultMethodData.min_memory_gb),
+        minCpuCores: Number(defaultMethodData.min_cpu_cores),
+        requiresTee: Boolean(defaultMethodData.requires_tee),
+      };
+    }
+    
     const agent = {
       id: (agentObject as any)?.id?.id,
       name: (agentObject as any).name,
       image: (agentObject as any)?.image ?? undefined,
       description: (agentObject as any)?.description ?? undefined,
       site: (agentObject as any)?.site ?? undefined,
-      dockerImage: (agentObject as any).docker_image,
-      dockerSha256: (agentObject as any)?.docker_sha256 ?? undefined,
-      minMemoryGb: Number((agentObject as any).min_memory_gb),
-      minCpuCores: Number((agentObject as any).min_cpu_cores),
-      supportsTEE: Boolean((agentObject as any).supports_tee),
+      chains: (agentObject as any)?.chains ?? [],
+      methods,
+      defaultMethod,
       createdAt: Number((agentObject as any).created_at),
       updatedAt: Number((agentObject as any).updated_at),
       version: Number((agentObject as any).version),
     };
-    if (
-      !agent.id ||
-      !agent.name ||
-      !agent.dockerImage ||
-      !agent.minMemoryGb ||
-      !agent.minCpuCores ||
-      !agent.createdAt ||
-      !agent.updatedAt
-    ) {
+    
+    // Only check for essential fields
+    if (!agent.id || !agent.name) {
       return undefined;
     }
+    
     return agent as Agent;
   }
 

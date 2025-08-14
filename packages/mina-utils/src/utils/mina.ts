@@ -70,7 +70,9 @@ function getDeployer(): Mina.TestPublicKey | undefined {
 async function initBlockchain(
   instance: blockchain,
   deployersNumber: number = 0,
-  proofsEnabled: boolean = true
+  proofsEnabled: boolean = true,
+  customMinaNodeUrl: string | undefined = undefined,
+  customMinaArchiveNodeUrl: string | undefined = undefined
 ): Promise<MinaNetworkInstance> {
   /*
   if (instance === "mainnet") {
@@ -113,10 +115,12 @@ async function initBlockchain(
     mina:
       process.env.MINA_NODE_URL ??
       process.env.NEXT_PUBLIC_MINA_NODE_URL ??
+      customMinaNodeUrl ??
       network.mina,
     archive:
       process.env.MINA_ARCHIVE_NODE_URL ??
       process.env.NEXT_PUBLIC_MINA_ARCHIVE_NODE_URL ??
+      customMinaArchiveNodeUrl ??
       network.archive,
     lightnetAccountManager: network.accountManager,
     networkId: instance === "mainnet" ? "mainnet" : "testnet",

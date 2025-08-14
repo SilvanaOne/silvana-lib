@@ -58,6 +58,7 @@ const vk = nftVerificationKeys[networkId].vk;
 
 const { TestPublicKey } = Mina;
 type TestPublicKey = Mina.TestPublicKey;
+const FEE = 500_000_000;
 
 /*
 “Richard Of York Gave Battle In Vain”:
@@ -233,7 +234,12 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
   }
 
   it("should initialize a blockchain", async () => {
-    if (chain === "devnet" || chain === "zeko" || chain === "mainnet") {
+    if (
+      chain === "devnet" ||
+      chain === "zeko" ||
+      chain === "mainnet" ||
+      chain === "zeko:alphanet"
+    ) {
       await initBlockchain(chain);
       admin = TestPublicKey.fromBase58(TEST_ACCOUNTS[0].privateKey);
       users = TEST_ACCOUNTS.slice(1).map((account) =>
@@ -339,7 +345,8 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
         : chain === "zeko"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
-    const expiry = slot.add(UInt32.from(100000));
+    const expiry = slot.add(UInt32.from(1_000_000n));
+    console.log("expiry", expiry.toBigint());
     const masterNFT = new MintParams({
       name: fieldFromString(name),
       address: zkCollectionKey,
@@ -358,7 +365,7 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
     const tx = await Mina.transaction(
       {
         sender: creator,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Deploy Collection ${name}`.substring(0, 30),
       },
       async () => {
@@ -460,11 +467,12 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
         : chain === "zeko"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
-    const expiry = slot.add(UInt32.from(100000));
+    const expiry = slot.add(UInt32.from(1_000_000n));
+    console.log("expiry", expiry.toBigint());
     const tx = await Mina.transaction(
       {
         sender: creator,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Mint NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -490,6 +498,10 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
         });
         AccountUpdate.fundNewAccount(creator, 1);
         await colorGameContract.deploy({});
+        if (chain === "zeko") {
+          const au = AccountUpdate.createSigned(creator);
+          au.balance.addInPlace(900_000_000n);
+        }
       }
     );
     await tx.prove();
@@ -540,7 +552,7 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
     const tx = await Mina.transaction(
       {
         sender: player,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Play game`.substring(0, 30),
       },
       async () => {
@@ -673,7 +685,7 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
       const tx = await Mina.transaction(
         {
           sender: users[2],
-          fee: 100_000_000,
+          fee: FEE,
           memo: `Update NFT ${name}`.substring(0, 30),
         },
         async () => {
@@ -728,7 +740,7 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
     const tx = await Mina.transaction(
       {
         sender: player,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Win game`.substring(0, 30),
       },
       async () => {
@@ -870,7 +882,7 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
         const tx = await Mina.transaction(
           {
             sender: winner,
-            fee: 100_000_000,
+            fee: FEE,
             memo: `Change owner to the game winner for NFT ${name}`.substring(
               0,
               30
@@ -938,7 +950,7 @@ describe(`NFT ZkProgram tests: ${chain} ${readOnly ? "read-only " : ""}${
       const tx = await Mina.transaction(
         {
           sender: owner,
-          fee: 100_000_000,
+          fee: FEE,
           memo: `Transfer NFT ${name}`.substring(0, 30),
         },
         async () => {

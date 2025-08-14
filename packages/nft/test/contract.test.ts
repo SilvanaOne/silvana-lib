@@ -142,6 +142,7 @@ const validators = [
 const creator = whitelistedUsers[0];
 let owner = creator;
 const price = UInt64.from(10_000_000_000);
+const FEE = 300_000_000;
 let collectionName: string;
 
 interface NFTParams {
@@ -168,7 +169,12 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
   }
 
   it("should initialize a blockchain", async () => {
-    if (chain === "devnet" || chain === "zeko" || chain === "mainnet") {
+    if (
+      chain === "devnet" ||
+      chain === "zeko" ||
+      chain === "mainnet" ||
+      chain === "zeko:alphanet"
+    ) {
       await initBlockchain(chain);
       admin = TestPublicKey.fromBase58(TEST_ACCOUNTS[0].privateKey);
       users = TEST_ACCOUNTS.slice(1).map((account) =>
@@ -222,7 +228,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
         const transaction = await Mina.transaction(
           {
             sender: users[0],
-            fee: 100_000_000,
+            fee: FEE,
             memo: "topup",
             nonce: nonce++,
           },
@@ -502,7 +508,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       const tx = await Mina.transaction(
         {
           sender: admin,
-          fee: 100_000_000,
+          fee: FEE,
           memo: `Deploy UpgradeAuthority`,
         },
         async () => {
@@ -547,7 +553,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
         : chain === "zeko"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
-    const expiry = slot.add(UInt32.from(100000));
+    const expiry = slot.add(UInt32.from(1_000_000n));
+    console.log("expiry", expiry.toBigint());
     const masterNFT = new MintParams({
       name: fieldFromString(name),
       address: zkCollectionKey,
@@ -575,7 +582,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: creator,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Deploy Collection ${name}`.substring(0, 30),
       },
       async () => {
@@ -661,11 +668,12 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
         : chain === "zeko"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
-    const expiry = slot.add(UInt32.from(100000));
+    const expiry = slot.add(UInt32.from(1_000_000n));
+    console.log("expiry", expiry.toBigint());
     const tx = await Mina.transaction(
       {
         sender: creator,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Mint NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -738,7 +746,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: seller,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Offer NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -799,7 +807,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       const tx = await Mina.transaction(
         {
           sender: buyer,
-          fee: 100_000_000,
+          fee: FEE,
           memo: `Buy NFT ${name}`.substring(0, 30),
         },
         async () => {
@@ -834,7 +842,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       );
       success = true;
     } catch (e) {
-      console.log("Buy failed, approveTransfer:", approveTransfer);
+      console.log("Buy failed, approveTransfer:", approveTransfer, e);
     }
     assert.strictEqual(success, !approveTransfer);
   });
@@ -901,7 +909,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: buyer,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Bid NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -967,7 +975,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: seller,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Accept bid on NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -1097,7 +1105,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: owner,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Update NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -1148,7 +1156,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: owner,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Transfer NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -1207,7 +1215,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: owner,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Pause NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -1253,7 +1261,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       const tx = await Mina.transaction(
         {
           sender: owner,
-          fee: 100_000_000,
+          fee: FEE,
           memo: `Transfer NFT ${name}`.substring(0, 30),
         },
         async () => {
@@ -1314,7 +1322,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: owner,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Resume NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -1359,7 +1367,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: owner,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Transfer NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -1408,7 +1416,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: creator,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Pause Collection ${collectionName}`.substring(0, 30),
       },
       async () => {
@@ -1454,7 +1462,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       const tx = await Mina.transaction(
         {
           sender: owner,
-          fee: 100_000_000,
+          fee: FEE,
           memo: `Transfer NFT ${name}`.substring(0, 30),
         },
         async () => {
@@ -1505,7 +1513,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: creator,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Resume Collection ${collectionName}`.substring(0, 30),
       },
       async () => {
@@ -1681,7 +1689,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       const tx = await Mina.transaction(
         {
           sender: admin,
-          fee: 100_000_000,
+          fee: FEE,
           memo: `Set UpgradeAuthority`,
         },
         async () => {
@@ -1729,7 +1737,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: owner,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Upgrade NFT ${name}`.substring(0, 30),
       },
       async () => {
@@ -1765,7 +1773,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: creator,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Upgrade Collection ${collectionName}`.substring(0, 30),
       },
       async () => {
@@ -1801,7 +1809,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: creator,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Upgrade AdminContract`.substring(0, 30),
       },
       async () => {
@@ -1848,7 +1856,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     const tx = await Mina.transaction(
       {
         sender: owner,
-        fee: 100_000_000,
+        fee: FEE,
         memo: `Transfer NFT ${name}`.substring(0, 30),
       },
       async () => {

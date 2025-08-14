@@ -12,3 +12,7 @@ export * from "./walrus.js";
 export * from "./faucet.js";
 export * from "./ipfs.js";
 export * from "./public-key.js";
+export * from "./job.js";
+export * from "./app_instance.js";
+export * from "./package.js";
+export * from "./test.js";

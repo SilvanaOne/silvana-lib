@@ -5,6 +5,7 @@ export {
   Mainnet,
   Devnet,
   Zeko,
+  ZekoAlphaNet,
   Lightnet,
   Local,
 };
@@ -12,7 +13,13 @@ export {
 /**
  * blockchain is the type for the chain ID.
  */
-type blockchain = "local" | "devnet" | "lightnet" | "mainnet" | "zeko";
+type blockchain =
+  | "local"
+  | "devnet"
+  | "lightnet"
+  | "mainnet"
+  | "zeko"
+  | "zeko:alphanet";
 
 /**
  * MinaNetwork is the data structure for a Mina network, keeping track of the Mina and archive endpoints, chain ID, name, account manager, explorer account URL, explorer transaction URL, and faucet.
@@ -90,15 +97,15 @@ const Zeko: MinaNetwork = {
   faucet: "https://zeko.io/faucet",
 };
 
-// const Zeko: MinaNetwork = {
-//   mina: ["http://m1.zeko.io/graphql"],
-//   archive: ["http://m1.zeko.io/graphql"],
-//   explorerAccountUrl: "https://zekoscan.io/devnet/account/",
-//   explorerTransactionUrl: "https://zekoscan.io/devnet/tx/",
-//   chainId: "zeko",
-//   name: "Zeko",
-//   faucet: "https://zeko.io/faucet",
-// };
+const ZekoAlphaNet: MinaNetwork = {
+  mina: ["http://m1.zeko.io/graphql"],
+  archive: ["http://m1.zeko.io/graphql"],
+  explorerAccountUrl: "",
+  explorerTransactionUrl: "",
+  chainId: "zeko:alphanet",
+  name: "Zeko AlphaNet",
+  faucet: "",
+};
 
 const Lightnet: MinaNetwork = {
   mina: ["http://localhost:8080/graphql"],
