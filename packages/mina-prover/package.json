@@ -13,7 +13,7 @@
     "@silvana-one/prover": "1.0.26",
     "@types/node": "^24.0.14",
     "esbuild": "^0.25.6",
-    "o1js": "^2.4.0",
+    "o1js": "2.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
@@ -50,7 +50,7 @@
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
   "peerDependencies": {
-    "o1js": "^2.4.0",
+    "o1js": "2.4.0",
     "@silvana-one/api": "1.0.26",
     "@silvana-one/mina-utils": "1.0.26",
     "@silvana-one/prover": "1.0.26"

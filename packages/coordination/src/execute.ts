@@ -66,6 +66,7 @@ export async function executeTx(params: {
       digest: string;
       events: object;
       executeTime: number;
+      error?: string;
     }
   | undefined
 > {
@@ -136,13 +137,21 @@ export async function executeTx(params: {
     }
 
     if (executedTx?.effects?.status?.status === "failure") {
+      const errorMessage = executedTx?.effects?.status?.error || "Unknown error";
       if (showErrors) {
         console.log(
           `Errors for tx ${executedTx.digest}:`,
-          executedTx?.effects?.status?.error
+          errorMessage
         );
-        throw new Error(`tx execution failed: ${executedTx.digest}`);
       }
+      // Return the transaction with error information instead of throwing
+      return {
+        tx: executedTx,
+        digest: executedTx.digest,
+        events: (executedTx?.events as SuiEvent[])?.[0]?.parsedJson as object,
+        executeTime: end - start,
+        error: errorMessage,
+      };
     }
     return {
       tx: executedTx,

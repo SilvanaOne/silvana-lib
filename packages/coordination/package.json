@@ -55,7 +55,7 @@
     "mvr": "npm run test test/mvr.test.ts",
     "agent": "npm run test test/agent.test.ts",
     "job": "npm run test test/job.test.ts",
-    "app": "npm run test test/app_instance.test.ts"
+    "app": "npm run test test/app.test.ts"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"

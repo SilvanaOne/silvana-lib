@@ -31,6 +31,17 @@ export interface TestRegistryResult {
   address: string;
 }
 
+export interface TestAppResult {
+  testAppAddress: string;
+  appInstanceAddress: string;
+  appInstanceCapAddress: string;
+  registryAddress: string;
+  appName: string;
+  keyPair: Ed25519Keypair;
+  address: string;
+  appInstanceManager: AppInstanceManager;
+}
+
 /**
  * Creates a test Silvana Registry with a test developer, app, and optionally an agent
  * This is a helper function for testing that sets up a complete test environment
@@ -80,7 +91,15 @@ export async function createTestRegistry(
     keyPair,
   });
   
-  if (!registryResult?.tx?.objectChanges) {
+  if (!registryResult) {
+    throw new Error("Failed to create registry - no result");
+  }
+  
+  if (registryResult.error) {
+    throw new Error(`Failed to create registry: ${registryResult.error}`);
+  }
+  
+  if (!registryResult.tx?.objectChanges) {
     throw new Error("Failed to create registry - no object changes");
   }
   
@@ -121,7 +140,15 @@ export async function createTestRegistry(
     keyPair,
   });
   
-  if (developerResult?.digest) {
+  if (!developerResult) {
+    throw new Error("Failed to create developer - no result");
+  }
+  
+  if (developerResult.error) {
+    throw new Error(`Failed to create developer: ${developerResult.error}`);
+  }
+  
+  if (developerResult.digest) {
     await waitTx(developerResult.digest);
   }
   console.log("Developer created:", developerName);
@@ -146,7 +173,15 @@ export async function createTestRegistry(
     keyPair,
   });
   
-  if (appResult?.digest) {
+  if (!appResult) {
+    throw new Error("Failed to create app - no result");
+  }
+  
+  if (appResult.error) {
+    throw new Error(`Failed to create app: ${appResult.error}`);
+  }
+  
+  if (appResult.digest) {
     await waitTx(appResult.digest);
   }
   console.log("App created:", appName);
@@ -170,7 +205,15 @@ export async function createTestRegistry(
       keyPair,
     });
     
-    if (agentResult?.digest) {
+    if (!agentResult) {
+      throw new Error("Failed to create agent - no result");
+    }
+    
+    if (agentResult.error) {
+      throw new Error(`Failed to create agent: ${agentResult.error}`);
+    }
+    
+    if (agentResult.digest) {
       await waitTx(agentResult.digest);
     }
     agentName = testAgentName;
@@ -198,46 +241,109 @@ export async function createTestRegistry(
 }
 
 /**
- * Helper to create an app instance in the test registry
+ * Creates a TestApp with an initialized AppInstance using the new TestApp module
+ * This uses the create_test_app function from the Move contract
  */
-export async function createTestAppInstance(
-  testRegistry: TestRegistryResult,
-  description?: string,
-  url?: string
-): Promise<string> {
-  console.log("Creating test app instance for app:", testRegistry.appName);
+export async function createTestApp(
+  registryAddress: string,
+  appName: string = "test_app"
+): Promise<TestAppResult> {
+  // Get key from environment
+  const key = process.env.SUI_KEY;
+  if (!key) {
+    throw new Error("SUI_KEY is not set in environment");
+  }
   
-  const tx = testRegistry.appInstanceManager.createAppInstance({
-    registry: testRegistry.registryAddress,
-    appName: testRegistry.appName,
-    description: description ?? `Test instance for ${testRegistry.appName}`,
-    url,
+  const keyPair = Ed25519Keypair.fromSecretKey(key);
+  const address = keyPair.toSuiAddress();
+  
+  console.log("Creating TestApp with AppInstance...");
+  console.log("Registry address:", registryAddress);
+  console.log("Sender address:", address);
+  
+  // First, check if the app already exists by trying to create it
+  // If it fails with "already exists" error, that's fine - we can continue
+  const createAppTx = new Transaction();
+  createAppTx.moveCall({
+    target: `${process.env.SILVANA_REGISTRY_PACKAGE ?? "@silvana/agent"}::registry::add_app`,
+    arguments: [
+      createAppTx.object(registryAddress),
+      createAppTx.pure.string(appName),
+      createAppTx.pure.option("string", "Test app for TestApp module"),
+      createAppTx.object("0x6"), // SUI_CLOCK_OBJECT_ID
+    ],
+  });
+  createAppTx.setSender(address);
+  createAppTx.setGasBudget(100_000_000);
+  
+  const appResult = await executeTx({
+    tx: createAppTx,
+    keyPair,
+    showErrors: false,  // Don't throw, we'll handle the error
   });
   
-  tx.setSender(testRegistry.address);
+  if (appResult?.digest && !appResult.error) {
+    await waitTx(appResult.digest);
+    console.log("App created:", appName);
+  } else if (appResult?.error?.includes("0) in command 0")) {
+    // Error code 0 from dynamic_field::add means the field already exists
+    console.log("App already exists, continuing:", appName);
+  } else if (appResult?.error) {
+    throw new Error(`Failed to create app for TestApp: ${appResult.error}`);
+  }
+  
+  // Call create_test_app to create a TestApp with an AppInstance
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${process.env.SILVANA_REGISTRY_PACKAGE ?? "@silvana/agent"}::test_app::create_test_app`,
+    arguments: [
+      tx.object(registryAddress),
+      tx.object("0x6"), // SUI_CLOCK_OBJECT_ID
+    ],
+  });
+  
+  tx.setSender(address);
   tx.setGasBudget(100_000_000);
   
   const result = await executeTx({
     tx,
-    keyPair: testRegistry.keyPair,
+    keyPair,
   });
   
-  if (!result || !result.tx) {
-    throw new Error("Failed to create app instance - no transaction result");
+  if (!result) {
+    throw new Error("Failed to create TestApp - no result");
+  }
+  
+  if (result.error) {
+    throw new Error(`Failed to create TestApp: ${result.error}`);
+  }
+  
+  if (!result.tx) {
+    throw new Error("Failed to create TestApp - no transaction result");
   }
   
   // Wait for the transaction to be confirmed
   if (result.digest) {
     const confirmedTx = await waitTx(result.digest);
-    // Use the confirmed transaction for object changes
     result.tx = confirmedTx;
   }
   
   if (!result?.tx?.objectChanges) {
-    throw new Error("Failed to create app instance - no object changes");
+    throw new Error("Failed to create TestApp - no object changes");
   }
   
-  // Find the created app instance object (it will be shared)
+  // Find the created TestApp object (it will be shared)
+  const testAppObject = result.tx.objectChanges.find(
+    (obj: any) => 
+      obj.type === "created" && 
+      obj.objectType?.includes("::test_app::TestApp")
+  );
+  
+  if (!testAppObject || !('objectId' in testAppObject)) {
+    throw new Error("Failed to find created TestApp object");
+  }
+  
+  // Find the created AppInstance object (it will be shared)
   const appInstanceObject = result.tx.objectChanges.find(
     (obj: any) => 
       obj.type === "created" && 
@@ -245,15 +351,33 @@ export async function createTestAppInstance(
   );
   
   if (!appInstanceObject || !('objectId' in appInstanceObject)) {
-    throw new Error("Failed to find created app instance object");
+    throw new Error("Failed to find created AppInstance object");
   }
   
-  const appInstanceId = appInstanceObject.objectId;
-  console.log("App instance created:", appInstanceId);
+  const testAppAddress = testAppObject.objectId;
+  const appInstanceAddress = appInstanceObject.objectId;
   
-  if (result.digest) {
-    await waitTx(result.digest);
-  }
+  // AppInstanceCap is stored inside the TestApp, not as a separate shared object
+  // We'll use the TestApp address as a placeholder since the cap is embedded
+  const appInstanceCapAddress = testAppAddress;
   
-  return appInstanceId;
+  console.log("TestApp created:", testAppAddress);
+  console.log("AppInstance created:", appInstanceAddress);
+  console.log("AppInstanceCap created:", appInstanceCapAddress);
+  
+  const appInstanceManager = new AppInstanceManager({ registry: registryAddress });
+  
+  return {
+    testAppAddress,
+    appInstanceAddress,
+    appInstanceCapAddress,
+    registryAddress,
+    appName,
+    keyPair,
+    address,
+    appInstanceManager,
+  };
 }
+
+// Note: createTestAppInstance has been removed. Use createTestApp instead, which creates
+// a TestApp with an embedded AppInstance using the Move test_app module.

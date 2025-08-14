@@ -41,14 +41,9 @@ export interface Agent {
   image?: string;
   description?: string;
   site?: string;
-  dockerImage: string;
-  dockerSha256?: string;
-  minMemoryGb: number;
-  minCpuCores: number;
-  supportsTEE: boolean;
   chains: AgentChain[];
-  methods?: Record<string, AgentMethod>;
-  defaultMethod?: string;
+  methods: Record<string, AgentMethod>;
+  defaultMethod?: AgentMethod;
   createdAt: number;
   updatedAt: number;
   version: number;
@@ -494,32 +489,58 @@ export class AgentRegistry {
     if (!agentObject) {
       return undefined;
     }
+    
+    // Parse methods from VecMap structure
+    const methods: Record<string, AgentMethod> = {};
+    const methodsData = (agentObject as any)?.methods?.fields?.contents;
+    if (methodsData && Array.isArray(methodsData)) {
+      for (const entry of methodsData) {
+        const key = entry?.fields?.key;
+        const value = entry?.fields?.value;
+        if (key && value) {
+          methods[key] = {
+            dockerImage: value.docker_image,
+            dockerSha256: value.docker_sha256 ?? undefined,
+            minMemoryGb: Number(value.min_memory_gb),
+            minCpuCores: Number(value.min_cpu_cores),
+            requiresTee: Boolean(value.requires_tee),
+          };
+        }
+      }
+    }
+    
+    // Parse default method if it exists
+    let defaultMethod: AgentMethod | undefined;
+    const defaultMethodData = (agentObject as any)?.default_method;
+    if (defaultMethodData && typeof defaultMethodData === 'object' && !Array.isArray(defaultMethodData)) {
+      defaultMethod = {
+        dockerImage: defaultMethodData.docker_image,
+        dockerSha256: defaultMethodData.docker_sha256 ?? undefined,
+        minMemoryGb: Number(defaultMethodData.min_memory_gb),
+        minCpuCores: Number(defaultMethodData.min_cpu_cores),
+        requiresTee: Boolean(defaultMethodData.requires_tee),
+      };
+    }
+    
     const agent = {
       id: (agentObject as any)?.id?.id,
       name: (agentObject as any).name,
       image: (agentObject as any)?.image ?? undefined,
       description: (agentObject as any)?.description ?? undefined,
       site: (agentObject as any)?.site ?? undefined,
-      dockerImage: (agentObject as any).docker_image,
-      dockerSha256: (agentObject as any)?.docker_sha256 ?? undefined,
-      minMemoryGb: Number((agentObject as any).min_memory_gb),
-      minCpuCores: Number((agentObject as any).min_cpu_cores),
-      supportsTEE: Boolean((agentObject as any).supports_tee),
+      chains: (agentObject as any)?.chains ?? [],
+      methods,
+      defaultMethod,
       createdAt: Number((agentObject as any).created_at),
       updatedAt: Number((agentObject as any).updated_at),
       version: Number((agentObject as any).version),
     };
-    if (
-      !agent.id ||
-      !agent.name ||
-      !agent.dockerImage ||
-      !agent.minMemoryGb ||
-      !agent.minCpuCores ||
-      !agent.createdAt ||
-      !agent.updatedAt
-    ) {
+    
+    // Only check for essential fields
+    if (!agent.id || !agent.name) {
       return undefined;
     }
+    
     return agent as Agent;
   }
 

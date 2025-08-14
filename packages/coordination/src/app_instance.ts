@@ -29,13 +29,6 @@ export interface AppInstance {
   updatedAt: number;
 }
 
-export interface CreateAppInstanceParams {
-  registry: string;
-  appName: string;
-  description?: string;
-  url?: string;
-}
-
 export interface CreateAppJobParams {
   appInstance: string;
   description?: string;
@@ -44,69 +37,11 @@ export interface CreateAppJobParams {
   data: Uint8Array;
 }
 
-export interface AddMethodParams {
-  appInstance: string;
-  name: string;
-  description?: string;
-  developer: string;
-  agent: string;
-  agentMethod: string;
-}
-
 export class AppInstanceManager {
   private readonly registry: string;
 
   constructor(params: { registry: string }) {
     this.registry = params.registry;
-  }
-
-  createAppInstance(params: CreateAppInstanceParams): Transaction {
-    const { appName, description, url } = params;
-    const tx = new Transaction();
-
-    tx.moveCall({
-      target: `${silvanaRegistryPackage}::registry::create_app_instance_from_registry`,
-      arguments: [
-        tx.object(this.registry),
-        tx.pure.string(appName),
-        tx.pure.option("string", description ?? null),
-        tx.pure.option("string", url ?? null),
-        tx.object(SUI_CLOCK_OBJECT_ID),
-      ],
-    });
-
-    return tx;
-  }
-
-  addMethod(params: AddMethodParams): Transaction {
-    const { appInstance, name, description, developer, agent, agentMethod } =
-      params;
-
-    // Debug logging
-    console.log("addMethod params:", {
-      appInstance,
-      name,
-      description,
-      developer,
-      agent,
-      agentMethod,
-    });
-
-    const tx = new Transaction();
-
-    tx.moveCall({
-      target: `${silvanaRegistryPackage}::app_instance::add_method`,
-      arguments: [
-        tx.object(appInstance),
-        tx.pure.string(name),
-        tx.pure.option("string", description ?? null),
-        tx.pure.string(developer),
-        tx.pure.string(agent),
-        tx.pure.string(agentMethod),
-      ],
-    });
-
-    return tx;
   }
 
   // Note: update_method and remove_method functions are not available in the Move module

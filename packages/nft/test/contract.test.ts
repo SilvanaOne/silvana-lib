@@ -142,7 +142,7 @@ const validators = [
 const creator = whitelistedUsers[0];
 let owner = creator;
 const price = UInt64.from(10_000_000_000);
-const FEE = 500_000_000;
+const FEE = 300_000_000;
 let collectionName: string;
 
 interface NFTParams {
