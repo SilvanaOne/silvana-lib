@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/upgradable",
   "description": "Silvana Upgradable interface for Mina zkApps",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
@@ -9,7 +9,7 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@silvana-one/storage": "1.0.26",
+    "@silvana-one/storage": "1.0.27",
     "@types/node": "^24.0.14",
     "esbuild": "^0.25.6",
     "o1js": "2.4.0",
@@ -44,7 +44,7 @@
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
   "peerDependencies": {
-    "@silvana-one/storage": "1.0.26",
+    "@silvana-one/storage": "1.0.27",
     "o1js": "2.4.0"
   },
   "publishConfig": {

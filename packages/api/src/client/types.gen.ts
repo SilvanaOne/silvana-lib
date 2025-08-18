@@ -536,6 +536,10 @@ export type TokenTransactionBaseParams = {
      */
     nonce?: number;
     /**
+     * Optional. The fee for the transaction.
+     */
+    fee?: number;
+    /**
      * Optional. A memo for the transaction.
      */
     memo?: string;
@@ -570,6 +574,10 @@ export type NftTransactionBaseParams = {
      * Optional. The nonce for the transaction.
      */
     nonce?: number;
+    /**
+     * Optional. The fee for the transaction.
+     */
+    fee?: number;
     /**
      * Optional. A memo for the transaction.
      */

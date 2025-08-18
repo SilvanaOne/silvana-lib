@@ -2289,6 +2289,10 @@ components:
           type: integer
           format: int64
           description: Optional. The nonce for the transaction.
+        fee:
+          type: integer
+          format: int64
+          description: Optional. The fee for the transaction.
         memo:
           type: string
           description: Optional. A memo for the transaction.
@@ -2320,6 +2324,10 @@ components:
           type: integer
           format: int64
           description: Optional. The nonce for the transaction.
+        fee:
+          type: integer
+          format: int64
+          description: Optional. The fee for the transaction.
         memo:
           type: string
           description: Optional. A memo for the transaction.
