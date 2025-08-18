@@ -20,6 +20,7 @@ import {
   NftSellParams,
   NftBuyParams,
   NftTransferParams,
+  getCurrentZekoSlot,
 } from "@silvana-one/api";
 import { blockchain } from "../types.js";
 import { fetchMinaAccount } from "../fetch.js";
@@ -225,11 +226,9 @@ export async function buildNftCollectionLaunchTransaction(params: {
     chain === "local"
       ? Mina.currentSlot()
       : chain === "zeko"
-      ? UInt32.zero
+      ? UInt32.from((await getCurrentZekoSlot("zeko")) ?? 2_000_000)
       : (await fetchLastBlock()).globalSlotSinceGenesis;
-  const expiry = slot.add(
-    UInt32.from(chain === "mainnet" || chain === "devnet" ? 20 : 100000)
-  );
+  const expiry = slot.add(UInt32.from(20));
 
   const nftData = NFTData.new({
     owner: creator,
@@ -1029,11 +1028,9 @@ export async function buildNftMintTransaction(params: {
     chain === "local"
       ? Mina.currentSlot()
       : chain === "zeko"
-      ? UInt32.zero
+      ? UInt32.from((await getCurrentZekoSlot("zeko")) ?? 2_000_000)
       : (await fetchLastBlock()).globalSlotSinceGenesis;
-  const expiry = slot.add(
-    UInt32.from(chain === "mainnet" || chain === "devnet" ? 20 : 100000)
-  );
+  const expiry = slot.add(UInt32.from(20));
 
   const nftDataArgs = args.nftMintParams.data;
   if (nftDataArgs.owner === undefined) {
