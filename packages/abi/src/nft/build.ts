@@ -20,6 +20,7 @@ import {
   NftSellParams,
   NftBuyParams,
   NftTransferParams,
+  getCurrentZekoSlot,
 } from "@silvana-one/api";
 import { blockchain } from "../types.js";
 import { fetchMinaAccount } from "../fetch.js";
@@ -120,7 +121,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
   const sender = PublicKey.fromBase58(args.sender);
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
-  const fee = 200_000_000;
+  const fee = args.fee ?? 200_000_000;
   if (url && typeof url !== "string") throw new Error("Url must be a string");
   if (!args.collectionAddress || typeof args.collectionAddress !== "string")
     throw new Error("collectionAddress is required");
@@ -225,11 +226,9 @@ export async function buildNftCollectionLaunchTransaction(params: {
     chain === "local"
       ? Mina.currentSlot()
       : chain === "zeko"
-      ? UInt32.zero
+      ? UInt32.from((await getCurrentZekoSlot("zeko")) ?? 2_000_000)
       : (await fetchLastBlock()).globalSlotSinceGenesis;
-  const expiry = slot.add(
-    UInt32.from(chain === "mainnet" || chain === "devnet" ? 20 : 100000)
-  );
+  const expiry = slot.add(UInt32.from(20));
 
   const nftData = NFTData.new({
     owner: creator,
@@ -527,7 +526,7 @@ export async function buildNftTransaction(params: {
   }
 
   const memo = args.memo ?? `${txType.split(":")[1]} ${symbol} ${nftName}`;
-  const fee = 100_000_000;
+  const fee = args.fee ?? 200_000_000;
   const provingKey = params.provingKey
     ? PublicKey.fromBase58(params.provingKey)
     : sender;
@@ -956,7 +955,7 @@ export async function buildNftMintTransaction(params: {
   });
   const nftName = args.nftMintParams.name;
   const memo = args.memo ?? `${txType.split(":")[1]} ${symbol} ${nftName}`;
-  const fee = 200_000_000;
+  const fee = args.fee ?? 200_000_000;
   const provingKey = params.provingKey
     ? PublicKey.fromBase58(params.provingKey)
     : sender;
@@ -1029,11 +1028,9 @@ export async function buildNftMintTransaction(params: {
     chain === "local"
       ? Mina.currentSlot()
       : chain === "zeko"
-      ? UInt32.zero
+      ? UInt32.from((await getCurrentZekoSlot("zeko")) ?? 2_000_000)
       : (await fetchLastBlock()).globalSlotSinceGenesis;
-  const expiry = slot.add(
-    UInt32.from(chain === "mainnet" || chain === "devnet" ? 20 : 100000)
-  );
+  const expiry = slot.add(UInt32.from(20));
 
   const nftDataArgs = args.nftMintParams.data;
   if (nftDataArgs.owner === undefined) {

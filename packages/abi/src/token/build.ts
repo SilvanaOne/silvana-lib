@@ -68,7 +68,7 @@ export async function buildTokenLaunchTransaction(params: {
   const sender = PublicKey.fromBase58(args.sender);
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
-  const fee = 200_000_000;
+  const fee = args.fee ?? 200_000_000;
   if (uri && typeof uri !== "string") throw new Error("Uri must be a string");
   if (!args.tokenAddress || typeof args.tokenAddress !== "string")
     throw new Error("tokenAddress is required");
@@ -389,7 +389,7 @@ export async function buildTokenTransaction(params: {
     bidAddress,
   });
   const memo = args.memo ?? `${txType} ${symbol}`;
-  const fee = 200_000_000;
+  const fee = args.fee ?? 200_000_000;
   const provingKey = params.provingKey
     ? PublicKey.fromBase58(params.provingKey)
     : sender;
