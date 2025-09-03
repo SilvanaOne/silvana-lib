@@ -196,7 +196,7 @@ export async function buildTokenLaunchTransaction(params: {
           curveK: UInt64.from(10_000),
           feeMaster: provingKey,
           fee: UInt32.from(1000), // 1000 = 1%
-          launchFee: UInt64.from(10_000_000_000),
+          launchFee: UInt64.from(5_000_000_000),
           numberOfNewAccounts: UInt64.from(
             ACCOUNT_CREATION_FEE < 1_000_000_000n ? 0 : 4
           ), // patch Zeko Account Creation Fee
