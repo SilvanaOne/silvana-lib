@@ -1,25 +1,10 @@
-import {
-  Whitelist,
-  WhitelistedAddress,
-  Storage,
-  pinJSON,
-  serializeIndexedMap,
-  IndexedMapSerialized,
-} from "@silvana-one/storage";
+import { Whitelist, Storage, IndexedMapSerialized } from "@silvana-one/storage";
 import {
   NftTransactionType,
   NftTransactionParams,
   LaunchNftCollectionStandardAdminParams,
   LaunchNftCollectionAdvancedAdminParams,
   NftMintTransactionParams,
-  NftSellTransactionParams,
-  NftBuyTransactionParams,
-  NftTransferTransactionParams,
-  NftApproveTransactionParams,
-  NftMintParams,
-  NftSellParams,
-  NftBuyParams,
-  NftTransferParams,
   getCurrentZekoSlot,
 } from "@silvana-one/api";
 import { blockchain } from "../types.js";
@@ -228,7 +213,11 @@ export async function buildNftCollectionLaunchTransaction(params: {
       : chain === "zeko"
       ? UInt32.from((await getCurrentZekoSlot("zeko")) ?? 2_000_000)
       : (await fetchLastBlock()).globalSlotSinceGenesis;
-  const expiry = slot.add(UInt32.from(20));
+  const expiry = slot.add(UInt32.from(100));
+  if (chain === "zeko") {
+    console.log("zeko slot", slot.toBigint());
+    console.log("zeko expiry", expiry.toBigint());
+  }
 
   const nftData = NFTData.new({
     owner: creator,
@@ -1030,7 +1019,11 @@ export async function buildNftMintTransaction(params: {
       : chain === "zeko"
       ? UInt32.from((await getCurrentZekoSlot("zeko")) ?? 2_000_000)
       : (await fetchLastBlock()).globalSlotSinceGenesis;
-  const expiry = slot.add(UInt32.from(20));
+  const expiry = slot.add(UInt32.from(100));
+  if (chain === "zeko") {
+    console.log("zeko slot", slot.toBigint());
+    console.log("zeko expiry", expiry.toBigint());
+  }
 
   const nftDataArgs = args.nftMintParams.data;
   if (nftDataArgs.owner === undefined) {

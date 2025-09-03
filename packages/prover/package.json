@@ -1,16 +1,16 @@
 {
   "name": "@silvana-one/prover",
   "description": "Silvana Prover",
-  "version": "1.0.28",
+  "version": "1.0.30",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
     "chalk": "^4.1.2"
   },
   "devDependencies": {
-    "@types/node": "^24.0.14",
-    "esbuild": "^0.25.6",
-    "typescript": "^5.8.3"
+    "@types/node": "^24.3.0",
+    "esbuild": "^0.25.9",
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=20.0.0"

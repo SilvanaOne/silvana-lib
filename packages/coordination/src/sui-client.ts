@@ -31,11 +31,23 @@ export const suiClient = new SuiClient({
 
 function getUrl(network: SuiNetwork) {
   if (network === "testnet") {
-    return "https://rpc-testnet.suiscan.xyz:443";
+    return (
+      process.env.SUI_TESTNET_URL ||
+      process.env.NEXT_PUBLIC_SUI_TESTNET_URL ||
+      "https://rpc-testnet.suiscan.xyz:443"
+    );
   } else if (network === "devnet") {
-    return "https://rpc-ws-devnet.suiscan.xyz";
+    return (
+      process.env.SUI_DEVNET_URL ||
+      process.env.NEXT_PUBLIC_SUI_DEVNET_URL ||
+      "https://rpc-ws-devnet.suiscan.xyz"
+    );
   } else if (network === "mainnet") {
-    return "https://rpc-mainnet.suiscan.xyz:443";
+    return (
+      process.env.SUI_MAINNET_URL ||
+      process.env.NEXT_PUBLIC_SUI_MAINNET_URL ||
+      "https://rpc-mainnet.suiscan.xyz:443"
+    );
   } else {
     return getFullnodeUrl(network);
   }
