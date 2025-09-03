@@ -1,5 +1,7 @@
 export {
+  CanonicalBlockchain,
   blockchain,
+  getCanonicalBlockchain,
   MinaNetwork,
   networks,
   Mainnet,
@@ -10,16 +12,41 @@ export {
   Local,
 };
 
+type CanonicalBlockchain =
+  | "mina:local"
+  | "mina:lightnet"
+  | "mina:devnet"
+  | "mina:mainnet"
+  | "zeko:testnet"
+  | "zeko:alphanet";
+
 /**
  * blockchain is the type for the chain ID.
  */
 type blockchain =
+  | CanonicalBlockchain
   | "local"
   | "devnet"
   | "lightnet"
   | "mainnet"
-  | "zeko"
-  | "zeko:alphanet";
+  | "zeko";
+
+function getCanonicalBlockchain(chain: blockchain): CanonicalBlockchain {
+  switch (chain) {
+    case "local":
+      return "mina:local";
+    case "devnet":
+      return "mina:devnet";
+    case "lightnet":
+      return "mina:lightnet";
+    case "mainnet":
+      return "mina:mainnet";
+    case "zeko":
+      return "zeko:testnet";
+    default:
+      return chain;
+  }
+}
 
 /**
  * MinaNetwork is the data structure for a Mina network, keeping track of the Mina and archive endpoints, chain ID, name, account manager, explorer account URL, explorer transaction URL, and faucet.
@@ -32,7 +59,7 @@ interface MinaNetwork {
   archive: string[];
 
   /** The chain ID */
-  chainId: blockchain;
+  chainId: CanonicalBlockchain;
 
   /** The name of the network (optional) */
   name?: string;
@@ -61,14 +88,14 @@ const Mainnet: MinaNetwork = {
   ],
   explorerAccountUrl: "https://minascan.io/mainnet/account/",
   explorerTransactionUrl: "https://minascan.io/mainnet/tx/",
-  chainId: "mainnet",
+  chainId: "mina:mainnet",
   name: "Mainnet",
 };
 
 const Local: MinaNetwork = {
   mina: [],
   archive: [],
-  chainId: "local",
+  chainId: "mina:local",
 };
 
 const Devnet: MinaNetwork = {
@@ -82,7 +109,7 @@ const Devnet: MinaNetwork = {
   ],
   explorerAccountUrl: "https://minascan.io/devnet/account/",
   explorerTransactionUrl: "https://minascan.io/devnet/tx/",
-  chainId: "devnet",
+  chainId: "mina:devnet",
   name: "Devnet",
   faucet: "https://faucet.minaprotocol.com",
 };
@@ -92,7 +119,7 @@ const Zeko: MinaNetwork = {
   archive: ["https://devnet.zeko.io/graphql"],
   explorerAccountUrl: "https://zekoscan.io/devnet/account/",
   explorerTransactionUrl: "https://zekoscan.io/devnet/tx/",
-  chainId: "zeko",
+  chainId: "zeko:testnet",
   name: "Zeko",
   faucet: "https://zeko.io/faucet",
 };
@@ -111,7 +138,7 @@ const Lightnet: MinaNetwork = {
   mina: ["http://localhost:8080/graphql"],
   archive: ["http://localhost:8282"],
   accountManager: "http://localhost:8181",
-  chainId: "lightnet",
+  chainId: "mina:lightnet",
   name: "Lightnet",
 };
 

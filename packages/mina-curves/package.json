@@ -1,18 +1,18 @@
 {
   "name": "@silvana-one/mina-curves",
   "description": "Mina Curves - Poseidon hash and Signature",
-  "version": "1.0.28",
+  "version": "1.0.30",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@types/node": "^24.0.14",
-    "dotenv": "^17.2.0",
-    "esbuild": "^0.25.6",
+    "@types/node": "^24.3.0",
+    "dotenv": "^17.2.2",
+    "esbuild": "^0.25.9",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=20.0.0"

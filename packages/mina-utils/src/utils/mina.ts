@@ -19,7 +19,13 @@ import {
   Lightnet,
   CircuitString,
 } from "o1js";
-import { networks, blockchain, MinaNetwork, Local } from "../networks.js";
+import {
+  networks,
+  blockchain,
+  MinaNetwork,
+  Local,
+  getCanonicalBlockchain,
+} from "../networks.js";
 
 /**
  * MinaNetworkInstance is the data structure for a Mina network instance, keeping track of the keys, network, and network ID hash.
@@ -68,17 +74,14 @@ function getDeployer(): Mina.TestPublicKey | undefined {
  * @returns the Mina network instance
  */
 async function initBlockchain(
-  instance: blockchain,
+  chain: blockchain,
   deployersNumber: number = 0,
   proofsEnabled: boolean = true,
   customMinaNodeUrl: string | undefined = undefined,
   customMinaArchiveNodeUrl: string | undefined = undefined
 ): Promise<MinaNetworkInstance> {
-  /*
-  if (instance === "mainnet") {
-    throw new Error("Mainnet is not supported yet by zkApps");
-  }
-  */
+  const instance = getCanonicalBlockchain(chain);
+
   if (currentNetwork !== undefined) {
     if (currentNetwork?.network.chainId === instance) {
       return currentNetwork;
@@ -91,7 +94,7 @@ async function initBlockchain(
   const networkIdHash = CircuitString.fromString(instance).hash();
 
   // await used for compatibility with future versions of o1js
-  if (instance === "local") {
+  if (instance === "mina:local") {
     const local = await Mina.LocalBlockchain({
       proofsEnabled,
     });
@@ -123,15 +126,16 @@ async function initBlockchain(
       customMinaArchiveNodeUrl ??
       network.archive,
     lightnetAccountManager: network.accountManager,
-    networkId: instance === "mainnet" ? "mainnet" : "testnet",
-    bypassTransactionLimits: instance === "zeko",
+    networkId: instance === "mina:mainnet" ? "mainnet" : "testnet",
+    bypassTransactionLimits:
+      instance === "zeko:testnet" || instance === "zeko:alphanet",
   });
   Mina.setActiveInstance(networkInstance);
 
   const keys: Mina.TestPublicKey[] = [];
 
   if (deployersNumber > 0) {
-    if (instance === "lightnet") {
+    if (instance === "mina:lightnet") {
       for (let i = 0; i < deployersNumber; i++) {
         const keyPair = await Lightnet.acquireKeyPair();
         const key = Mina.TestPublicKey(keyPair.privateKey);
