@@ -1,25 +1,27 @@
 {
-  "name": "@silvana-one/abi",
-  "description": "Silvana ABI Experimental Library",
+  "name": "@silvana-one/agent",
+  "description": "Silvana Agent Client",
   "version": "1.0.32",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "tslib": "^2.8.1"
+    "@bufbuild/protobuf": "^2.6.0",
+    "@connectrpc/connect": "^2.0.2",
+    "@connectrpc/connect-node": "^2.0.2",
+    "@mysten/sui": "^1.36.0",
+    "@silvana-one/coordination": "^1.0.31",
+    "@silvana-one/mina-utils": "^1.0.31",
+    "@silvana-one/storage": "^1.0.31",
+    "o1js": "2.4.0"
   },
   "devDependencies": {
-    "@silvana-one/api": "1.0.32",
-    "@silvana-one/nft": "1.0.32",
-    "@silvana-one/storage": "1.0.32",
-    "@silvana-one/token": "1.0.32",
     "@types/node": "^24.3.0",
     "esbuild": "^0.25.9",
-    "o1js": "2.4.0",
-    "ts-node": "^10.9.2",
+    "dotenv": "^17.1.0",
     "typescript": "^5.9.2"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "exports": {
     "types": "./dist/node/index.d.ts",
@@ -40,30 +42,23 @@
   "homepage": "https://docs.silvana.one",
   "keywords": [
     "cloud",
-    "fungible-token",
-    "mina-protocol",
-    "silvana-one",
-    "proving",
-    "tokens",
-    "typescript",
-    "zkcloudworker"
+    "silvana",
+    "agent",
+    "client",
+    "typescript"
   ],
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
-  "peerDependencies": {
-    "@silvana-one/api": "1.0.32",
-    "@silvana-one/nft": "1.0.32",
-    "@silvana-one/storage": "1.0.32",
-    "@silvana-one/token": "1.0.32",
-    "o1js": "2.4.0"
-  },
   "publishConfig": {
     "access": "public"
   },
   "repository": "SilvanaOne/silvana-lib.git",
   "scripts": {
+    "proto": "rm -rf src/proto && cp -R ../../../silvana/proto/silvana/coordinator proto/silvana && buf generate --template buf.gen.agent.yaml",
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
-    "release": "npm publish --access public"
+    "release": "npm publish --access public",
+    "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test",
+    "agent": "npm run test test/agent.test.ts"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"

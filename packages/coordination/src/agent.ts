@@ -348,6 +348,69 @@ export class AgentRegistry {
     return tx;
   }
 
+  addMethodToApp(params: {
+    appName: string;
+    methodName: string;
+    description?: string;
+    developerName: string;
+    agentName: string;
+    agentMethod: string;
+  }): Transaction {
+    const {
+      appName,
+      methodName,
+      description,
+      developerName,
+      agentName,
+      agentMethod,
+    } = params;
+    const tx = new Transaction();
+
+    // Create the app method using app_method::new
+    const appMethod = tx.moveCall({
+      target: `${silvanaRegistryPackage}::app_method::new`,
+      arguments: [
+        tx.pure.option("string", description ?? null),
+        tx.pure.string(developerName),
+        tx.pure.string(agentName),
+        tx.pure.string(agentMethod),
+      ],
+    });
+
+    // Add the method to the app
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::add_method_to_app`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(appName),
+        tx.pure.string(methodName),
+        appMethod,
+      ],
+    });
+
+    return tx;
+  }
+
+  addMetadata(params: {
+    appInstanceId: string;
+    key: string;
+    value: string;
+  }): Transaction {
+    const { appInstanceId, key, value } = params;
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::app_instance::add_metadata`,
+      arguments: [
+        tx.object(appInstanceId),
+        tx.pure.string(key),
+        tx.pure.string(value),
+      ],
+    });
+
+    return tx;
+  }
+
   setDefaultMethod(params: {
     developer: string;
     agent: string;

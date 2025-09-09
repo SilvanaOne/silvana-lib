@@ -17,6 +17,7 @@ import path from "path";
 
   const packages: string[] = [
     "",
+    "agent",
     "coordination",
     "api",
     "storage",
