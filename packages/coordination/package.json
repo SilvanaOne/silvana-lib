@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/coordination",
   "description": "Silvana Coordination Client",
-  "version": "1.0.34",
+  "version": "1.0.36",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
@@ -55,7 +55,8 @@
     "mvr": "npm run test test/mvr.test.ts",
     "agent": "npm run test test/agent.test.ts",
     "job": "npm run test test/job.test.ts",
-    "app": "npm run test test/app.test.ts"
+    "app": "npm run test test/app.test.ts",
+    "getapp": "npm run test test/getapp.test.ts"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"

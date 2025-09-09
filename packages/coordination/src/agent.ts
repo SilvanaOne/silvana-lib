@@ -651,7 +651,7 @@ export class AgentRegistry {
     if (methodsData && Array.isArray(methodsData)) {
       for (const entry of methodsData) {
         const key = entry?.fields?.key;
-        const value = entry?.fields?.value;
+        const value = entry?.fields?.value?.fields;
         if (key && value) {
           methods[key] = {
             description: value.description ?? undefined,
@@ -692,6 +692,27 @@ export class AgentRegistry {
     }
 
     return app as SilvanaApp;
+  }
+
+  createApp(params: {
+    name: string;
+    description?: string;
+    transaction?: Transaction;
+  }): Transaction {
+    const { name, description, transaction } = params;
+    const tx = transaction ?? new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::add_app`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(name),
+        tx.pure.option("string", description ?? null),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+
+    return tx;
   }
 
   removeApp(params: { name: string; transaction?: Transaction }): Transaction {
