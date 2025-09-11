@@ -1,30 +1,26 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
-import {
-  fetchSuiDynamicField,
-  fetchSuiDynamicFieldsList,
-  fetchSuiObject,
-} from "./fetch.js";
+import { fetchSuiDynamicField, fetchSuiDynamicFieldsList } from "./fetch.js";
 import { silvanaRegistryPackage } from "./package.js";
+import { AppMethod } from "./app_instance.js";
 
 type AgentChain =
-  | "ethereum-mainnet"
-  | "ethereum-seplolia"
-  | "ethereum-holesky"
-  | "ethereum-hoodi"
-  | "mina-mainnet"
-  | "mina-devnet"
-  | "zeko-testnet"
-  | "zeko-alphanet"
-  | "sui-mainnet"
-  | "sui-testnet"
-  | "sui-devnet"
-  | "solana-mainnet"
-  | "solana-testnet"
-  | "solana-devnet"
-  | "solana-devnet"
-  | "walrus-mainnet"
-  | "walrus-testnet"
+  | "ethereum:mainnet"
+  | "ethereum:seplolia"
+  | "ethereum:holesky"
+  | "ethereum:hoodi"
+  | "mina:mainnet"
+  | "mina:devnet"
+  | "zeko:testnet"
+  | "zeko:alphanet"
+  | "sui:mainnet"
+  | "sui:testnet"
+  | "sui:devnet"
+  | "solana:mainnet"
+  | "solana:testnet"
+  | "solana:devnet"
+  | "walrus:mainnet"
+  | "walrus:testnet"
   | string; // other chains
 
 export interface AgentMethod {
@@ -70,6 +66,18 @@ export interface DeveloperNames {
   version: number;
 }
 
+export interface SilvanaApp {
+  id: string;
+  name: string;
+  description?: string;
+  methods: Record<string, AppMethod>;
+  owner: string;
+  createdAt: number;
+  updatedAt: number;
+  version: number;
+  instances: string[];
+}
+
 export class AgentRegistry {
   private readonly registry: string;
 
@@ -77,15 +85,19 @@ export class AgentRegistry {
     this.registry = params.registry;
   }
 
-  static createAgentRegistry(params: { name: string }): Transaction {
-    console.log("Creating agent registry", params.name);
-    const transaction = new Transaction();
-    transaction.moveCall({
+  static createAgentRegistry(params: {
+    name: string;
+    transaction?: Transaction;
+  }): Transaction {
+    const { name, transaction } = params;
+    console.log("Creating agent registry", name);
+    const tx = transaction ?? new Transaction();
+    tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::create_registry`,
-      arguments: [transaction.pure.string(params.name)],
+      arguments: [tx.pure.string(name)],
     });
 
-    return transaction;
+    return tx;
   }
 
   createDeveloper(params: {
@@ -94,9 +106,10 @@ export class AgentRegistry {
     image?: string;
     description?: string;
     site?: string;
+    transaction?: Transaction;
   }): Transaction {
-    const { name, github, image, description, site } = params;
-    const tx = new Transaction();
+    const { name, github, image, description, site, transaction } = params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::add_developer`,
@@ -120,9 +133,10 @@ export class AgentRegistry {
     image?: string;
     description?: string;
     site?: string;
+    transaction?: Transaction;
   }): Transaction {
-    const { name, github, image, description, site } = params;
-    const tx = new Transaction();
+    const { name, github, image, description, site, transaction } = params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::update_developer`,
@@ -140,9 +154,13 @@ export class AgentRegistry {
     return tx;
   }
 
-  removeDeveloper(params: { name: string; agentNames: string[] }): Transaction {
-    const { name, agentNames } = params;
-    const tx = new Transaction();
+  removeDeveloper(params: {
+    name: string;
+    agentNames: string[];
+    transaction?: Transaction;
+  }): Transaction {
+    const { name, agentNames, transaction } = params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::remove_developer`,
@@ -164,16 +182,11 @@ export class AgentRegistry {
     description?: string;
     site?: string;
     chains: AgentChain[];
+    transaction?: Transaction;
   }): Transaction {
-    const {
-      developer,
-      name,
-      image,
-      description,
-      site,
-      chains,
-    } = params;
-    const tx = new Transaction();
+    const { developer, name, image, description, site, chains, transaction } =
+      params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::add_agent`,
@@ -199,16 +212,11 @@ export class AgentRegistry {
     description?: string;
     site?: string;
     chains: AgentChain[];
+    transaction?: Transaction;
   }): Transaction {
-    const {
-      developer,
-      name,
-      image,
-      description,
-      site,
-      chains,
-    } = params;
-    const tx = new Transaction();
+    const { developer, name, image, description, site, chains, transaction } =
+      params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::update_agent`,
@@ -227,9 +235,13 @@ export class AgentRegistry {
     return tx;
   }
 
-  removeAgent(params: { developer: string; agent: string }): Transaction {
-    const { developer, agent } = params;
-    const tx = new Transaction();
+  removeAgent(params: {
+    developer: string;
+    agent: string;
+    transaction?: Transaction;
+  }): Transaction {
+    const { developer, agent, transaction } = params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::remove_agent`,
@@ -253,6 +265,7 @@ export class AgentRegistry {
     minMemoryGb: number;
     minCpuCores: number;
     requiresTee: boolean;
+    transaction?: Transaction;
   }): Transaction {
     const {
       developer,
@@ -263,8 +276,9 @@ export class AgentRegistry {
       minMemoryGb,
       minCpuCores,
       requiresTee,
+      transaction,
     } = params;
-    const tx = new Transaction();
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::add_method`,
@@ -294,6 +308,7 @@ export class AgentRegistry {
     minMemoryGb: number;
     minCpuCores: number;
     requiresTee: boolean;
+    transaction?: Transaction;
   }): Transaction {
     const {
       developer,
@@ -304,8 +319,9 @@ export class AgentRegistry {
       minMemoryGb,
       minCpuCores,
       requiresTee,
+      transaction,
     } = params;
-    const tx = new Transaction();
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::update_method`,
@@ -330,9 +346,10 @@ export class AgentRegistry {
     developer: string;
     agent: string;
     method: string;
+    transaction?: Transaction;
   }): Transaction {
-    const { developer, agent, method } = params;
-    const tx = new Transaction();
+    const { developer, agent, method, transaction } = params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::remove_method`,
@@ -348,13 +365,80 @@ export class AgentRegistry {
     return tx;
   }
 
+  addMethodToApp(params: {
+    appName: string;
+    methodName: string;
+    description?: string;
+    developerName: string;
+    agentName: string;
+    agentMethod: string;
+    transaction?: Transaction;
+  }): Transaction {
+    const {
+      appName,
+      methodName,
+      description,
+      developerName,
+      agentName,
+      agentMethod,
+      transaction,
+    } = params;
+    const tx = transaction ?? new Transaction();
+
+    // Create the app method using app_method::new
+    const appMethod = tx.moveCall({
+      target: `${silvanaRegistryPackage}::app_method::new`,
+      arguments: [
+        tx.pure.option("string", description ?? null),
+        tx.pure.string(developerName),
+        tx.pure.string(agentName),
+        tx.pure.string(agentMethod),
+      ],
+    });
+
+    // Add the method to the app
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::add_method_to_app`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(appName),
+        tx.pure.string(methodName),
+        appMethod,
+      ],
+    });
+
+    return tx;
+  }
+
+  addMetadata(params: {
+    appInstanceId: string;
+    key: string;
+    value: string;
+    transaction?: Transaction;
+  }): Transaction {
+    const { appInstanceId, key, value, transaction } = params;
+    const tx = transaction ?? new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::app_instance::add_metadata`,
+      arguments: [
+        tx.object(appInstanceId),
+        tx.pure.string(key),
+        tx.pure.string(value),
+      ],
+    });
+
+    return tx;
+  }
+
   setDefaultMethod(params: {
     developer: string;
     agent: string;
     method: string;
+    transaction?: Transaction;
   }): Transaction {
-    const { developer, agent, method } = params;
-    const tx = new Transaction();
+    const { developer, agent, method, transaction } = params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::set_default_method`,
@@ -373,9 +457,10 @@ export class AgentRegistry {
   removeDefaultMethod(params: {
     developer: string;
     agent: string;
+    transaction?: Transaction;
   }): Transaction {
-    const { developer, agent } = params;
-    const tx = new Transaction();
+    const { developer, agent, transaction } = params;
+    const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::remove_default_method`,
@@ -489,7 +574,7 @@ export class AgentRegistry {
     if (!agentObject) {
       return undefined;
     }
-    
+
     // Parse methods from VecMap structure
     const methods: Record<string, AgentMethod> = {};
     const methodsData = (agentObject as any)?.methods?.fields?.contents;
@@ -508,11 +593,15 @@ export class AgentRegistry {
         }
       }
     }
-    
+
     // Parse default method if it exists
     let defaultMethod: AgentMethod | undefined;
     const defaultMethodData = (agentObject as any)?.default_method;
-    if (defaultMethodData && typeof defaultMethodData === 'object' && !Array.isArray(defaultMethodData)) {
+    if (
+      defaultMethodData &&
+      typeof defaultMethodData === "object" &&
+      !Array.isArray(defaultMethodData)
+    ) {
       defaultMethod = {
         dockerImage: defaultMethodData.docker_image,
         dockerSha256: defaultMethodData.docker_sha256 ?? undefined,
@@ -521,7 +610,7 @@ export class AgentRegistry {
         requiresTee: Boolean(defaultMethodData.requires_tee),
       };
     }
-    
+
     const agent = {
       id: (agentObject as any)?.id?.id,
       name: (agentObject as any).name,
@@ -535,13 +624,111 @@ export class AgentRegistry {
       updatedAt: Number((agentObject as any).updated_at),
       version: Number((agentObject as any).version),
     };
-    
+
     // Only check for essential fields
     if (!agent.id || !agent.name) {
       return undefined;
     }
-    
+
     return agent as Agent;
+  }
+
+  async getApp(params: { name: string }): Promise<SilvanaApp | undefined> {
+    const appObject = await fetchSuiDynamicField({
+      objectID: this.registry,
+      fieldName: "apps",
+      type: "0x1::string::String",
+      key: params.name,
+    });
+
+    if (!appObject) {
+      return undefined;
+    }
+
+    // Parse methods from VecMap structure
+    const methods: Record<string, AppMethod> = {};
+    const methodsData = (appObject as any)?.methods?.fields?.contents;
+    if (methodsData && Array.isArray(methodsData)) {
+      for (const entry of methodsData) {
+        const key = entry?.fields?.key;
+        const value = entry?.fields?.value?.fields;
+        if (key && value) {
+          methods[key] = {
+            description: value.description ?? undefined,
+            developer: value.developer,
+            agent: value.agent,
+            agentMethod: value.agent_method,
+          };
+        }
+      }
+    }
+
+    // Parse instances from VecSet structure
+    const instances: string[] = [];
+    const instancesData = (appObject as any)?.instances?.fields?.contents;
+    if (instancesData && Array.isArray(instancesData)) {
+      for (const instance of instancesData) {
+        if (instance?.fields?.key) {
+          instances.push(instance.fields.key);
+        }
+      }
+    }
+
+    const app = {
+      id: (appObject as any)?.id?.id,
+      name: (appObject as any).name,
+      description: (appObject as any)?.description ?? undefined,
+      methods,
+      owner: (appObject as any).owner,
+      createdAt: Number((appObject as any).created_at),
+      updatedAt: Number((appObject as any).updated_at),
+      version: Number((appObject as any).version),
+      instances,
+    };
+
+    // Check for essential fields
+    if (!app.id || !app.name || !app.owner) {
+      return undefined;
+    }
+
+    return app as SilvanaApp;
+  }
+
+  createApp(params: {
+    name: string;
+    description?: string;
+    transaction?: Transaction;
+  }): Transaction {
+    const { name, description, transaction } = params;
+    const tx = transaction ?? new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::add_app`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(name),
+        tx.pure.option("string", description ?? null),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+
+    return tx;
+  }
+
+  removeApp(params: { name: string; transaction?: Transaction }): Transaction {
+    const { name, transaction } = params;
+    const tx = transaction ?? new Transaction();
+
+    tx.moveCall({
+      target: `${silvanaRegistryPackage}::registry::remove_app`,
+      arguments: [
+        tx.object(this.registry),
+        tx.pure.string(name),
+        tx.object(SUI_CLOCK_OBJECT_ID),
+      ],
+    });
+
+    return tx;
   }
 
   static async getDockerImageDetails(params: { dockerImage: string }): Promise<

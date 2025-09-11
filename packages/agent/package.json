@@ -1,18 +1,23 @@
 {
-  "name": "@silvana-one/coordination",
-  "description": "Silvana Coordination Client",
+  "name": "@silvana-one/agent",
+  "description": "Silvana Agent Client",
   "version": "1.0.36",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "@mysten/sui": "^1.37.6",
-    "mina-signer": "^3.0.7",
-    "nanoid": "^5.1.5",
-    "pinata": "^2.5.0"
+    "@bufbuild/protobuf": "^2.6.0",
+    "@connectrpc/connect": "^2.0.2",
+    "@connectrpc/connect-node": "^2.0.2",
+    "@mysten/sui": "^1.36.0",
+    "@silvana-one/coordination": "^1.0.31",
+    "@silvana-one/mina-utils": "^1.0.31",
+    "@silvana-one/storage": "^1.0.31",
+    "o1js": "2.4.0"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
     "esbuild": "^0.25.9",
+    "dotenv": "^17.1.0",
     "typescript": "^5.9.2"
   },
   "engines": {
@@ -38,7 +43,7 @@
   "keywords": [
     "cloud",
     "silvana",
-    "coordination",
+    "agent",
     "client",
     "typescript"
   ],
@@ -49,14 +54,11 @@
   },
   "repository": "SilvanaOne/silvana-lib.git",
   "scripts": {
+    "proto": "rm -rf src/proto && cp -R ../../../silvana/proto/silvana/coordinator proto/silvana && buf generate --template buf.gen.agent.yaml",
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
     "release": "npm publish --access public",
     "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test",
-    "mvr": "npm run test test/mvr.test.ts",
-    "agent": "npm run test test/agent.test.ts",
-    "job": "npm run test test/job.test.ts",
-    "app": "npm run test test/app.test.ts",
-    "getapp": "npm run test test/getapp.test.ts"
+    "agent": "npm run test test/agent.test.ts"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"
