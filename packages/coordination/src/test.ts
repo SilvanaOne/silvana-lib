@@ -127,6 +127,7 @@ export async function createTestRegistry(
   console.log("Step 2: Creating developer...");
   const createDeveloperTx = registry.createDeveloper({
     name: developerName,
+    developerOwner: address,
     github: developerGithub,
     image: developerImage,
     description: developerDescription,
@@ -161,6 +162,7 @@ export async function createTestRegistry(
     arguments: [
       createAppTx.object(registryAddress),
       createAppTx.pure.string(appName),
+      createAppTx.pure.address(address),
       createAppTx.pure.option("string", appDescription),
       createAppTx.object("0x6"), // SUI_CLOCK_OBJECT_ID
     ],
@@ -269,6 +271,7 @@ export async function createTestApp(
     arguments: [
       createAppTx.object(registryAddress),
       createAppTx.pure.string(appName),
+      createAppTx.pure.address(address),
       createAppTx.pure.option("string", "Test app for TestApp module"),
       createAppTx.object("0x6"), // SUI_CLOCK_OBJECT_ID
     ],
