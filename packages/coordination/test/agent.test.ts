@@ -73,6 +73,7 @@ describe("Agent Registry", async () => {
     });
     const tx = registry.createDeveloper({
       name: "DFST",
+      developerOwner: address,
       github: "dfstio",
       image:
         "https://www.dfst.io/static/177f6f30ec66924986c36f0920d5a667/15f29/defi-logo.webp",
@@ -291,6 +292,7 @@ describe("Agent Registry", async () => {
     console.log("Creating developer for removal test");
     const createTx = registry.createDeveloper({
       name: "TestDevToRemove",
+      developerOwner: address,
       github: "testdevremove",
       image: "https://example.com/dev-to-remove.png",
       description: "Developer created for removal test",

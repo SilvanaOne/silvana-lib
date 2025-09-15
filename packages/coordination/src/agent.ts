@@ -102,19 +102,21 @@ export class AgentRegistry {
 
   createDeveloper(params: {
     name: string;
+    developerOwner: string;
     github: string;
     image?: string;
     description?: string;
     site?: string;
     transaction?: Transaction;
   }): Transaction {
-    const { name, github, image, description, site, transaction } = params;
+    const { name, developerOwner, github, image, description, site, transaction } = params;
     const tx = transaction ?? new Transaction();
 
     tx.moveCall({
       target: `${silvanaRegistryPackage}::registry::add_developer`,
       arguments: [
         tx.object(this.registry),
+        tx.pure.address(developerOwner),
         tx.pure.string(name),
         tx.pure.string(github),
         tx.pure.option("string", image ?? null),
@@ -696,10 +698,11 @@ export class AgentRegistry {
 
   createApp(params: {
     name: string;
+    owner: string;
     description?: string;
     transaction?: Transaction;
   }): Transaction {
-    const { name, description, transaction } = params;
+    const { name, owner, description, transaction } = params;
     const tx = transaction ?? new Transaction();
 
     tx.moveCall({
@@ -707,6 +710,7 @@ export class AgentRegistry {
       arguments: [
         tx.object(this.registry),
         tx.pure.string(name),
+        tx.pure.address(owner),
         tx.pure.option("string", description ?? null),
         tx.object(SUI_CLOCK_OBJECT_ID),
       ],

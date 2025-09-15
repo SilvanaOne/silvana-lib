@@ -18,3 +18,4 @@ export * from "./package.js";
 export * from "./test.js";
 export * from "./balance.js";
 export * from "./state.js";
+export * from "./keypair.js";

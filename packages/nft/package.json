@@ -1,17 +1,17 @@
 {
   "name": "@silvana-one/nft",
   "description": "Mina NFT library",
-  "version": "1.0.36",
+  "version": "1.0.38",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@silvana-one/mina-utils": "1.0.36",
-    "@silvana-one/storage": "1.0.36",
-    "@silvana-one/token": "1.0.36",
-    "@silvana-one/upgradable": "1.0.36",
+    "@silvana-one/mina-utils": "1.0.38",
+    "@silvana-one/storage": "1.0.38",
+    "@silvana-one/token": "1.0.38",
+    "@silvana-one/upgradable": "1.0.38",
     "@types/node": "^24.3.0",
     "c8": "^10.1.3",
     "dotenv": "^17.2.2",
@@ -50,9 +50,9 @@
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
   "peerDependencies": {
-    "@silvana-one/storage": "1.0.36",
-    "@silvana-one/token": "1.0.36",
-    "@silvana-one/upgradable": "1.0.36",
+    "@silvana-one/storage": "1.0.38",
+    "@silvana-one/token": "1.0.38",
+    "@silvana-one/upgradable": "1.0.38",
     "o1js": "2.4.0"
   },
   "publishConfig": {

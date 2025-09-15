@@ -28,6 +28,10 @@ import {
   UpdateBlockSettlementTxIncludedInBlockRequestSchema,
   CreateAppJobRequestSchema,
   RejectProofRequestSchema,
+  ProofEventRequestSchema,
+  AgentMessageRequestSchema,
+  LogLevel,
+  ProofEventType,
   type GetJobResponse,
   type CompleteJobResponse,
   type FailJobResponse,
@@ -57,6 +61,8 @@ import {
   type UpdateBlockSettlementTxIncludedInBlockResponse,
   type CreateAppJobResponse,
   type RejectProofResponse,
+  type ProofEventResponse,
+  type AgentMessageResponse,
 } from "./proto/silvana/coordinator/v1/coordinator_pb.js";
 import { create } from "@bufbuild/protobuf";
 
@@ -748,6 +754,135 @@ export async function updateBlockSettlement(
   return await client.updateBlockSettlement(request);
 }
 
+/**
+ * Sends a proof event to the coordinator
+ */
+export async function proofEvent(params: {
+  dataAvailability: string;
+  blockNumber: bigint;
+  proofEventType: ProofEventType;
+  sequences: bigint[];
+  blockProof?: boolean;
+  mergedSequences1?: bigint[];
+  mergedSequences2?: bigint[];
+}): Promise<ProofEventResponse> {
+  const { client } = getCoordinatorClient();
+
+  const request = create(ProofEventRequestSchema, {
+    dataAvailability: params.dataAvailability,
+    blockNumber: params.blockNumber,
+    proofEventType: params.proofEventType,
+    sequences: params.sequences,
+    blockProof: params.blockProof,
+    mergedSequences1: params.mergedSequences1 || [],
+    mergedSequences2: params.mergedSequences2 || [],
+  });
+
+  return await client.proofEvent(request);
+}
+
+/**
+ * Sends an agent message to the coordinator with a specific log level
+ */
+export async function agentMessage(
+  level: LogLevel,
+  message: string
+): Promise<AgentMessageResponse> {
+  const { client } = getCoordinatorClient();
+
+  const request = create(AgentMessageRequestSchema, {
+    level,
+    message,
+  });
+
+  return await client.agentMessage(request);
+}
+
+/**
+ * Logs a debug message to the coordinator and console
+ */
+export async function debug(...args: any[]): Promise<void> {
+  const message = args
+    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+    .join(" ");
+
+  console.log(...args);
+
+  try {
+    await agentMessage(LogLevel.DEBUG, message);
+  } catch (error) {
+    console.error("Failed to send debug message to coordinator:", error);
+  }
+}
+
+/**
+ * Logs an info message to the coordinator and console
+ */
+export async function info(...args: any[]): Promise<void> {
+  const message = args
+    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+    .join(" ");
+
+  console.log(...args);
+
+  try {
+    await agentMessage(LogLevel.INFO, message);
+  } catch (error) {
+    console.error("Failed to send info message to coordinator:", error);
+  }
+}
+
+/**
+ * Logs a warning message to the coordinator and console
+ */
+export async function warn(...args: any[]): Promise<void> {
+  const message = args
+    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+    .join(" ");
+
+  console.warn(...args);
+
+  try {
+    await agentMessage(LogLevel.WARN, message);
+  } catch (error) {
+    console.error("Failed to send warn message to coordinator:", error);
+  }
+}
+
+/**
+ * Logs an error message to the coordinator and console
+ */
+export async function error(...args: any[]): Promise<void> {
+  const message = args
+    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+    .join(" ");
+
+  console.error(...args);
+
+  try {
+    await agentMessage(LogLevel.ERROR, message);
+  } catch (error) {
+    console.error("Failed to send error message to coordinator:", error);
+  }
+}
+
+/**
+ * Logs a fatal message to the coordinator and console
+ */
+export async function fatal(...args: any[]): Promise<void> {
+  const message = args
+    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+    .join(" ");
+
+  console.error(...args);
+
+  try {
+    await agentMessage(LogLevel.FATAL, message);
+  } catch (error) {
+    console.error("Failed to send fatal message to coordinator:", error);
+  }
+}
+
 // Re-export types for users to access
 export type {
   Block,
@@ -759,4 +894,9 @@ export type {
   GetBlockSettlementResponse,
   UpdateBlockSettlementResponse,
   RejectProofResponse,
+  ProofEventResponse,
+  AgentMessageResponse,
 };
+
+// Re-export enums
+export { LogLevel, ProofEventType };
