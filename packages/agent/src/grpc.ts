@@ -766,9 +766,14 @@ export async function proofEvent(params: {
   mergedSequences1?: bigint[];
   mergedSequences2?: bigint[];
 }): Promise<ProofEventResponse> {
-  const { client } = getCoordinatorClient();
+  if (!jobId) {
+    throw new Error("Call getJob() first");
+  }
+  const { client, sessionId } = getCoordinatorClient();
 
   const request = create(ProofEventRequestSchema, {
+    sessionId,
+    jobId,
     dataAvailability: params.dataAvailability,
     blockNumber: params.blockNumber,
     proofEventType: params.proofEventType,
@@ -788,9 +793,14 @@ export async function agentMessage(
   level: LogLevel,
   message: string
 ): Promise<AgentMessageResponse> {
-  const { client } = getCoordinatorClient();
+  if (!jobId) {
+    throw new Error("Call getJob() first");
+  }
+  const { client, sessionId } = getCoordinatorClient();
 
   const request = create(AgentMessageRequestSchema, {
+    sessionId,
+    jobId,
     level,
     message,
   });
