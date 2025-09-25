@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/mina-curves",
   "description": "Mina Curves - Poseidon hash and Signature",
-  "version": "1.0.39",
+  "version": "1.0.41",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {

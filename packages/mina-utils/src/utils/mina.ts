@@ -113,18 +113,22 @@ async function initBlockchain(
   if (network === undefined) {
     throw new Error("Unknown network");
   }
+  const mina =
+    process.env.MINA_NODE_URL ??
+    process.env.NEXT_PUBLIC_MINA_NODE_URL ??
+    customMinaNodeUrl ??
+    network.mina;
+  const archive =
+    process.env.MINA_ARCHIVE_NODE_URL ??
+    process.env.NEXT_PUBLIC_MINA_ARCHIVE_NODE_URL ??
+    customMinaArchiveNodeUrl ??
+    network.archive;
+  console.log("mina endpoint:", mina);
+  console.log("archive endpoint:", archive);
 
   const networkInstance = Mina.Network({
-    mina:
-      process.env.MINA_NODE_URL ??
-      process.env.NEXT_PUBLIC_MINA_NODE_URL ??
-      customMinaNodeUrl ??
-      network.mina,
-    archive:
-      process.env.MINA_ARCHIVE_NODE_URL ??
-      process.env.NEXT_PUBLIC_MINA_ARCHIVE_NODE_URL ??
-      customMinaArchiveNodeUrl ??
-      network.archive,
+    mina,
+    archive,
     lightnetAccountManager: network.accountManager,
     networkId: instance === "mina:mainnet" ? "mainnet" : "testnet",
     bypassTransactionLimits:
