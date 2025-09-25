@@ -32,7 +32,7 @@ Verification keys are up to date
 
 ### In case vk are changed
 
-You will see the message
+You will see the message in red
 
 ```
 saving new verification keys
