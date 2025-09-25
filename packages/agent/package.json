@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/agent",
   "description": "Silvana Agent Client",
-  "version": "1.0.41",
+  "version": "1.0.42",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {

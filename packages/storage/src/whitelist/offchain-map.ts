@@ -1,4 +1,4 @@
-import { Experimental, Struct, Field, Option, Provable, Bool } from "o1js";
+import { Struct, Field, Option, Provable, Bool, IndexedMerkleMap } from "o1js";
 import {
   serializeIndexedMap,
   loadIndexedMerkleMap,
@@ -10,8 +10,6 @@ import { Storage, IpfsHash } from "../storage/storage.js";
 import { createIpfsURL } from "../storage/ipfs.js";
 import { pinJSON } from "../storage/pinata.js";
 
-const { IndexedMerkleMap } = Experimental;
-type IndexedMerkleMap = Experimental.IndexedMerkleMap;
 const OFFCHAIN_MAP_HEIGHT = 20;
 
 export interface OffchainMapSerialized extends IndexedMapSerializedJson {

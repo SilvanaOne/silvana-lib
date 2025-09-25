@@ -7,15 +7,14 @@ import {
   Poseidon,
   SelfProof,
   UInt32,
-  Experimental,
   DynamicProof,
   FeatureFlags,
-  Void,
   Bool,
   Nullifier,
   PrivateKey,
   Provable,
   Encoding,
+  IndexedMerkleMap,
 } from "o1js";
 import { Storage } from "@silvana-one/storage";
 import { PublicKeyOption } from "./upgradable.js";
@@ -35,9 +34,6 @@ export {
   UpgradeDatabaseStatePacked,
   ChainId,
 };
-
-const { IndexedMerkleMap } = Experimental;
-type IndexedMerkleMap = Experimental.IndexedMerkleMap;
 
 const VALIDATORS_LIST_HEIGHT = 10;
 const UPGRADE_AUTHORITY_DATABASE_HEIGHT = 20;

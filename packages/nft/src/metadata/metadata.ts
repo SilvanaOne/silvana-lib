@@ -1,4 +1,11 @@
-import { Field, Poseidon, Struct, Experimental, PublicKey, UInt64 } from "o1js";
+import {
+  Field,
+  Poseidon,
+  Struct,
+  PublicKey,
+  UInt64,
+  IndexedMerkleMap,
+} from "o1js";
 import { fieldFromString } from "../interfaces/index.js";
 import { Text } from "./text.js";
 import { MinaAddress } from "./address.js";
@@ -16,8 +23,6 @@ export {
  * The height of the metadata Merkle tree.
  */
 const METADATA_HEIGHT = 20;
-const IndexedMerkleMap = Experimental.IndexedMerkleMap;
-type IndexedMerkleMap = Experimental.IndexedMerkleMap;
 
 /**
  * A specialized IndexedMerkleMap for storing metadata.

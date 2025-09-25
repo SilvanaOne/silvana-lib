@@ -35,7 +35,7 @@ Verification keys are up to date
 You will see the message
 
 ```
-
+saving new verification keys
 ```
 
 ## Check new verification keys

@@ -1,11 +1,11 @@
 {
   "name": "silvana-lib",
   "description": "Silvana Library",
-  "version": "1.0.41",
+  "version": "1.0.42",
   "author": "DFST",
   "devDependencies": {
     "@types/node": "^24.3.0",
-    "o1js": "2.4.0",
+    "o1js": "2.9.0",
     "ts-node": "^10.9.2",
     "typedoc": "^0.28.12",
     "typedoc-plugin-markdown": "^4.8.1",

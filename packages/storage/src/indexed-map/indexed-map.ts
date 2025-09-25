@@ -1,10 +1,7 @@
-import { Experimental, Field } from "o1js";
+import { Field, IndexedMerkleMap } from "o1js";
 import { bigintToBase64, bigintFromBase64 } from "../base64/bigint.js";
 import { sleep } from "../util/sleep.js";
 import { pinJSON } from "../storage/pinata.js";
-
-const { IndexedMerkleMap } = Experimental;
-type IndexedMerkleMap = Experimental.IndexedMerkleMap;
 
 export interface IndexedMapSerialized {
   height: number;
@@ -177,7 +174,7 @@ function deserializeIndexedMerkleMapInternal(params: {
     }
   );
 
-  map.root = Field.fromJSON(serializedIndexedMap.root);
+  (map as any).root = Field.fromJSON(serializedIndexedMap.root);
   map.length = Field.fromJSON(serializedIndexedMap.length);
   map.data.updateAsProver(() => {
     return {
