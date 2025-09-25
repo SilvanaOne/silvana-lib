@@ -793,14 +793,11 @@ export async function agentMessage(
   level: LogLevel,
   message: string
 ): Promise<AgentMessageResponse> {
-  if (!jobId) {
-    throw new Error("Call getJob() first");
-  }
   const { client, sessionId } = getCoordinatorClient();
 
   const request = create(AgentMessageRequestSchema, {
     sessionId,
-    jobId,
+    jobId: jobId ?? undefined,
     level,
     message,
   });
