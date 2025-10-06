@@ -12,7 +12,7 @@
     "@silvana-one/storage": "1.0.42",
     "@types/node": "^24.3.0",
     "esbuild": "^0.25.9",
-    "o1js": "2.9.0",
+    "o1js": "https://pkg.pr.new/o1-labs/o1js@9f4741f",
     "typescript": "^5.9.2"
   },
   "engines": {
@@ -45,7 +45,7 @@
   "main": "dist/web/index.js",
   "peerDependencies": {
     "@silvana-one/storage": "1.0.42",
-    "o1js": "2.9.0"
+    "o1js": "https://pkg.pr.new/o1-labs/o1js@9f4741f"
   },
   "publishConfig": {
     "access": "public"

@@ -10,7 +10,7 @@
   "devDependencies": {
     "@types/node": "^24.3.0",
     "esbuild": "^0.25.9",
-    "o1js": "2.9.0",
+    "o1js": "https://pkg.pr.new/o1-labs/o1js@9f4741f",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
@@ -47,7 +47,7 @@
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
   "peerDependencies": {
-    "o1js": "2.9.0"
+    "o1js": "https://pkg.pr.new/o1-labs/o1js@9f4741f"
   },
   "publishConfig": {
     "access": "public"

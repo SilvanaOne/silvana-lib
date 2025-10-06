@@ -5,7 +5,7 @@
   "author": "DFST",
   "devDependencies": {
     "@types/node": "^24.3.0",
-    "o1js": "2.9.0",
+    "o1js": "https://pkg.pr.new/o1-labs/o1js@9f4741f",
     "ts-node": "^10.9.2",
     "typedoc": "^0.28.12",
     "typedoc-plugin-markdown": "^4.8.1",
