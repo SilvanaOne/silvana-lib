@@ -135,6 +135,26 @@ const contracts: {
   { name: "FungibleTokenMF", contract: FungibleTokenMF, type: "check" },
 ];
 
+// Contracts to track detailed gadget usage
+const contractsToTrack = [
+  "VerificationKeyUpgradeAuthority",
+  "NFTAdvancedAdmin",
+  "FungibleTokenAdvancedAdmin",
+  "FungibleTokenBidContract",
+  "FungibleTokenOfferContract",
+  "FungibleTokenClaimContract",
+];
+
+// Expected baseline row counts
+const expectedBaselines: Record<string, number> = {
+  VerificationKeyUpgradeAuthority: 3117,
+  NFTAdvancedAdmin: 16050,
+  FungibleTokenAdvancedAdmin: 6639,
+  FungibleTokenBidContract: 5428,
+  FungibleTokenOfferContract: 5628,
+  FungibleTokenClaimContract: 4950,
+};
+
 const verificationKeys: { name: string; verificationKey: VerificationKey }[] =
   [];
 
@@ -167,13 +187,64 @@ export async function compileContracts(chain: string) {
     console.log("Analyzing contracts methods...");
     console.time("methods analyzed");
     const methods: any[] = [];
+
     for (const contract of contracts) {
+      const result = await contract.contract.analyzeMethods();
+      const shouldTrackDetails = contractsToTrack.includes(contract.name);
+
       methods.push({
         name: contract.name,
-        result: await contract.contract.analyzeMethods(),
-        skip: true,
+        result,
+        skip: !shouldTrackDetails,
+        trackDetails: shouldTrackDetails,
       });
+
+      // Detailed tracking for specific contracts
+      if (shouldTrackDetails) {
+        console.log(`\n=== DETAILED ANALYSIS: ${contract.name} ===`);
+
+        for (const [methodName, methodStats] of Object.entries(result)) {
+          const stats = methodStats as any;
+          console.log(`\nMethod: ${methodName}`);
+          console.log(`  Constraints: ${stats.rows}`);
+
+          if (stats.gates) {
+            console.log(`  Total gates: ${stats.gates.length}`);
+
+            // Track gate types
+            const gateTypes = new Map<string, number>();
+            for (const gate of stats.gates) {
+              const type = gate?.typ || gate?.type || "Unknown";
+              gateTypes.set(type, (gateTypes.get(type) || 0) + 1);
+            }
+
+            console.log(`  Gate types breakdown:`);
+            for (const [type, count] of gateTypes.entries()) {
+              console.log(`    - ${type}: ${count}`);
+            }
+          }
+        }
+
+        // Compare with baseline
+        if (expectedBaselines[contract.name]) {
+          const totalRows = Object.values(result).reduce(
+            (acc, method) => acc + (method as any).rows,
+            0
+          );
+          const baseline = expectedBaselines[contract.name];
+          const diff = totalRows - baseline;
+          console.log(`\n📊 Baseline comparison:`);
+          console.log(`  Current: ${totalRows} rows`);
+          console.log(`  Expected: ${baseline} rows`);
+          console.log(`  Difference: ${diff > 0 ? "+" : ""}${diff} rows (${(
+            (diff / baseline) *
+            100
+          ).toFixed(2)}%)`);
+        }
+        console.log("=".repeat(50));
+      }
     }
+
     console.timeEnd("methods analyzed");
     const maxRows = 2 ** 16;
     for (const contract of methods) {
@@ -269,6 +340,72 @@ export async function compileContracts(chain: string) {
       }
     }
     //assert(!isDifferent);
+  });
+
+  await it("should generate gadget analysis summary", async () => {
+    console.log("\n=== 🔍 GADGET ANALYSIS SUMMARY ===");
+
+    for (const contractName of contractsToTrack) {
+      const contract = contracts.find((c) => c.name === contractName);
+      if (!contract) continue;
+
+      const result = await contract.contract.analyzeMethods();
+      const totalRows = Object.values(result).reduce(
+        (acc, method) => acc + (method as any).rows,
+        0
+      );
+
+      const baseline = expectedBaselines[contractName];
+      const diff = totalRows - baseline;
+
+      console.log(`\n📦 ${contractName}:`);
+      console.log(`  Current: ${totalRows} rows`);
+      console.log(`  Baseline: ${baseline} rows`);
+      console.log(
+        `  Change: ${diff > 0 ? "+" : ""}${diff} rows (${(
+          (diff / baseline) *
+          100
+        ).toFixed(2)}%)`
+      );
+
+      // Identify which methods contribute most to the contract
+      console.log(`  Top methods by row count:`);
+      const sortedMethods = Object.entries(result)
+        .map(([name, stats]) => ({ name, rows: (stats as any).rows }))
+        .sort((a, b) => b.rows - a.rows)
+        .slice(0, 5); // Show top 5 methods
+
+      for (const method of sortedMethods) {
+        console.log(`    - ${method.name}: ${method.rows} rows`);
+      }
+
+      // Analyze gate types across all methods if we have detailed gates
+      const allGates: any[] = [];
+      for (const methodStats of Object.values(result)) {
+        const stats = methodStats as any;
+        if (stats.gates) {
+          allGates.push(...stats.gates);
+        }
+      }
+
+      if (allGates.length > 0) {
+        const overallGateTypes = new Map<string, number>();
+        for (const gate of allGates) {
+          const type = gate?.typ || gate?.type || "Unknown";
+          overallGateTypes.set(type, (overallGateTypes.get(type) || 0) + 1);
+        }
+
+        console.log(`  Overall gate distribution:`);
+        const sortedGates = Array.from(overallGateTypes.entries()).sort(
+          (a, b) => b[1] - a[1]
+        );
+        for (const [type, count] of sortedGates) {
+          const percentage = ((count / allGates.length) * 100).toFixed(1);
+          console.log(`    - ${type}: ${count} (${percentage}%)`);
+        }
+      }
+    }
+    console.log("\n" + "=".repeat(50));
   });
 
   await it("should save new verification keys", async () => {
