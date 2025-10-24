@@ -71,6 +71,12 @@ interface MinaNetwork {
   /** The explorer transaction URL (optional) */
   explorerTransactionUrl?: string;
 
+  /** The explorer token URL (optional) */
+  explorerTokenUrl?: string;
+
+  /** The launchpad URL (optional) */
+  launchpadUrl?: string;
+
   /** The faucet URL (optional) */
   faucet?: string;
 }
@@ -86,6 +92,8 @@ const Mainnet: MinaNetwork = {
   ],
   explorerAccountUrl: "https://minascan.io/mainnet/account/",
   explorerTransactionUrl: "https://minascan.io/mainnet/tx/",
+  explorerTokenUrl: "https://minascan.io/mainnet/token/",
+  launchpadUrl: "https://minatokens.com",
   chainId: "mina:mainnet",
   name: "Mainnet",
 };
@@ -107,6 +115,8 @@ const Devnet: MinaNetwork = {
   ],
   explorerAccountUrl: "https://minascan.io/devnet/account/",
   explorerTransactionUrl: "https://minascan.io/devnet/tx/",
+  explorerTokenUrl: "https://minascan.io/devnet/token/",
+  launchpadUrl: "https://minatokens.com",
   chainId: "mina:devnet",
   name: "Devnet",
   faucet: "https://faucet.minaprotocol.com",
@@ -115,8 +125,10 @@ const Devnet: MinaNetwork = {
 const Zeko: MinaNetwork = {
   mina: ["https://devnet.zeko.io/graphql"],
   archive: ["https://devnet.zeko.io/graphql"],
-  explorerAccountUrl: "https://zekoscan.io/devnet/account/",
-  explorerTransactionUrl: "https://zekoscan.io/devnet/tx/",
+  explorerAccountUrl: "https://zekoscan.io/testnet/account/",
+  explorerTransactionUrl: "https://zekoscan.io/testnet/tx/",
+  explorerTokenUrl: "https://zekoscan.io/testnet/token/",
+  launchpadUrl: "https://zekotokens.com",
   chainId: "zeko:testnet",
   name: "Zeko",
   faucet: "https://zeko.io/faucet",

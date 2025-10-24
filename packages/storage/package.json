@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/storage",
   "description": "Silvana Storage Library",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
