@@ -4,5 +4,4 @@ export * from "./fetch.js";
 export * from "./fields.js";
 export * from "./fee.js";
 export * from "./mina.js";
-export * from "./indexed-map.js";
 export * from "./utils.js";

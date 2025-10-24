@@ -1,19 +1,19 @@
 {
   "name": "@silvana-one/agent",
   "description": "Silvana Agent Client",
-  "version": "1.0.42",
+  "version": "1.1.0",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "@bufbuild/protobuf": "^2.6.0",
-    "@connectrpc/connect": "^2.0.2",
-    "@connectrpc/connect-node": "^2.0.2"
+    "@bufbuild/protobuf": "^2.10.0",
+    "@connectrpc/connect": "^2.1.0",
+    "@connectrpc/connect-node": "^2.1.0"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
-    "esbuild": "^0.25.9",
-    "dotenv": "^17.1.0",
-    "typescript": "^5.9.2"
+    "@types/node": "^24.9.1",
+    "esbuild": "^0.25.11",
+    "dotenv": "^17.2.3",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22.0.0"
