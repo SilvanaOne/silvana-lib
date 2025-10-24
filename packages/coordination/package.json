@@ -1,19 +1,19 @@
 {
   "name": "@silvana-one/coordination",
   "description": "Silvana Coordination Client",
-  "version": "1.0.41",
+  "version": "1.1.0",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "@mysten/sui": "^1.37.6",
-    "mina-signer": "^3.0.7",
-    "nanoid": "^5.1.5",
-    "pinata": "^2.5.0"
+    "@mysten/sui": "^1.43.1",
+    "mina-signer": "^3.1.0",
+    "nanoid": "^5.1.6",
+    "pinata": "^2.5.1"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
-    "esbuild": "^0.25.9",
-    "typescript": "^5.9.2"
+    "@types/node": "^24.9.1",
+    "esbuild": "^0.25.11",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -57,7 +57,8 @@
     "job": "npm run test test/job.test.ts",
     "app": "npm run test test/app.test.ts",
     "getapp": "npm run test test/getapp.test.ts",
-    "keypair": "npm run test test/keypair.test.ts"
+    "keypair": "npm run test test/keypair.test.ts",
+    "app-instance": "npm run test test/app_instance.test.ts"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"

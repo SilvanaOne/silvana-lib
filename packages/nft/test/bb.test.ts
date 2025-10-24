@@ -20,10 +20,8 @@ import {
   sendTx,
 } from "@silvana-one/mina-utils";
 import { TEST_ACCOUNTS } from "./helpers/config.js";
-import { BulletinBoard, fieldFromString } from "../src/index.js";
-import { Storage } from "@silvana-one/storage";
+import { BulletinBoard } from "../src/index.js";
 import { processArguments } from "./helpers/utils.js";
-import { randomMetadata } from "./helpers/metadata.js";
 
 let { chain, noLog } = processArguments();
 const networkId = chain === "mainnet" ? "mainnet" : "devnet";

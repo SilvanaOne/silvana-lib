@@ -15,7 +15,8 @@ export interface AppInstance {
   id: string;
   silvanaAppName: string;
   description?: string;
-  metadata?: string;
+  metadata: Record<string, string>;
+  kv: Record<string, string>;
   methods: Record<string, AppMethod>;
   admin: string;
   sequence: number;
@@ -23,7 +24,11 @@ export interface AppInstance {
   previousBlockTimestamp: number;
   previousBlockLastSequence: number;
   lastProvedBlockNumber: number;
+  lastSettledBlockNumber: number;
+  lastSettledSequence: number;
+  lastPurgedSequence: number;
   isPaused: boolean;
+  minTimeBetweenBlocks: number;
   jobsId: string;
   createdAt: number;
   updatedAt: number;
@@ -161,11 +166,38 @@ export class AppInstanceManager {
         }
       }
 
+      // Parse metadata from VecMap
+      const metadata: Record<string, string> = {};
+      const metadataArray = fields?.metadata?.fields?.contents;
+      if (Array.isArray(metadataArray)) {
+        for (const entry of metadataArray) {
+          const key = entry?.fields?.key;
+          const value = entry?.fields?.value;
+          if (key && value) {
+            metadata[key] = value;
+          }
+        }
+      }
+
+      // Parse kv from VecMap
+      const kv: Record<string, string> = {};
+      const kvArray = fields?.kv?.fields?.contents;
+      if (Array.isArray(kvArray)) {
+        for (const entry of kvArray) {
+          const key = entry?.fields?.key;
+          const value = entry?.fields?.value;
+          if (key && value) {
+            kv[key] = value;
+          }
+        }
+      }
+
       return {
         id: fields?.id?.id,
         silvanaAppName: fields.silvana_app_name,
         description: fields?.description ?? undefined,
-        metadata: fields?.metadata ?? undefined,
+        metadata,
+        kv,
         methods,
         admin: fields.admin,
         sequence: Number(fields.sequence),
@@ -173,7 +205,11 @@ export class AppInstanceManager {
         previousBlockTimestamp: Number(fields.previous_block_timestamp),
         previousBlockLastSequence: Number(fields.previous_block_last_sequence),
         lastProvedBlockNumber: Number(fields.last_proved_block_number),
+        lastSettledBlockNumber: Number(fields.last_settled_block_number),
+        lastSettledSequence: Number(fields.last_settled_sequence),
+        lastPurgedSequence: Number(fields.last_purged_sequence),
         isPaused: Boolean(fields.isPaused),
+        minTimeBetweenBlocks: Number(fields.min_time_between_blocks),
         jobsId: String(fields.jobs?.fields?.id?.id ?? ""),
         createdAt: Number(fields.created_at),
         updatedAt: Number(fields.updated_at),

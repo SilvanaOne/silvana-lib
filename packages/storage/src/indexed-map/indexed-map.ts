@@ -1,14 +1,12 @@
-import { Experimental, Field } from "o1js";
+import { IndexedMerkleMap, Field } from "o1js";
 import { bigintToBase64, bigintFromBase64 } from "../base64/bigint.js";
 import { sleep } from "../util/sleep.js";
 import { pinJSON } from "../storage/pinata.js";
 
-const { IndexedMerkleMap } = Experimental;
-type IndexedMerkleMap = Experimental.IndexedMerkleMap;
-
 export interface IndexedMapSerialized {
   height: number;
   root: string;
+  internalRoot: string;
   length: string;
   nodes: string;
   sortedLeaves: string;
@@ -91,6 +89,7 @@ export function serializeIndexedMap(
   return {
     height: map.height,
     root: map.root.toJSON(),
+    internalRoot: map._internalRoot.toJSON(),
     length: map.length.toJSON(),
     nodes: JSON.stringify(map.data.get().nodes, (_, v) =>
       typeof v === "bigint" ? "n" + bigintToBase64(v) : v
@@ -131,6 +130,7 @@ export function parseIndexedMapSerialized(
   if (
     json.height === undefined ||
     json.root === undefined ||
+    json.internalRoot === undefined ||
     json.length === undefined ||
     json.nodes === undefined ||
     json.sortedLeaves === undefined
@@ -140,6 +140,8 @@ export function parseIndexedMapSerialized(
     throw new Error("wrong IndexedMerkleMap height format");
   if (typeof json.root !== "string")
     throw new Error("wrong IndexedMerkleMap root format");
+  if (typeof json.internalRoot !== "string")
+    throw new Error("wrong IndexedMerkleMap internalRoot format");
   if (typeof json.length !== "string")
     throw new Error("wrong IndexedMerkleMap length format");
   if (typeof json.nodes !== "string")
@@ -177,7 +179,7 @@ function deserializeIndexedMerkleMapInternal(params: {
     }
   );
 
-  map.root = Field.fromJSON(serializedIndexedMap.root);
+  map._internalRoot = Field.fromJSON(serializedIndexedMap.internalRoot);
   map.length = Field.fromJSON(serializedIndexedMap.length);
   map.data.updateAsProver(() => {
     return {
@@ -185,5 +187,12 @@ function deserializeIndexedMerkleMapInternal(params: {
       sortedLeaves: [...sortedLeaves],
     };
   });
+
+  if (
+    map.root.equals(Field.fromJSON(serializedIndexedMap.root)).toBoolean() ===
+    false
+  ) {
+    throw new Error("wrong IndexedMap root");
+  }
   return map;
 }

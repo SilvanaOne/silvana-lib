@@ -21,10 +21,10 @@ import {
   initBlockchain,
   accountBalanceMina,
   Memory,
-  serializeIndexedMap,
   sendTx,
   pinJSON,
 } from "@silvana-one/mina-utils";
+import { serializeIndexedMap } from "@silvana-one/storage";
 import { TEST_ACCOUNTS } from "./helpers/config.js";
 import {
   NFT,

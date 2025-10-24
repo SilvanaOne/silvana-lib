@@ -14,6 +14,8 @@ import {
   GetBlockRequestSchema,
   GetBlockSettlementRequestSchema,
   UpdateBlockSettlementRequestSchema,
+  GetSettlementProofRequestSchema,
+  SubmitSettlementProofRequestSchema,
   TerminateJobRequestSchema,
   ReadDataAvailabilityRequestSchema,
   SetKVRequestSchema,
@@ -44,6 +46,8 @@ import {
   type GetBlockResponse,
   type GetBlockSettlementResponse,
   type UpdateBlockSettlementResponse,
+  type GetSettlementProofResponse,
+  type SubmitSettlementProofResponse,
   type Block,
   type BlockSettlement,
   type Metadata,
@@ -78,7 +82,7 @@ let chain: string | null = null;
 let coordinatorId: string | null = null;
 let sessionPrivateKey: string | null = null;
 let developer: string | null = null;
-let agent: string | null = null;
+let agentName: string | null = null;
 let agentMethod: string | null = null;
 
 /**
@@ -92,7 +96,7 @@ function getCoordinatorClient(): {
   coordinatorId: string;
   sessionPrivateKey: string;
   developer: string;
-  agent: string;
+  agentName: string;
   agentMethod: string;
 } {
   if (coordinatorClient === null) {
@@ -102,7 +106,7 @@ function getCoordinatorClient(): {
     coordinatorId = process.env.COORDINATOR_ID || null;
     sessionPrivateKey = process.env.SESSION_PRIVATE_KEY || null;
     developer = process.env.DEVELOPER || null;
-    agent = process.env.AGENT || null;
+    agentName = process.env.AGENT || null;
     agentMethod = process.env.AGENT_METHOD || null;
 
     // Check for required environment variables
@@ -146,7 +150,7 @@ function getCoordinatorClient(): {
     coordinatorId: coordinatorId as string,
     sessionPrivateKey: sessionPrivateKey as string,
     developer: developer as string,
-    agent: agent as string,
+    agentName: agentName as string,
     agentMethod: agentMethod as string,
   };
 }
@@ -192,12 +196,12 @@ export async function getSecret(key: string): Promise<string | null> {
  * Gets a job from the coordinator
  */
 export async function getJob(): Promise<GetJobResponse> {
-  const { client, sessionId, developer, agent, agentMethod } =
+  const { client, sessionId, developer, agentName, agentMethod } =
     getCoordinatorClient();
 
   const request = create(GetJobRequestSchema, {
     developer,
-    agent,
+    agent: agentName,
     agentMethod,
     sessionId,
   });
@@ -291,14 +295,14 @@ export async function getSequenceStates(
 /**
  * Submits a proof
  */
-export async function submitProof(
-  blockNumber: bigint,
-  sequences: bigint[],
-  proof: string,
-  cpuTime: bigint,
-  mergedSequences1?: bigint[],
-  mergedSequences2?: bigint[]
-): Promise<SubmitProofResponse> {
+export async function submitProof(params: {
+  blockNumber: bigint;
+  sequences: bigint[];
+  proof: string;
+  cpuTime: bigint;
+  mergedSequences1?: bigint[];
+  mergedSequences2?: bigint[];
+}): Promise<SubmitProofResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -307,12 +311,12 @@ export async function submitProof(
   const request = create(SubmitProofRequestSchema, {
     sessionId,
     jobId,
-    blockNumber,
-    sequences,
-    proof,
-    cpuTime,
-    mergedSequences1: mergedSequences1 || [],
-    mergedSequences2: mergedSequences2 || [],
+    blockNumber: params.blockNumber,
+    sequences: params.sequences,
+    proof: params.proof,
+    cpuTime: params.cpuTime,
+    mergedSequences1: params.mergedSequences1 || [],
+    mergedSequences2: params.mergedSequences2 || [],
   });
 
   return await client.submitProof(request);
@@ -321,11 +325,11 @@ export async function submitProof(
 /**
  * Submits state
  */
-export async function submitState(
-  sequence: bigint,
-  newStateData?: Uint8Array,
-  serializedState?: string
-): Promise<SubmitStateResponse> {
+export async function submitState(params: {
+  sequence: bigint;
+  newStateData?: Uint8Array;
+  serializedState?: string;
+}): Promise<SubmitStateResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -334,9 +338,9 @@ export async function submitState(
   const request = create(SubmitStateRequestSchema, {
     sessionId,
     jobId,
-    sequence,
-    newStateData,
-    serializedState,
+    sequence: params.sequence,
+    newStateData: params.newStateData,
+    serializedState: params.serializedState,
   });
 
   return await client.submitState(request);
@@ -345,10 +349,10 @@ export async function submitState(
 /**
  * Gets a proof
  */
-export async function getProof(
-  blockNumber: bigint,
-  sequences: bigint[]
-): Promise<GetProofResponse> {
+export async function getProof(params: {
+  blockNumber: bigint;
+  sequences: bigint[];
+}): Promise<GetProofResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -356,8 +360,8 @@ export async function getProof(
 
   const request = create(GetProofRequestSchema, {
     sessionId,
-    blockNumber,
-    sequences,
+    blockNumber: params.blockNumber,
+    sequences: params.sequences,
     jobId,
   });
 
@@ -406,10 +410,10 @@ export async function readDataAvailability(
 /**
  * Sets a key-value pair in the app instance KV store
  */
-export async function setKv(
-  key: string,
-  value: string
-): Promise<SetKVResponse> {
+export async function setKv(params: {
+  key: string;
+  value: string;
+}): Promise<SetKVResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -418,8 +422,8 @@ export async function setKv(
   const request = create(SetKVRequestSchema, {
     sessionId,
     jobId,
-    key,
-    value,
+    key: params.key,
+    value: params.value,
   });
 
   return await client.setKV(request);
@@ -464,10 +468,10 @@ export async function deleteKv(key: string): Promise<DeleteKVResponse> {
 /**
  * Adds metadata to the app instance (write-once)
  */
-export async function addMetadata(
-  key: string,
-  value: string
-): Promise<AddMetadataResponse> {
+export async function addMetadata(params: {
+  key: string;
+  value: string;
+}): Promise<AddMetadataResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -476,8 +480,8 @@ export async function addMetadata(
   const request = create(AddMetadataRequestSchema, {
     sessionId,
     jobId,
-    key,
-    value,
+    key: params.key,
+    value: params.value,
   });
 
   return await client.addMetadata(request);
@@ -530,10 +534,10 @@ export async function tryCreateBlock(): Promise<TryCreateBlockResponse> {
 /**
  * Updates block state data availability
  */
-export async function updateBlockStateDataAvailability(
-  blockNumber: bigint,
-  stateDataAvailability: string
-): Promise<UpdateBlockStateDataAvailabilityResponse> {
+export async function updateBlockStateDataAvailability(params: {
+  blockNumber: bigint;
+  stateDataAvailability: string;
+}): Promise<UpdateBlockStateDataAvailabilityResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -542,8 +546,8 @@ export async function updateBlockStateDataAvailability(
   const request = create(UpdateBlockStateDataAvailabilityRequestSchema, {
     sessionId,
     jobId,
-    blockNumber,
-    stateDataAvailability,
+    blockNumber: params.blockNumber,
+    stateDataAvailability: params.stateDataAvailability,
   });
 
   return await client.updateBlockStateDataAvailability(request);
@@ -552,10 +556,10 @@ export async function updateBlockStateDataAvailability(
 /**
  * Updates block proof data availability
  */
-export async function updateBlockProofDataAvailability(
-  blockNumber: bigint,
-  proofDataAvailability: string
-): Promise<UpdateBlockProofDataAvailabilityResponse> {
+export async function updateBlockProofDataAvailability(params: {
+  blockNumber: bigint;
+  proofDataAvailability: string;
+}): Promise<UpdateBlockProofDataAvailabilityResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -564,8 +568,8 @@ export async function updateBlockProofDataAvailability(
   const request = create(UpdateBlockProofDataAvailabilityRequestSchema, {
     sessionId,
     jobId,
-    blockNumber,
-    proofDataAvailability,
+    blockNumber: params.blockNumber,
+    proofDataAvailability: params.proofDataAvailability,
   });
 
   return await client.updateBlockProofDataAvailability(request);
@@ -574,11 +578,11 @@ export async function updateBlockProofDataAvailability(
 /**
  * Updates block settlement transaction hash
  */
-export async function updateBlockSettlementTxHash(
-  blockNumber: bigint,
-  settlementTxHash: string,
-  settlementChain: string
-): Promise<UpdateBlockSettlementTxHashResponse> {
+export async function updateBlockSettlementTxHash(params: {
+  blockNumber: bigint;
+  settlementTxHash: string;
+  settlementChain: string;
+}): Promise<UpdateBlockSettlementTxHashResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -587,9 +591,9 @@ export async function updateBlockSettlementTxHash(
   const request = create(UpdateBlockSettlementTxHashRequestSchema, {
     sessionId,
     jobId,
-    blockNumber,
-    settlementTxHash,
-    chain: settlementChain,
+    blockNumber: params.blockNumber,
+    settlementTxHash: params.settlementTxHash,
+    chain: params.settlementChain,
   });
 
   return await client.updateBlockSettlementTxHash(request);
@@ -598,11 +602,11 @@ export async function updateBlockSettlementTxHash(
 /**
  * Updates block settlement transaction included in block
  */
-export async function updateBlockSettlementTxIncludedInBlock(
-  blockNumber: bigint,
-  settledAt: bigint,
-  settlementChain: string
-): Promise<UpdateBlockSettlementTxIncludedInBlockResponse> {
+export async function updateBlockSettlementTxIncludedInBlock(params: {
+  blockNumber: bigint;
+  settledAt: bigint;
+  settlementChain: string;
+}): Promise<UpdateBlockSettlementTxIncludedInBlockResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -611,9 +615,9 @@ export async function updateBlockSettlementTxIncludedInBlock(
   const request = create(UpdateBlockSettlementTxIncludedInBlockRequestSchema, {
     sessionId,
     jobId,
-    blockNumber,
-    settledAt,
-    chain: settlementChain,
+    blockNumber: params.blockNumber,
+    settledAt: params.settledAt,
+    chain: params.settlementChain,
   });
 
   return await client.updateBlockSettlementTxIncludedInBlock(request);
@@ -680,10 +684,10 @@ export async function getBlock(blockNumber: bigint): Promise<GetBlockResponse> {
 /**
  * Rejects a proof for specific sequences
  */
-export async function rejectProof(
-  blockNumber: bigint,
-  sequences: bigint[]
-): Promise<RejectProofResponse> {
+export async function rejectProof(params: {
+  blockNumber: bigint;
+  sequences: bigint[];
+}): Promise<RejectProofResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -691,8 +695,8 @@ export async function rejectProof(
 
   const request = create(RejectProofRequestSchema, {
     sessionId,
-    blockNumber,
-    sequences,
+    blockNumber: params.blockNumber,
+    sequences: params.sequences,
     jobId,
   });
 
@@ -702,10 +706,10 @@ export async function rejectProof(
 /**
  * Gets a block settlement for a specific chain
  */
-export async function getBlockSettlement(
-  blockNumber: bigint,
-  chain: string
-): Promise<GetBlockSettlementResponse> {
+export async function getBlockSettlement(params: {
+  blockNumber: bigint;
+  chain: string;
+}): Promise<GetBlockSettlementResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -714,8 +718,8 @@ export async function getBlockSettlement(
   const request = create(GetBlockSettlementRequestSchema, {
     sessionId,
     jobId,
-    blockNumber,
-    chain,
+    blockNumber: params.blockNumber,
+    chain: params.chain,
   });
 
   return await client.getBlockSettlement(request);
@@ -724,16 +728,16 @@ export async function getBlockSettlement(
 /**
  * Updates a block settlement for a specific chain
  */
-export async function updateBlockSettlement(
-  blockNumber: bigint,
-  chain: string,
+export async function updateBlockSettlement(params: {
+  blockNumber: bigint;
+  chain: string;
   settlementData: {
     settlementTxHash?: string;
     settlementTxIncludedInBlock?: boolean;
     sentToSettlementAt?: bigint;
     settledAt?: bigint;
-  }
-): Promise<UpdateBlockSettlementResponse> {
+  };
+}): Promise<UpdateBlockSettlementResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
   }
@@ -742,16 +746,62 @@ export async function updateBlockSettlement(
   const request = create(UpdateBlockSettlementRequestSchema, {
     sessionId,
     jobId,
-    blockNumber,
-    chain,
-    settlementTxHash: settlementData.settlementTxHash,
+    blockNumber: params.blockNumber,
+    chain: params.chain,
+    settlementTxHash: params.settlementData.settlementTxHash,
     settlementTxIncludedInBlock:
-      settlementData.settlementTxIncludedInBlock ?? false,
-    sentToSettlementAt: settlementData.sentToSettlementAt,
-    settledAt: settlementData.settledAt,
+      params.settlementData.settlementTxIncludedInBlock ?? false,
+    sentToSettlementAt: params.settlementData.sentToSettlementAt,
+    settledAt: params.settlementData.settledAt,
   });
 
   return await client.updateBlockSettlement(request);
+}
+
+/**
+ * Gets a settlement proof for a specific block and chain
+ */
+export async function getSettlementProof(params: {
+  blockNumber: bigint;
+  settlementChain: string;
+}): Promise<GetSettlementProofResponse> {
+  if (!jobId) {
+    throw new Error("Call getJob() first");
+  }
+  const { client, sessionId } = getCoordinatorClient();
+
+  const request = create(GetSettlementProofRequestSchema, {
+    sessionId,
+    blockNumber: params.blockNumber,
+    jobId,
+    settlementChain: params.settlementChain,
+  });
+
+  return await client.getSettlementProof(request);
+}
+
+/**
+ * Submits a settlement proof
+ */
+export async function submitSettlementProof(params: {
+  blockNumber: bigint;
+  proof: string;
+  cpuTime: bigint;
+}): Promise<SubmitSettlementProofResponse> {
+  if (!jobId) {
+    throw new Error("Call getJob() first");
+  }
+  const { client, sessionId } = getCoordinatorClient();
+
+  const request = create(SubmitSettlementProofRequestSchema, {
+    sessionId,
+    blockNumber: params.blockNumber,
+    jobId,
+    proof: params.proof,
+    cpuTime: params.cpuTime,
+  });
+
+  return await client.submitSettlementProof(request);
 }
 
 /**
@@ -806,89 +856,105 @@ export async function agentMessage(
 }
 
 /**
- * Logs a debug message to the coordinator and console
+ * Agent logging interface
+ * Provides methods to log messages to both the console and coordinator
  */
-export async function debug(...args: any[]): Promise<void> {
-  const message = args
-    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
-    .join(" ");
+export const agent = {
+  /**
+   * Logs a debug message to the coordinator and console
+   */
+  debug: async (...args: any[]): Promise<void> => {
+    const message = args
+      .map((arg) =>
+        typeof arg === "object" ? JSON.stringify(arg) : String(arg)
+      )
+      .join(" ");
 
-  console.log(...args);
+    console.log(...args);
 
-  try {
-    await agentMessage(LogLevel.DEBUG, message);
-  } catch (error) {
-    console.error("Failed to send debug message to coordinator:", error);
-  }
-}
+    try {
+      await agentMessage(LogLevel.DEBUG, message);
+    } catch (error) {
+      console.error("Failed to send debug message to coordinator:", error);
+    }
+  },
 
-/**
- * Logs an info message to the coordinator and console
- */
-export async function info(...args: any[]): Promise<void> {
-  const message = args
-    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
-    .join(" ");
+  /**
+   * Logs an info message to the coordinator and console
+   */
+  info: async (...args: any[]): Promise<void> => {
+    const message = args
+      .map((arg) =>
+        typeof arg === "object" ? JSON.stringify(arg) : String(arg)
+      )
+      .join(" ");
 
-  console.log(...args);
+    console.log(...args);
 
-  try {
-    await agentMessage(LogLevel.INFO, message);
-  } catch (error) {
-    console.error("Failed to send info message to coordinator:", error);
-  }
-}
+    try {
+      await agentMessage(LogLevel.INFO, message);
+    } catch (error) {
+      console.error("Failed to send info message to coordinator:", error);
+    }
+  },
 
-/**
- * Logs a warning message to the coordinator and console
- */
-export async function warn(...args: any[]): Promise<void> {
-  const message = args
-    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
-    .join(" ");
+  /**
+   * Logs a warning message to the coordinator and console
+   */
+  warn: async (...args: any[]): Promise<void> => {
+    const message = args
+      .map((arg) =>
+        typeof arg === "object" ? JSON.stringify(arg) : String(arg)
+      )
+      .join(" ");
 
-  console.warn(...args);
+    console.warn(...args);
 
-  try {
-    await agentMessage(LogLevel.WARN, message);
-  } catch (error) {
-    console.error("Failed to send warn message to coordinator:", error);
-  }
-}
+    try {
+      await agentMessage(LogLevel.WARN, message);
+    } catch (error) {
+      console.error("Failed to send warn message to coordinator:", error);
+    }
+  },
 
-/**
- * Logs an error message to the coordinator and console
- */
-export async function error(...args: any[]): Promise<void> {
-  const message = args
-    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
-    .join(" ");
+  /**
+   * Logs an error message to the coordinator and console
+   */
+  error: async (...args: any[]): Promise<void> => {
+    const message = args
+      .map((arg) =>
+        typeof arg === "object" ? JSON.stringify(arg) : String(arg)
+      )
+      .join(" ");
 
-  console.error(...args);
+    console.error(...args);
 
-  try {
-    await agentMessage(LogLevel.ERROR, message);
-  } catch (error) {
-    console.error("Failed to send error message to coordinator:", error);
-  }
-}
+    try {
+      await agentMessage(LogLevel.ERROR, message);
+    } catch (error) {
+      console.error("Failed to send error message to coordinator:", error);
+    }
+  },
 
-/**
- * Logs a fatal message to the coordinator and console
- */
-export async function fatal(...args: any[]): Promise<void> {
-  const message = args
-    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
-    .join(" ");
+  /**
+   * Logs a fatal message to the coordinator and console
+   */
+  fatal: async (...args: any[]): Promise<void> => {
+    const message = args
+      .map((arg) =>
+        typeof arg === "object" ? JSON.stringify(arg) : String(arg)
+      )
+      .join(" ");
 
-  console.error(...args);
+    console.error(...args);
 
-  try {
-    await agentMessage(LogLevel.FATAL, message);
-  } catch (error) {
-    console.error("Failed to send fatal message to coordinator:", error);
-  }
-}
+    try {
+      await agentMessage(LogLevel.FATAL, message);
+    } catch (error) {
+      console.error("Failed to send fatal message to coordinator:", error);
+    }
+  },
+};
 
 // Re-export types for users to access
 export type {
@@ -900,6 +966,8 @@ export type {
   GetBlockResponse,
   GetBlockSettlementResponse,
   UpdateBlockSettlementResponse,
+  GetSettlementProofResponse,
+  SubmitSettlementProofResponse,
   RejectProofResponse,
   ProofEventResponse,
   AgentMessageResponse,

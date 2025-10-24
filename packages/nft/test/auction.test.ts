@@ -19,11 +19,9 @@ import {
   initBlockchain,
   accountBalanceMina,
   Memory,
-  serializeIndexedMap,
   sendTx,
-  pinJSON,
-  sleep,
 } from "@silvana-one/mina-utils";
+import { serializeIndexedMap, pinJSON } from "@silvana-one/storage";
 import { TEST_ACCOUNTS } from "./helpers/config.js";
 import {
   NFT,
@@ -60,7 +58,7 @@ import {
 } from "@silvana-one/upgradable";
 import { processArguments } from "./helpers/utils.js";
 import { randomMetadata } from "./helpers/metadata.js";
-import { Whitelist, Storage } from "@silvana-one/storage";
+import { Whitelist, Storage, sleep } from "@silvana-one/storage";
 
 let { chain, useAdvancedAdmin, withdraw, noLog, approveTransfer, shares } =
   processArguments();
