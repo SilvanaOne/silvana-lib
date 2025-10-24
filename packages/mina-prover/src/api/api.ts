@@ -60,10 +60,12 @@ export class zkCloudWorkerClient {
     const chain = params.chain ?? "mina:devnet";
     this.chain = chain;
     this.endpoint =
-      chain === "mina:devnet" ||
-      chain === "zeko:testnet" ||
-      chain === "mina:mainnet"
-        ? ZKCLOUDWORKER_API + chain
+      chain === "mina:devnet"
+        ? ZKCLOUDWORKER_API + "devnet"
+        : chain === "zeko:testnet"
+        ? ZKCLOUDWORKER_API + "zeko"
+        : chain === "mina:mainnet"
+        ? ZKCLOUDWORKER_API + "mainnet"
         : undefined;
     this.webhook = webhook;
     if (jwt === "local") {
