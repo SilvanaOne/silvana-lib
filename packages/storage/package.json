@@ -11,6 +11,7 @@
     "@types/node": "^24.9.1",
     "esbuild": "^0.25.11",
     "o1js": "2.10.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "engines": {
@@ -45,7 +46,7 @@
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
   "peerDependencies": {
-    "o1js": "2.4.0"
+    "o1js": "2.10.0"
   },
   "publishConfig": {
     "access": "public"
@@ -53,7 +54,9 @@
   "repository": "SilvanaOne/silvana-lib.git",
   "scripts": {
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
-    "release": "npm publish --access public"
+    "release": "npm publish --access public",
+    "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps --test",
+    "test:indexed-map": "npm run test test/indexed-map.test.ts"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"

@@ -55,7 +55,7 @@
     "@silvana-one/nft": "1.1.0",
     "@silvana-one/storage": "1.1.0",
     "@silvana-one/token": "1.1.0",
-    "o1js": "2.4.0"
+    "o1js": "2.10.0"
   },
   "publishConfig": {
     "access": "public"

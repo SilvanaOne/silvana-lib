@@ -126,7 +126,7 @@ export async function sendTx(params: {
           )}`
         );
       }
-      if (chain !== "local") {
+      if (chain !== "mina:local") {
         // we still wait for the tx to be included in the block by checking the nonce
         // even in the case of tx NOT included
         // because the tx might still be included in the block in the case of devnet instability

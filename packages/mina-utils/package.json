@@ -47,7 +47,7 @@
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
   "peerDependencies": {
-    "o1js": "2.4.0"
+    "o1js": "2.10.0"
   },
   "publishConfig": {
     "access": "public"

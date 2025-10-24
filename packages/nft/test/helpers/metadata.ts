@@ -19,7 +19,7 @@ import {
   serializeIndexedMap,
   IndexedMapSerialized,
   pinJSON,
-} from "@silvana-one/mina-utils";
+} from "@silvana-one/storage";
 export {
   randomMetadata,
   randomName,
