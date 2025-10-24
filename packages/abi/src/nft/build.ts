@@ -7,7 +7,7 @@ import {
   NftMintTransactionParams,
   getCurrentZekoSlot,
 } from "@silvana-one/api";
-import { blockchain } from "../types.js";
+import { CanonicalBlockchain } from "@silvana-one/api";
 import { fetchMinaAccount } from "../fetch.js";
 import {
   Collection,
@@ -48,7 +48,7 @@ import {
 export type NftAdminType = "standard" | "advanced" | "unknown";
 
 export async function buildNftCollectionLaunchTransaction(params: {
-  chain: blockchain;
+  chain: CanonicalBlockchain;
   args:
     | LaunchNftCollectionStandardAdminParams
     | LaunchNftCollectionAdvancedAdminParams;
@@ -71,9 +71,9 @@ export async function buildNftCollectionLaunchTransaction(params: {
 }> {
   const { chain, args } = params;
   const ACCOUNT_CREATION_FEE: bigint =
-    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
+    chain === "zeko:testnet" ? 100_000_000n : 1_000_000_000n;
   const {
-    url = chain === "mainnet"
+    url = chain === "mina:mainnet"
       ? "https://minanft.io"
       : `https://${chain}.minanft.io`,
     symbol = "NFT",
@@ -123,7 +123,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
   const collectionContract =
     adminType === "advanced" ? AdvancedCollection : Collection;
   const vk =
-    tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
+    tokenVerificationKeys[chain === "mina:mainnet" ? "mainnet" : "devnet"].vk;
   if (
     !vk ||
     !vk.Collection ||
@@ -208,13 +208,13 @@ export async function buildNftCollectionLaunchTransaction(params: {
   if (metadataRoot === undefined) throw new Error("metadataRoot is required");
 
   const slot =
-    chain === "local"
+    chain === "mina:local"
       ? Mina.currentSlot()
-      : chain === "zeko"
-      ? UInt32.from((await getCurrentZekoSlot("zeko")) ?? 2_000_000)
+      : chain === "zeko:testnet"
+      ? UInt32.from((await getCurrentZekoSlot("zeko:testnet")) ?? 2_000_000)
       : (await fetchLastBlock()).globalSlotSinceGenesis;
   const expiry = slot.add(UInt32.from(100));
-  if (chain === "zeko") {
+  if (chain === "zeko:testnet") {
     console.log("zeko slot", slot.toBigint());
     console.log("zeko expiry", expiry.toBigint());
   }
@@ -326,7 +326,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
 }
 
 export async function buildNftTransaction(params: {
-  chain: blockchain;
+  chain: CanonicalBlockchain;
   args: Exclude<
     NftTransactionParams,
     | LaunchNftCollectionStandardAdminParams
@@ -357,7 +357,7 @@ export async function buildNftTransaction(params: {
 }> {
   const { chain, args } = params;
   const ACCOUNT_CREATION_FEE: bigint =
-    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
+    chain === "zeko:testnet" ? 100_000_000n : 1_000_000_000n;
   const { nonce, txType } = args;
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
@@ -626,7 +626,7 @@ export async function buildNftTransaction(params: {
   //   ? new FungibleTokenBidContract(bidAddress)
   //   : undefined;
   const vk =
-    tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
+    tokenVerificationKeys[chain === "mina:mainnet" ? "mainnet" : "devnet"].vk;
   if (
     !vk ||
     !vk.Collection ||
@@ -884,7 +884,7 @@ export async function buildNftTransaction(params: {
 }
 
 export async function buildNftMintTransaction(params: {
-  chain: blockchain;
+  chain: CanonicalBlockchain;
   args: NftMintTransactionParams;
   developerAddress?: string;
   provingKey?: string;
@@ -905,7 +905,7 @@ export async function buildNftMintTransaction(params: {
 }> {
   const { chain, args } = params;
   const ACCOUNT_CREATION_FEE: bigint =
-    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
+    chain === "zeko:testnet" ? 100_000_000n : 1_000_000_000n;
   const { nonce, txType } = args;
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
@@ -975,7 +975,7 @@ export async function buildNftMintTransaction(params: {
   });
 
   const vk =
-    tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
+    tokenVerificationKeys[chain === "mina:mainnet" ? "mainnet" : "devnet"].vk;
   if (
     !vk ||
     !vk.Collection ||
@@ -1014,13 +1014,13 @@ export async function buildNftMintTransaction(params: {
   if (metadataRoot === undefined) throw new Error("metadataRoot is required");
 
   const slot =
-    chain === "local"
+    chain === "mina:local"
       ? Mina.currentSlot()
-      : chain === "zeko"
-      ? UInt32.from((await getCurrentZekoSlot("zeko")) ?? 2_000_000)
+      : chain === "zeko:testnet"
+      ? UInt32.from((await getCurrentZekoSlot("zeko:testnet")) ?? 2_000_000)
       : (await fetchLastBlock()).globalSlotSinceGenesis;
   const expiry = slot.add(UInt32.from(100));
-  if (chain === "zeko") {
+  if (chain === "zeko:testnet") {
     console.log("zeko slot", slot.toBigint());
     console.log("zeko expiry", expiry.toBigint());
   }
@@ -1102,7 +1102,7 @@ export async function getNftSymbolAndAdmin(params: {
   // bidAddress?: PublicKey;
   nftAddress?: PublicKey;
   collectionAddress: PublicKey;
-  chain: blockchain;
+  chain: CanonicalBlockchain;
 }): Promise<{
   adminContractAddress: PublicKey;
   symbol: string;
@@ -1116,7 +1116,7 @@ export async function getNftSymbolAndAdmin(params: {
 }> {
   const { txType, collectionAddress, chain, nftAddress } = params;
   const vk =
-    tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
+    tokenVerificationKeys[chain === "mina:mainnet" ? "mainnet" : "devnet"].vk;
   let verificationKeyHashes: string[] = [];
   let nftName: string | undefined = undefined;
   let storage: string | undefined = undefined;

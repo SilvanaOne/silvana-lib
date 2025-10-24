@@ -7,9 +7,8 @@ import {
   TaskData,
   zkCloudWorker,
   TransactionMetadata,
-  blockchain,
-  Local,
 } from "@silvana-one/prover";
+import { CanonicalBlockchain, Local } from "@silvana-one/api";
 import { makeString } from "@silvana-one/mina-utils";
 import { ApiCommand } from "../api/api.js";
 
@@ -34,7 +33,7 @@ export class LocalCloud extends Cloud {
    */
   constructor(params: {
     job: JobData;
-    chain: blockchain;
+    chain: CanonicalBlockchain;
     cache?: string;
     stepId?: string;
     localWorker: (cloud: Cloud) => Promise<zkCloudWorker>;
@@ -284,7 +283,7 @@ export class LocalCloud extends Cloud {
       args?: string;
       metadata?: string;
     };
-    chain: blockchain;
+    chain: CanonicalBlockchain;
     localWorker: (cloud: Cloud) => Promise<zkCloudWorker>;
   }): Promise<string> {
     const { command, data, chain, localWorker } = params;
@@ -488,7 +487,7 @@ export class LocalCloud extends Cloud {
     developer: string;
     repo: string;
     localWorker: (cloud: Cloud) => Promise<zkCloudWorker>;
-    chain: blockchain;
+    chain: CanonicalBlockchain;
   }): Promise<number> {
     const { developer, repo, localWorker, chain } = params;
     for (const taskId in LocalStorage.tasks) {

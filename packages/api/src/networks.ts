@@ -1,7 +1,5 @@
 export {
   CanonicalBlockchain,
-  blockchain,
-  getCanonicalBlockchain,
   MinaNetwork,
   networks,
   Mainnet,
@@ -21,32 +19,32 @@ type CanonicalBlockchain =
   | "zeko:alphanet";
 
 /**
- * blockchain is the type for the chain ID.
+ * blockchain is the type for the chain ID - deprecated.
  */
-type blockchain =
-  | CanonicalBlockchain
-  | "local"
-  | "devnet"
-  | "lightnet"
-  | "mainnet"
-  | "zeko";
+// type blockchain =
+//   | CanonicalBlockchain
+//   | "local"
+//   | "devnet"
+//   | "lightnet"
+//   | "mainnet"
+//   | "zeko";
 
-function getCanonicalBlockchain(chain: blockchain): CanonicalBlockchain {
-  switch (chain) {
-    case "local":
-      return "mina:local";
-    case "devnet":
-      return "mina:devnet";
-    case "lightnet":
-      return "mina:lightnet";
-    case "mainnet":
-      return "mina:mainnet";
-    case "zeko":
-      return "zeko:testnet";
-    default:
-      return chain;
-  }
-}
+// function getCanonicalBlockchain(chain: blockchain): CanonicalBlockchain {
+//   switch (chain) {
+//     case "local":
+//       return "mina:local";
+//     case "devnet":
+//       return "mina:devnet";
+//     case "lightnet":
+//       return "mina:lightnet";
+//     case "mainnet":
+//       return "mina:mainnet";
+//     case "zeko":
+//       return "zeko:testnet";
+//     default:
+//       return chain;
+//   }
+// }
 
 /**
  * MinaNetwork is the data structure for a Mina network, keeping track of the Mina and archive endpoints, chain ID, name, account manager, explorer account URL, explorer transaction URL, and faucet.

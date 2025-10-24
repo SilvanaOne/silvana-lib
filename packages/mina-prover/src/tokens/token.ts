@@ -1,9 +1,5 @@
-import {
-  blockchain,
-  Cloud,
-  JobStatus,
-  zkCloudWorker,
-} from "@silvana-one/prover";
+import { Cloud, JobStatus, zkCloudWorker } from "@silvana-one/prover";
+import { CanonicalBlockchain } from "@silvana-one/api";
 import { zkCloudWorkerClient } from "../api/api.js";
 import { TokenTransaction, JobResult } from "@silvana-one/api";
 
@@ -13,7 +9,7 @@ export class TokenAPI {
   constructor(params: {
     jwt: string;
     zkcloudworker?: (cloud: Cloud) => Promise<zkCloudWorker>;
-    chain: blockchain;
+    chain: CanonicalBlockchain;
   }) {
     const { jwt, zkcloudworker, chain } = params;
     if (jwt === undefined) throw new Error("jwt is undefined");

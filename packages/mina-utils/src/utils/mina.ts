@@ -21,11 +21,10 @@ import {
 } from "o1js";
 import {
   networks,
-  blockchain,
   MinaNetwork,
   Local,
-  getCanonicalBlockchain,
-} from "../networks.js";
+  CanonicalBlockchain,
+} from "@silvana-one/api";
 
 /**
  * MinaNetworkInstance is the data structure for a Mina network instance, keeping track of the keys, network, and network ID hash.
@@ -73,28 +72,33 @@ function getDeployer(): Mina.TestPublicKey | undefined {
  * @param deployersNumber the number of deployers to use for the network (only for local and lightnet networks)
  * @returns the Mina network instance
  */
-async function initBlockchain(
-  chain: blockchain,
-  deployersNumber: number = 0,
-  proofsEnabled: boolean = true,
-  customMinaNodeUrl: string | undefined = undefined,
-  customMinaArchiveNodeUrl: string | undefined = undefined
-): Promise<MinaNetworkInstance> {
-  const instance = getCanonicalBlockchain(chain);
-
+async function initBlockchain(params: {
+  chain: CanonicalBlockchain;
+  deployersNumber?: number;
+  proofsEnabled?: boolean;
+  customMinaNodeUrl?: string;
+  customMinaArchiveNodeUrl?: string;
+}): Promise<MinaNetworkInstance> {
+  const {
+    chain,
+    deployersNumber = 0,
+    proofsEnabled = true,
+    customMinaNodeUrl = undefined,
+    customMinaArchiveNodeUrl = undefined,
+  } = params;
   if (currentNetwork !== undefined) {
-    if (currentNetwork?.network.chainId === instance) {
+    if (currentNetwork?.network.chainId === chain) {
       return currentNetwork;
     } else {
       throw new Error(
-        `Network is already initialized to different chain ${currentNetwork.network.chainId}, cannot initialize to ${instance}`
+        `Network is already initialized to different chain ${currentNetwork.network.chainId}, cannot initialize to ${chain}`
       );
     }
   }
-  const networkIdHash = CircuitString.fromString(instance).hash();
+  const networkIdHash = CircuitString.fromString(chain).hash();
 
   // await used for compatibility with future versions of o1js
-  if (instance === "mina:local") {
+  if (chain === "mina:local") {
     const local = await Mina.LocalBlockchain({
       proofsEnabled,
     });
@@ -109,7 +113,7 @@ async function initBlockchain(
     return currentNetwork;
   }
 
-  const network = networks.find((n) => n.chainId === instance);
+  const network = networks.find((n) => n.chainId === chain);
   if (network === undefined) {
     throw new Error("Unknown network");
   }
@@ -130,16 +134,16 @@ async function initBlockchain(
     mina,
     archive,
     lightnetAccountManager: network.accountManager,
-    networkId: instance === "mina:mainnet" ? "mainnet" : "testnet",
+    networkId: chain === "mina:mainnet" ? "mainnet" : "testnet",
     bypassTransactionLimits:
-      instance === "zeko:testnet" || instance === "zeko:alphanet",
+      chain === "zeko:testnet" || chain === "zeko:alphanet",
   });
   Mina.setActiveInstance(networkInstance);
 
   const keys: Mina.TestPublicKey[] = [];
 
   if (deployersNumber > 0) {
-    if (instance === "mina:lightnet") {
+    if (chain === "mina:lightnet") {
       for (let i = 0; i < deployersNumber; i++) {
         const keyPair = await Lightnet.acquireKeyPair();
         const key = Mina.TestPublicKey(keyPair.privateKey);

@@ -1,5 +1,5 @@
 export async function getCurrentZekoSlot(
-  chain: "zeko" | "zeko:alphanet" = "zeko"
+  chain: "zeko:testnet" | "zeko:alphanet" = "zeko:testnet"
 ): Promise<number | undefined> {
   try {
     const response = await fetch(

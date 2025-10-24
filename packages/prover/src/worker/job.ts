@@ -1,4 +1,4 @@
-import { blockchain } from "../networks.js";
+import { CanonicalBlockchain } from "@silvana-one/api";
 export type JobStatus =
   | "created"
   | "started"
@@ -63,7 +63,7 @@ export interface JobData {
   metadata?: string;
 
   /** The blockchain to execute the job on */
-  chain: blockchain;
+  chain: CanonicalBlockchain;
 
   /** The filename where transactions data is stored (optional) */
   filename?: string;

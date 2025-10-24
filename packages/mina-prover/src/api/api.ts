@@ -1,13 +1,8 @@
 import chalk from "chalk";
 import { sleep } from "@silvana-one/mina-utils";
 import { LocalCloud, LocalStorage } from "../local/local.js";
-import {
-  zkCloudWorker,
-  Cloud,
-  JobData,
-  config,
-  blockchain,
-} from "@silvana-one/prover";
+import { zkCloudWorker, Cloud, JobData, config } from "@silvana-one/prover";
+import { CanonicalBlockchain } from "@silvana-one/api";
 const { ZKCLOUDWORKER_AUTH, ZKCLOUDWORKER_API } = config;
 
 /**
@@ -41,7 +36,7 @@ export type ApiCommand =
 export class zkCloudWorkerClient {
   readonly jwt: string;
   readonly endpoint?: string;
-  readonly chain: blockchain;
+  readonly chain: CanonicalBlockchain;
   readonly webhook?: string;
   readonly localWorker?: (cloud: Cloud) => Promise<zkCloudWorker>;
 
@@ -56,16 +51,18 @@ export class zkCloudWorkerClient {
   constructor(params: {
     jwt: string;
     zkcloudworker?: (cloud: Cloud) => Promise<zkCloudWorker>;
-    chain?: blockchain;
+    chain?: CanonicalBlockchain;
     webhook?: string;
   }) {
     const { jwt, zkcloudworker, webhook } = params;
     this.jwt = jwt;
 
-    const chain = params.chain ?? "devnet";
+    const chain = params.chain ?? "mina:devnet";
     this.chain = chain;
     this.endpoint =
-      chain === "devnet" || chain === "zeko" || chain === "mainnet"
+      chain === "mina:devnet" ||
+      chain === "zeko:testnet" ||
+      chain === "mina:mainnet"
         ? ZKCLOUDWORKER_API + chain
         : undefined;
     this.webhook = webhook;

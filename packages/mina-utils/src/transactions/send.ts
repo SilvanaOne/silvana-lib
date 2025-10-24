@@ -1,6 +1,6 @@
 import { checkZkappTransaction } from "o1js";
 import { Mina } from "o1js";
-import { blockchain } from "../networks.js";
+import { CanonicalBlockchain } from "@silvana-one/api";
 import { sleep } from "../utils/utils.js";
 import { fetchMinaAccount } from "../utils/fetch.js";
 import { getCurrentNetwork } from "../utils/mina.js";
@@ -23,7 +23,7 @@ export async function sendTx(params: {
   retry?: number;
   verbose?: boolean;
   wait?: boolean;
-  chain?: blockchain;
+  chain?: CanonicalBlockchain;
   delay?: number;
 }): Promise<
   | Mina.IncludedTransaction
@@ -37,7 +37,9 @@ export async function sendTx(params: {
     verbose = true,
     wait = true,
     chain = getCurrentNetwork().network.chainId,
-    delay = chain === "zeko" || chain === "lightnet" ? 5000 : 60000,
+    delay = chain === "zeko:testnet" || chain === "mina:lightnet"
+      ? 5000
+      : 60000,
     retry = 30,
   } = params;
   // flatten accountUpdates
@@ -94,7 +96,7 @@ export async function sendTx(params: {
               txSent.status
             }`
           );
-      } else if (chain !== "local") {
+      } else if (chain !== "mina:local") {
         attempt++;
         console.error(
           `${description} tx NOT sent: hash: ${txSent?.hash} status: ${
@@ -114,7 +116,11 @@ export async function sendTx(params: {
       );
     }
 
-    if (txSent.status === "pending" && wait !== false && chain !== "zeko") {
+    if (
+      txSent.status === "pending" &&
+      wait !== false &&
+      chain !== "zeko:testnet"
+    ) {
       if (verbose) console.log(`Waiting for tx inclusion...`);
       let txIncluded = await txSent.safeWait();
       if (txIncluded.status !== "included") {
@@ -199,16 +205,16 @@ export async function sendTx(params: {
       return txIncluded;
     } else return txSent;
   } catch (error) {
-    if (chain !== "zeko") console.error("Error sending tx", error);
+    if (chain !== "zeko:testnet") console.error("Error sending tx", error);
   }
 }
 
 export async function getTxStatusFast(params: {
   hash: string;
-  chain?: blockchain;
+  chain?: CanonicalBlockchain;
 }): Promise<{ success: boolean; result?: boolean; error?: string }> {
   const { hash, chain = getCurrentNetwork().network.chainId } = params;
-  if (chain === "local" || chain === "zeko")
+  if (chain === "mina:local" || chain === "zeko:testnet")
     return { success: true, result: true };
 
   try {

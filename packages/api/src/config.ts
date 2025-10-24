@@ -6,7 +6,7 @@ export function config({
   throwOnError,
 }: {
   apiKey: string;
-  chain?: "mainnet" | "devnet" | "zeko";
+  chain?: "mina:mainnet" | "mina:devnet" | "zeko:testnet";
   throwOnError?: boolean;
 }) {
   client.setConfig({
@@ -14,9 +14,9 @@ export function config({
       "x-api-key": apiKey,
     },
     baseUrl:
-      chain === "zeko"
+      chain === "zeko:testnet"
         ? "https://zekotokens.com/api/v1/"
-        : chain === "devnet"
+        : chain === "mina:devnet"
         ? "https://devnet.minatokens.com/api/v1/"
         : "https://minatokens.com/api/v1/",
     throwOnError: throwOnError ?? true,

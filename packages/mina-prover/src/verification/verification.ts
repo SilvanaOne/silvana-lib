@@ -1,4 +1,4 @@
-import { blockchain } from "@silvana-one/prover";
+import { CanonicalBlockchain } from "@silvana-one/api";
 import { SmartContract } from "o1js";
 
 /**
@@ -18,6 +18,6 @@ export interface VerificationData {
   contractDependencies?: (typeof SmartContract)[];
   programDependencies?: any[]; // ZkProgram[];
   address: string;
-  chain: blockchain;
+  chain: CanonicalBlockchain;
   image?: string;
 }
