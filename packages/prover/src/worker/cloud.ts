@@ -1,4 +1,4 @@
-import { blockchain } from "../networks.js";
+import { CanonicalBlockchain } from "@silvana-one/api";
 import { JobData } from "./job.js";
 import { TransactionMetadata } from "./transaction.js";
 
@@ -63,7 +63,7 @@ export abstract class Cloud {
   readonly userId?: string;
   readonly args?: string;
   readonly metadata?: string;
-  readonly chain: blockchain;
+  readonly chain: CanonicalBlockchain;
   readonly isLocalCloud: boolean;
 
   /**
@@ -96,7 +96,7 @@ export abstract class Cloud {
     args?: string;
     metadata?: string;
     isLocalCloud?: boolean;
-    chain: blockchain;
+    chain: CanonicalBlockchain;
   }) {
     const {
       id,

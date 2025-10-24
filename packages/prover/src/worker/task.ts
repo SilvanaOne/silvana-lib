@@ -1,4 +1,4 @@
-import { blockchain } from "../networks.js";
+import { CanonicalBlockchain } from "@silvana-one/api";
 
 /**
  * TaskData is the data structure for a task, keeping track of the task status, result, logs, and metadata.
@@ -41,5 +41,5 @@ export interface TaskData {
   metadata?: string;
 
   /** The blockchain to execute the task on */
-  chain: blockchain;
+  chain: CanonicalBlockchain;
 }

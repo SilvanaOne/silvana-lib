@@ -1,4 +1,4 @@
-export type JobSettlementChain = "mina" | "zeko" | "ethereum";
+import { CanonicalBlockchain } from "@silvana-one/api";
 
 export type JobDataAvailabilityChain =
   | "walrus"
@@ -6,35 +6,19 @@ export type JobDataAvailabilityChain =
   | "celestia"
   | "pinata";
 
-export type JobCoordinationChain = "sui" | "solana";
-
-export type JobNetwork =
-  | "mainnet"
-  | "testnet"
-  | "devnet"
-  | "public"
-  | "private";
-
 export interface JobMetadataBase {
   linkId?: string;
   custom?: object | string;
 }
 
 export interface JobSettlementTransactionHash extends JobMetadataBase {
-  chain: JobSettlementChain;
-  network: JobNetwork;
-  hash: string;
-}
-
-export interface JobCoordinationTransactionHash extends JobMetadataBase {
-  chain: JobCoordinationChain;
-  network: JobNetwork;
+  chain: CanonicalBlockchain;
   hash: string;
 }
 
 export interface JobDataAvailabilityTransactionHash extends JobMetadataBase {
   chain: JobDataAvailabilityChain;
-  network: JobNetwork;
+  network: CanonicalBlockchain;
   hash: string;
 }
 
@@ -46,7 +30,6 @@ export interface JobProof extends JobMetadataBase {
 
 export interface JobMetadata {
   settlement_txs?: JobSettlementTransactionHash[];
-  coordination_txs?: JobCoordinationTransactionHash[];
   data_availability_txs?: JobDataAvailabilityTransactionHash[];
   proof_availability_txs?: JobDataAvailabilityTransactionHash[];
   proofs?: JobProof[];

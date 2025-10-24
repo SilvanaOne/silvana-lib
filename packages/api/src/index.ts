@@ -7,3 +7,4 @@ export * from "./client/types.gen.js";
 export * from "./config.js";
 export * from "./wait.js";
 export * from "./zeko.js";
+export * from "./networks.js";

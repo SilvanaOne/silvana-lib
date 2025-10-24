@@ -6,7 +6,7 @@ import {
 import { fetchMinaAccount } from "../utils/fetch.js";
 import { getCurrentNetwork } from "../utils/mina.js";
 import { Mina, PublicKey } from "o1js";
-import { blockchain } from "../networks.js";
+import { CanonicalBlockchain } from "@silvana-one/api";
 
 export async function getNonce(params: {
   account: string;
@@ -79,7 +79,7 @@ export async function getNonce(params: {
 
 export async function getAccountNonce(params: {
   account: string;
-  chain?: blockchain;
+  chain?: CanonicalBlockchain;
   blockBerryApiKey?: string;
   verbose?: boolean;
 }): Promise<number> {
@@ -91,18 +91,19 @@ export async function getAccountNonce(params: {
   } = params;
   const canUseBlockBerry =
     blockBerryApiKey !== undefined &&
-    (chain === "devnet" || chain === "mainnet");
-  if (chain === "zeko") {
+    (chain === "mina:devnet" || chain === "mina:mainnet");
+  if (chain === "zeko:testnet") {
     const publicKey = PublicKey.fromBase58(account);
     await fetchMinaAccount({ publicKey });
     const nonce = Number(Mina.getAccount(publicKey).nonce.toBigint());
     return nonce;
-  } else {
+  } else if (chain === "mina:devnet" || chain === "mina:mainnet") {
+    const blockberryChain = chain === "mina:devnet" ? "devnet" : "mainnet";
     const blockberryNoncePromise = canUseBlockBerry
       ? getNonce({
           account,
           blockBerryApiKey,
-          chain,
+          chain: blockberryChain,
         })
       : undefined;
     const publicKey = PublicKey.fromBase58(account);
@@ -117,5 +118,7 @@ export async function getAccountNonce(params: {
         `Nonce changed from ${senderNonce} to ${nonce} for ${account}`
       );
     return nonce;
+  } else {
+    throw new Error(`Unsupported chain: ${chain}`);
   }
 }

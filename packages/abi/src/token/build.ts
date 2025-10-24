@@ -6,7 +6,7 @@ import {
   LaunchTokenStandardAdminParams,
   LaunchTokenBondingCurveAdminParams,
 } from "@silvana-one/api";
-import { blockchain } from "../types.js";
+import { CanonicalBlockchain } from "@silvana-one/api";
 import { fetchMinaAccount } from "../fetch.js";
 import {
   FungibleToken,
@@ -36,7 +36,7 @@ import {
 export type AdminType = "standard" | "advanced" | "bondingCurve" | "unknown";
 
 export async function buildTokenLaunchTransaction(params: {
-  chain: blockchain;
+  chain: CanonicalBlockchain;
   args:
     | LaunchTokenStandardAdminParams
     | LaunchTokenAdvancedAdminParams
@@ -55,7 +55,7 @@ export async function buildTokenLaunchTransaction(params: {
 }> {
   const { chain, args } = params;
   const ACCOUNT_CREATION_FEE: bigint =
-    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
+    chain === "zeko:testnet" ? 100_000_000n : 1_000_000_000n;
   const { uri, symbol, memo, nonce, adminContract: adminType } = args;
   if (memo && typeof memo !== "string")
     throw new Error("Memo must be a string");
@@ -91,7 +91,7 @@ export async function buildTokenLaunchTransaction(params: {
       ? BondingCurveFungibleToken
       : FungibleToken;
   const vk =
-    tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
+    tokenVerificationKeys[chain === "mina:mainnet" ? "mainnet" : "devnet"].vk;
   if (
     !vk ||
     !vk.FungibleTokenOfferContract ||
@@ -279,7 +279,7 @@ export async function buildTokenLaunchTransaction(params: {
 }
 
 export async function buildTokenTransaction(params: {
-  chain: blockchain;
+  chain: CanonicalBlockchain;
   args: Exclude<
     TokenTransactionParams,
     | LaunchTokenStandardAdminParams
@@ -305,7 +305,7 @@ export async function buildTokenTransaction(params: {
 }> {
   const { chain, args } = params;
   const ACCOUNT_CREATION_FEE: bigint =
-    chain === "zeko" ? 100_000_000n : 1_000_000_000n;
+    chain === "zeko:testnet" ? 100_000_000n : 1_000_000_000n;
   const { nonce, txType } = args;
   if (nonce === undefined) throw new Error("Nonce is required");
   if (typeof nonce !== "number") throw new Error("Nonce must be a number");
@@ -512,7 +512,7 @@ export async function buildTokenTransaction(params: {
     ? new FungibleTokenBidContract(bidAddress)
     : undefined;
   const vk =
-    tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
+    tokenVerificationKeys[chain === "mina:mainnet" ? "mainnet" : "devnet"].vk;
   if (
     !vk ||
     !vk.FungibleTokenOfferContract ||
@@ -875,7 +875,7 @@ export async function getTokenSymbolAndAdmin(params: {
   offerAddress?: PublicKey;
   bidAddress?: PublicKey;
   tokenAddress: PublicKey;
-  chain: blockchain;
+  chain: CanonicalBlockchain;
 }): Promise<{
   adminContractAddress: PublicKey;
   adminAddress: PublicKey;
@@ -886,7 +886,7 @@ export async function getTokenSymbolAndAdmin(params: {
 }> {
   const { txType, tokenAddress, chain, to, offerAddress, bidAddress } = params;
   const vk =
-    tokenVerificationKeys[chain === "mainnet" ? "mainnet" : "devnet"].vk;
+    tokenVerificationKeys[chain === "mina:mainnet" ? "mainnet" : "devnet"].vk;
   let verificationKeyHashes: string[] = [];
   if (bidAddress) {
     verificationKeyHashes.push(vk.FungibleTokenBidContract.hash);
