@@ -787,6 +787,7 @@ export async function submitSettlementProof(params: {
   blockNumber: bigint;
   proof: string;
   cpuTime: bigint;
+  chain: string;
 }): Promise<SubmitSettlementProofResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
@@ -799,6 +800,7 @@ export async function submitSettlementProof(params: {
     jobId,
     proof: params.proof,
     cpuTime: params.cpuTime,
+    chain: params.chain,
   });
 
   return await client.submitSettlementProof(request);
