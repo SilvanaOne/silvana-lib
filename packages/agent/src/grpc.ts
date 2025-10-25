@@ -16,6 +16,7 @@ import {
   UpdateBlockSettlementRequestSchema,
   GetSettlementProofRequestSchema,
   SubmitSettlementProofRequestSchema,
+  GetAppInstanceRequestSchema,
   TerminateJobRequestSchema,
   ReadDataAvailabilityRequestSchema,
   SetKVRequestSchema,
@@ -48,6 +49,8 @@ import {
   type UpdateBlockSettlementResponse,
   type GetSettlementProofResponse,
   type SubmitSettlementProofResponse,
+  type GetAppInstanceResponse,
+  type AppInstanceData,
   type Block,
   type BlockSettlement,
   type Metadata,
@@ -807,6 +810,29 @@ export async function submitSettlementProof(params: {
 }
 
 /**
+ * Gets the full app instance data from the blockchain
+ * Returns comprehensive information about the app instance including:
+ * - Basic info (id, name, description)
+ * - Metadata and KV store
+ * - Methods configuration
+ * - State (sequence, block number, etc.)
+ * - Settlement information per chain
+ */
+export async function getAppInstance(): Promise<GetAppInstanceResponse> {
+  if (!jobId) {
+    throw new Error("Call getJob() first");
+  }
+  const { client, sessionId } = getCoordinatorClient();
+
+  const request = create(GetAppInstanceRequestSchema, {
+    sessionId,
+    jobId,
+  });
+
+  return await client.getAppInstance(request);
+}
+
+/**
  * Sends a proof event to the coordinator
  */
 export async function proofEvent(params: {
@@ -970,6 +996,8 @@ export type {
   UpdateBlockSettlementResponse,
   GetSettlementProofResponse,
   SubmitSettlementProofResponse,
+  GetAppInstanceResponse,
+  AppInstanceData,
   RejectProofResponse,
   ProofEventResponse,
   AgentMessageResponse,
