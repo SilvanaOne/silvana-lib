@@ -37,7 +37,9 @@ export async function sendTx(params: {
     verbose = true,
     wait = true,
     chain = getCurrentNetwork().network.chainId,
-    delay = chain === "zeko:testnet" || chain === "mina:lightnet"
+    delay = chain === "zeko:testnet" ||
+    chain === "zeko:alphanet" ||
+    chain === "mina:lightnet"
       ? 5000
       : 60000,
     retry = 30,
@@ -119,7 +121,8 @@ export async function sendTx(params: {
     if (
       txSent.status === "pending" &&
       wait !== false &&
-      chain !== "zeko:testnet"
+      chain !== "zeko:testnet" &&
+      chain !== "zeko:alphanet"
     ) {
       if (verbose) console.log(`Waiting for tx inclusion...`);
       let txIncluded = await txSent.safeWait();

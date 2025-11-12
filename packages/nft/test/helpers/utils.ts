@@ -1,7 +1,7 @@
-import { blockchain } from "@silvana-one/mina-utils";
+import { CanonicalBlockchain } from "@silvana-one/api";
 
 export function processArguments(): {
-  chain: blockchain;
+  chain: CanonicalBlockchain;
   useAdvancedAdmin: boolean;
   useLocalCloudWorker: boolean;
   withdraw: boolean;
@@ -15,7 +15,7 @@ export function processArguments(): {
   sell: boolean;
   buy: boolean;
 } {
-  const chainName = process.env.CHAIN ?? "local";
+  const chainName = process.env.CHAIN ?? "mina:local";
   const useAdvancedAdmin = process.env.ADVANCED ?? "false";
   const withdraw = process.env.WITHDRAW ?? "false";
   const noLog = process.env.NO_LOG ?? "false";
@@ -29,16 +29,16 @@ export function processArguments(): {
   const sell = process.env.SELL === "true";
   const buy = process.env.BUY === "true";
   if (
-    chainName !== "local" &&
-    chainName !== "devnet" &&
-    chainName !== "lightnet" &&
-    chainName !== "zeko" &&
+    chainName !== "mina:local" &&
+    chainName !== "mina:devnet" &&
+    chainName !== "mina:lightnet" &&
+    chainName !== "zeko:testnet" &&
     chainName !== "zeko:alphanet"
   )
     throw new Error("Invalid chain name");
 
   return {
-    chain: chainName as blockchain,
+    chain: chainName as CanonicalBlockchain,
     useAdvancedAdmin: useAdvancedAdmin === "true",
     useLocalCloudWorker,
     withdraw: withdraw === "true",
