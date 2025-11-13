@@ -128,7 +128,7 @@ function getCoordinatorClient(): {
     if (!developer) {
       throw new Error("DEVELOPER environment variable is required");
     }
-    if (!agent) {
+    if (!agentName) {
       throw new Error("AGENT environment variable is required");
     }
     if (!agentMethod) {

@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/api",
   "description": "Silvana API",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "devDependencies": {

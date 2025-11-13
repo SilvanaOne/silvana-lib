@@ -1,22 +1,22 @@
 {
-  "name": "@silvana-one/upgradable",
-  "description": "Silvana Upgradable interface for Mina zkApps",
+  "name": "@silvana-one/orderbook",
+  "description": "Silvana Orderbook Client",
   "version": "1.1.8",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "mina-signer": "^3.1.0",
-    "tslib": "^2.8.1"
+    "@bufbuild/protobuf": "^2.10.0",
+    "@connectrpc/connect": "^2.1.0",
+    "@connectrpc/connect-node": "^2.1.0"
   },
   "devDependencies": {
-    "@silvana-one/storage": "1.1.8",
     "@types/node": "^24.9.1",
     "esbuild": "^0.25.11",
-    "o1js": "2.10.0",
+    "dotenv": "^17.2.3",
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "exports": {
     "types": "./dist/node/index.d.ts",
@@ -36,24 +36,23 @@
   ],
   "homepage": "https://docs.silvana.one",
   "keywords": [
-    "mina-protocol",
-    "typescript",
-    "Upgradable",
-    "zkApps"
+    "cloud",
+    "silvana",
+    "orderbook",
+    "client",
+    "typescript"
   ],
   "license": "Apache-2.0",
   "main": "dist/web/index.js",
-  "peerDependencies": {
-    "@silvana-one/storage": "1.1.8",
-    "o1js": "2.10.0"
-  },
   "publishConfig": {
     "access": "public"
   },
   "repository": "SilvanaOne/silvana-lib.git",
   "scripts": {
+    "proto": "rm -rf src/proto && cp -R ../../../canton-agent/proto/silvana/orderbook proto/silvana && buf generate --template buf.gen.orderbook.yaml",
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
-    "release": "npm publish --access public"
+    "release": "npm publish --access public",
+    "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test"
   },
   "type": "module",
   "types": "./dist/node/index.d.ts"
