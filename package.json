@@ -1,7 +1,7 @@
 {
   "name": "silvana-lib",
   "description": "Silvana Library",
-  "version": "1.1.5",
+  "version": "1.1.8",
   "author": "DFST",
   "devDependencies": {
     "@types/node": "^24.9.1",
@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
-    "build": "npm run build -w @silvana-one/agent && npm run build -w @silvana-one/coordination && npm run build -w @silvana-one/api && npm run build -w @silvana-one/prover && npm run build -w @silvana-one/mina-curves  && npm run build -w @silvana-one/mina-utils && npm run build -w @silvana-one/mina-prover && npm run build -w @silvana-one/storage && npm run build -w @silvana-one/token && npm run build -w @silvana-one/upgradable && npm run build -w @silvana-one/nft  && npm run build -w @silvana-one/abi",
+    "build": "npm run build -w @silvana-one/agent && npm run build -w @silvana-one/orderbook && npm run build -w @silvana-one/coordination && npm run build -w @silvana-one/api && npm run build -w @silvana-one/prover && npm run build -w @silvana-one/mina-curves  && npm run build -w @silvana-one/mina-utils && npm run build -w @silvana-one/mina-prover && npm run build -w @silvana-one/storage && npm run build -w @silvana-one/token && npm run build -w @silvana-one/upgradable && npm run build -w @silvana-one/nft  && npm run build -w @silvana-one/abi",
     "clean": "rm -rf cache && rm -rf node_modules && rm -rf dist && rm -rf packages/*/node_modules && rm -rf packages/*/dist && rm package-lock.json",
     "compile": "npm run compile:devnet && npm run compile:mainnet",
     "compile:devnet": "CHAIN=devnet node --trace-uncaught --loader=ts-node/esm --enable-source-maps --test scripts/compile.ts && npm run build -w @silvana-one/abi",
@@ -49,6 +49,7 @@
     "packages/token",
     "packages/upgradable",
     "packages/coordination",
-    "packages/agent"
+    "packages/agent",
+    "packages/orderbook"
   ]
 }

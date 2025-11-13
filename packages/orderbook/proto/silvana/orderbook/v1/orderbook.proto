@@ -1,0 +1,490 @@
+syntax = "proto3";
+
+package silvana.orderbook.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;orderbook";
+
+// ============================================================================
+// Enumerations
+// ============================================================================
+
+// Order type enumeration
+enum OrderType {
+  ORDER_TYPE_UNSPECIFIED = 0;
+  ORDER_TYPE_BID = 1;  // Buy order
+  ORDER_TYPE_OFFER = 2; // Sell order
+}
+
+// Order status enumeration
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_ACTIVE = 1;
+  ORDER_STATUS_PARTIAL = 2;
+  ORDER_STATUS_FILLED = 3;
+  ORDER_STATUS_CANCELLED = 4;
+  ORDER_STATUS_EXPIRED = 5;
+}
+
+// Time in force enumeration
+enum TimeInForce {
+  TIME_IN_FORCE_UNSPECIFIED = 0;
+  TIME_IN_FORCE_GTC = 1; // Good Till Cancel
+  TIME_IN_FORCE_IOC = 2; // Immediate Or Cancel
+  TIME_IN_FORCE_FOK = 3; // Fill Or Kill
+  TIME_IN_FORCE_GTD = 4; // Good Till Date
+}
+
+// Settlement status enumeration
+enum SettlementStatus {
+  SETTLEMENT_STATUS_UNSPECIFIED = 0;
+  SETTLEMENT_STATUS_CREATED = 1;
+  SETTLEMENT_STATUS_PRECONFIRMED = 2;
+  SETTLEMENT_STATUS_DVP_REQUEST_CREATED = 3;
+  SETTLEMENT_STATUS_DVP_REQUEST_ACCEPTED = 4;
+  SETTLEMENT_STATUS_INSTRUMENTS_ALLOCATED = 5;
+  SETTLEMENT_STATUS_SETTLED = 6;
+  SETTLEMENT_STATUS_CANCELLED = 7;
+  SETTLEMENT_STATUS_FAILED = 8;
+}
+
+// Market type enumeration
+enum MarketType {
+  MARKET_TYPE_UNSPECIFIED = 0;
+  MARKET_TYPE_GENERAL = 1;
+  MARKET_TYPE_INSTITUTIONAL = 2;
+  MARKET_TYPE_OTC = 3;
+}
+
+// ============================================================================
+// Core Data Messages (matching SQL tables)
+// ============================================================================
+
+// JWT authentication token
+message JWTAuth {
+  string token = 1; // JWT signed with Ed25519 private key
+}
+
+// Instrument message
+message Instrument {
+  string instrument_id = 1;
+  string instrument_type = 2;
+  string name = 3;
+  string symbol = 4;
+  optional string description = 5;
+  optional string issuer = 6;
+  optional string registry = 7;
+  optional google.protobuf.Struct metadata = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// Market message
+message Market {
+  string market_id = 1;
+  MarketType market_type = 2;
+  string base_instrument = 3;
+  string quote_instrument = 4;
+  string pair_symbol = 5; // Generated: base/quote
+  bool is_active = 6;
+  string min_order_size = 7; // DECIMAL(38,10) as string
+  optional string max_order_size = 8; // DECIMAL(38,10) as string
+  string tick_size = 9; // DECIMAL(38,10) as string
+  string maker_fee = 10; // DECIMAL(10,6) as string
+  string taker_fee = 11; // DECIMAL(10,6) as string
+  optional google.protobuf.Struct metadata = 12;
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+// Order message
+message Order {
+  uint64 order_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT
+  string market_id = 2;
+  OrderType order_type = 3;
+  string trader = 4; // Canton party ID
+  optional string trader_order_ref = 5;
+  string base_instrument = 6;
+  string quote_instrument = 7;
+  string price = 8; // DECIMAL(38,10) as string
+  string quantity = 9; // DECIMAL(38,10) as string
+  string filled_quantity = 10; // DECIMAL(38,10) as string
+  string pending_quantity = 11; // DECIMAL(38,10) as string
+  string remaining_quantity = 12; // DECIMAL(38,10) as string (calculated)
+  OrderStatus status = 13;
+  TimeInForce time_in_force = 14;
+  optional google.protobuf.Timestamp expires_at = 15;
+  uint64 version = 16; // Optimistic locking
+  optional google.protobuf.Struct credentials = 17;
+  optional google.protobuf.Struct requirements = 18;
+  optional google.protobuf.Struct metadata = 19;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+  optional google.protobuf.Timestamp cancelled_at = 22;
+}
+
+// Orderbook depth level (aggregated view without user details)
+message OrderbookLevel {
+  string price = 1; // DECIMAL(38,10) as string
+  string total_quantity = 2; // DECIMAL(38,10) as string
+  uint32 order_count = 3;
+  google.protobuf.Timestamp first_order_time = 4;
+}
+
+// Orderbook depth for a market
+message OrderbookDepth {
+  string market_id = 1;
+  string pair_symbol = 2;
+  repeated OrderbookLevel bids = 3; // Sorted by price DESC
+  repeated OrderbookLevel offers = 4; // Sorted by price ASC
+  google.protobuf.Timestamp snapshot_time = 5;
+}
+
+// Settlement proposal message
+message SettlementProposal {
+  uint64 proposal_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT
+  string market_id = 2;
+  string buyer = 3;
+  string seller = 4;
+  string base_quantity = 5; // DECIMAL(38,10) as string
+  string quote_quantity = 6; // DECIMAL(38,10) as string
+  string settlement_price = 7; // DECIMAL(38,10) as string
+  SettlementStatus status = 8;
+  uint64 version = 9; // Optimistic locking
+
+  // Preconfirmation tracking
+  optional google.protobuf.Struct preconfirmation_request = 10;
+  optional google.protobuf.Timestamp preconfirmation_request_sent_at = 11;
+  optional google.protobuf.Struct buyer_preconfirmation = 12;
+  optional google.protobuf.Timestamp buyer_preconfirmation_received_at = 13;
+  optional google.protobuf.Struct seller_preconfirmation = 14;
+  optional google.protobuf.Timestamp seller_preconfirmation_received_at = 15;
+
+  // Canton DVP integration fields
+  optional string dvp_proposal_cid = 16;
+  optional string dvp_proposal_update_id = 17;
+  optional string dvp_cid = 18;
+  optional string dvp_update_id = 19;
+  optional string dvp_settlement_id = 20;
+  optional string allocation_buyer_cid = 21;
+  optional string allocation_buyer_update_id = 22;
+  optional string allocation_seller_cid = 23;
+  optional string allocation_seller_update_id = 24;
+  optional string settled_dvp_cid = 25;
+  optional string settlement_update_id = 26;
+  optional string settlement_completion_offset = 27;
+
+  // Timestamps
+  google.protobuf.Timestamp created_at = 28;
+  optional google.protobuf.Timestamp preconfirmed_at = 29;
+  optional google.protobuf.Timestamp dvp_created_at = 30;
+  optional google.protobuf.Timestamp dvp_accepted_at = 31;
+  optional google.protobuf.Timestamp allocated_at = 32;
+  optional google.protobuf.Timestamp settled_at = 33;
+  optional google.protobuf.Timestamp cancelled_at = 34;
+  optional google.protobuf.Timestamp failed_at = 35;
+
+  optional string error_message = 36;
+  optional google.protobuf.Struct metadata = 37;
+}
+
+// Order match message
+message OrderMatch {
+  uint64 match_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT
+  uint64 settlement_proposal_id = 2;
+  uint64 bid_order_id = 3;
+  uint64 offer_order_id = 4;
+  string matched_quantity = 5; // DECIMAL(38,10) as string
+  string matched_price = 6; // DECIMAL(38,10) as string
+  google.protobuf.Timestamp created_at = 7;
+}
+
+// Settlement (completed) message
+message Settlement {
+  uint64 settlement_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT
+  uint64 proposal_id = 2;
+  string market_id = 3;
+  string buyer = 4;
+  string seller = 5;
+  string base_quantity = 6; // DECIMAL(38,10) as string
+  string quote_quantity = 7; // DECIMAL(38,10) as string
+  string settlement_price = 8; // DECIMAL(38,10) as string
+  string settled_dvp_cid = 9;
+  string settlement_update_id = 10;
+  google.protobuf.Timestamp settled_at = 11;
+  google.protobuf.Timestamp created_at = 12;
+  optional google.protobuf.Struct metadata = 13;
+}
+
+// Market data message
+message MarketData {
+  string market_id = 1;
+  string pair_symbol = 2;
+  optional string best_bid = 3; // DECIMAL(38,10) as string
+  optional string best_offer = 4; // DECIMAL(38,10) as string
+  optional string last_price = 5; // DECIMAL(38,10) as string
+  string volume_24h = 6; // DECIMAL(38,10) as string
+  uint32 trades_24h = 7;
+  uint32 open_orders = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// ============================================================================
+// Service Request/Response Messages
+// ============================================================================
+
+// Get user's orders
+message GetOrdersRequest {
+  JWTAuth auth = 1;
+  optional string market_id = 2;
+  optional OrderStatus status = 3;
+  optional OrderType order_type = 4;
+  optional uint32 limit = 5;
+  optional uint32 offset = 6;
+}
+
+message GetOrdersResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Order orders = 3;
+  uint32 total = 4;
+}
+
+// Get orderbook depth (aggregated, no user details)
+message GetOrderbookDepthRequest {
+  JWTAuth auth = 1;
+  string market_id = 2;
+  optional uint32 depth = 3; // Number of price levels (default 20)
+}
+
+message GetOrderbookDepthResponse {
+  bool success = 1;
+  string message = 2;
+  OrderbookDepth orderbook = 3;
+}
+
+// Get user's settlement proposals
+message GetSettlementProposalsRequest {
+  JWTAuth auth = 1;
+  optional string market_id = 2;
+  optional SettlementStatus status = 3;
+  optional uint32 limit = 4;
+  optional uint32 offset = 5;
+}
+
+message GetSettlementProposalsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated SettlementProposal proposals = 3;
+  uint32 total = 4;
+}
+
+// Get available instruments (filtered by JWT permissions)
+message GetInstrumentsRequest {
+  JWTAuth auth = 1;
+  optional string instrument_type = 2;
+  optional uint32 limit = 3;
+  optional uint32 offset = 4;
+}
+
+message GetInstrumentsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Instrument instruments = 3;
+  uint32 total = 4;
+}
+
+// Get available markets (filtered by JWT permissions)
+message GetMarketsRequest {
+  JWTAuth auth = 1;
+  optional MarketType market_type = 2;
+  optional string base_instrument = 3;
+  optional string quote_instrument = 4;
+  optional bool active_only = 5;
+  optional uint32 limit = 6;
+  optional uint32 offset = 7;
+}
+
+message GetMarketsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Market markets = 3;
+  uint32 total = 4;
+}
+
+// Get user's order history
+message GetOrderHistoryRequest {
+  JWTAuth auth = 1;
+  optional string market_id = 2;
+  optional google.protobuf.Timestamp from_time = 3;
+  optional google.protobuf.Timestamp to_time = 4;
+  optional uint32 limit = 5;
+  optional uint32 offset = 6;
+}
+
+message GetOrderHistoryResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Order orders = 3;
+  uint32 total = 4;
+}
+
+// Get market data (filtered by JWT permissions)
+message GetMarketDataRequest {
+  JWTAuth auth = 1;
+  repeated string market_ids = 2; // Empty = all accessible markets
+}
+
+message GetMarketDataResponse {
+  bool success = 1;
+  string message = 2;
+  repeated MarketData market_data = 3;
+}
+
+// Get user's settlements (completed)
+message GetSettlementsRequest {
+  JWTAuth auth = 1;
+  optional string market_id = 2;
+  optional google.protobuf.Timestamp from_time = 3;
+  optional google.protobuf.Timestamp to_time = 4;
+  optional uint32 limit = 5;
+  optional uint32 offset = 6;
+}
+
+message GetSettlementsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Settlement settlements = 3;
+  uint32 total = 4;
+}
+
+// Subscribe to orderbook updates (streaming)
+message SubscribeOrderbookRequest {
+  JWTAuth auth = 1;
+  string market_id = 2;
+  optional uint32 depth = 3; // Number of price levels
+}
+
+// Orderbook update event
+message OrderbookUpdate {
+  string market_id = 1;
+  enum UpdateType {
+    UPDATE_TYPE_UNSPECIFIED = 0;
+    UPDATE_TYPE_SNAPSHOT = 1;
+    UPDATE_TYPE_DELTA = 2;
+  }
+  UpdateType update_type = 2;
+  repeated OrderbookLevel bid_updates = 3;
+  repeated OrderbookLevel offer_updates = 4;
+  google.protobuf.Timestamp timestamp = 5;
+  uint64 sequence_number = 6; // For ordering updates
+}
+
+// Subscribe to user's order updates (streaming)
+message SubscribeOrdersRequest {
+  JWTAuth auth = 1;
+  optional string market_id = 2;
+}
+
+// Order update event
+message OrderUpdate {
+  enum EventType {
+    EVENT_TYPE_UNSPECIFIED = 0;
+    EVENT_TYPE_CREATED = 1;
+    EVENT_TYPE_UPDATED = 2;
+    EVENT_TYPE_FILLED = 3;
+    EVENT_TYPE_PARTIALLY_FILLED = 4;
+    EVENT_TYPE_CANCELLED = 5;
+    EVENT_TYPE_EXPIRED = 6;
+  }
+  EventType event_type = 1;
+  Order order = 2;
+  optional OrderMatch match = 3; // For fill events
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// Subscribe to user's settlement updates (streaming)
+message SubscribeSettlementsRequest {
+  JWTAuth auth = 1;
+  optional string market_id = 2;
+}
+
+// Settlement update event
+message SettlementUpdate {
+  enum EventType {
+    EVENT_TYPE_UNSPECIFIED = 0;
+    EVENT_TYPE_PROPOSAL_CREATED = 1;
+    EVENT_TYPE_PRECONFIRMATION_REQUESTED = 2;
+    EVENT_TYPE_PRECONFIRMED = 3;
+    EVENT_TYPE_DVP_CREATED = 4;
+    EVENT_TYPE_DVP_ACCEPTED = 5;
+    EVENT_TYPE_ALLOCATED = 6;
+    EVENT_TYPE_SETTLED = 7;
+    EVENT_TYPE_FAILED = 8;
+    EVENT_TYPE_CANCELLED = 9;
+  }
+  EventType event_type = 1;
+  SettlementProposal proposal = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+// Submit a new order
+message SubmitOrderRequest {
+  JWTAuth auth = 1;
+  string market_id = 2;
+  OrderType order_type = 3;
+  string price = 4;  // DECIMAL(38,10) as string
+  string quantity = 5;  // DECIMAL(38,10) as string
+  TimeInForce time_in_force = 6;
+  optional google.protobuf.Timestamp expires_at = 7;
+  optional string trader_order_ref = 8;
+  optional google.protobuf.Struct credentials = 9;
+  optional google.protobuf.Struct requirements = 10;
+  optional google.protobuf.Struct metadata = 11;
+}
+
+message SubmitOrderResponse {
+  bool success = 1;
+  string message = 2;
+  optional Order order = 3;
+}
+
+// Cancel an existing order
+message CancelOrderRequest {
+  JWTAuth auth = 1;
+  uint64 order_id = 2;
+}
+
+message CancelOrderResponse {
+  bool success = 1;
+  string message = 2;
+  optional Order order = 3;
+}
+
+// ============================================================================
+// Service Definition
+// ============================================================================
+
+service OrderbookService {
+  // Query operations
+  rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse);
+  rpc GetOrderbookDepth(GetOrderbookDepthRequest) returns (GetOrderbookDepthResponse);
+  rpc GetSettlementProposals(GetSettlementProposalsRequest) returns (GetSettlementProposalsResponse);
+  rpc GetInstruments(GetInstrumentsRequest) returns (GetInstrumentsResponse);
+  rpc GetMarkets(GetMarketsRequest) returns (GetMarketsResponse);
+  rpc GetOrderHistory(GetOrderHistoryRequest) returns (GetOrderHistoryResponse);
+  rpc GetMarketData(GetMarketDataRequest) returns (GetMarketDataResponse);
+  rpc GetSettlements(GetSettlementsRequest) returns (GetSettlementsResponse);
+
+  // Order management operations
+  rpc SubmitOrder(SubmitOrderRequest) returns (SubmitOrderResponse);
+  rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+
+  // Streaming subscriptions
+  rpc SubscribeOrderbook(SubscribeOrderbookRequest) returns (stream OrderbookUpdate);
+  rpc SubscribeOrders(SubscribeOrdersRequest) returns (stream OrderUpdate);
+  rpc SubscribeSettlements(SubscribeSettlementsRequest) returns (stream SettlementUpdate);
+}

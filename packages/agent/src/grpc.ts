@@ -16,6 +16,7 @@ import {
   UpdateBlockSettlementRequestSchema,
   GetSettlementProofRequestSchema,
   SubmitSettlementProofRequestSchema,
+  GetAppInstanceRequestSchema,
   TerminateJobRequestSchema,
   ReadDataAvailabilityRequestSchema,
   SetKVRequestSchema,
@@ -48,6 +49,8 @@ import {
   type UpdateBlockSettlementResponse,
   type GetSettlementProofResponse,
   type SubmitSettlementProofResponse,
+  type GetAppInstanceResponse,
+  type AppInstanceData,
   type Block,
   type BlockSettlement,
   type Metadata,
@@ -125,7 +128,7 @@ function getCoordinatorClient(): {
     if (!developer) {
       throw new Error("DEVELOPER environment variable is required");
     }
-    if (!agent) {
+    if (!agentName) {
       throw new Error("AGENT environment variable is required");
     }
     if (!agentMethod) {
@@ -787,6 +790,7 @@ export async function submitSettlementProof(params: {
   blockNumber: bigint;
   proof: string;
   cpuTime: bigint;
+  chain: string;
 }): Promise<SubmitSettlementProofResponse> {
   if (!jobId) {
     throw new Error("Call getJob() first");
@@ -799,9 +803,33 @@ export async function submitSettlementProof(params: {
     jobId,
     proof: params.proof,
     cpuTime: params.cpuTime,
+    chain: params.chain,
   });
 
   return await client.submitSettlementProof(request);
+}
+
+/**
+ * Gets the full app instance data from the blockchain
+ * Returns comprehensive information about the app instance including:
+ * - Basic info (id, name, description)
+ * - Metadata and KV store
+ * - Methods configuration
+ * - State (sequence, block number, etc.)
+ * - Settlement information per chain
+ */
+export async function getAppInstance(): Promise<GetAppInstanceResponse> {
+  if (!jobId) {
+    throw new Error("Call getJob() first");
+  }
+  const { client, sessionId } = getCoordinatorClient();
+
+  const request = create(GetAppInstanceRequestSchema, {
+    sessionId,
+    jobId,
+  });
+
+  return await client.getAppInstance(request);
 }
 
 /**
@@ -968,6 +996,8 @@ export type {
   UpdateBlockSettlementResponse,
   GetSettlementProofResponse,
   SubmitSettlementProofResponse,
+  GetAppInstanceResponse,
+  AppInstanceData,
   RejectProofResponse,
   ProofEventResponse,
   AgentMessageResponse,

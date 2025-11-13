@@ -135,8 +135,8 @@ const Zeko: MinaNetwork = {
 };
 
 const ZekoAlphaNet: MinaNetwork = {
-  mina: ["http://m1.zeko.io/graphql"],
-  archive: ["http://m1.zeko.io/graphql"],
+  mina: ["https://alphanet.zeko.io/graphql"],
+  archive: ["https://archive.alphanet.zeko.io/graphql"],
   explorerAccountUrl: "",
   explorerTransactionUrl: "",
   chainId: "zeko:alphanet",
@@ -152,7 +152,14 @@ const Lightnet: MinaNetwork = {
   name: "Lightnet",
 };
 
-const networks: MinaNetwork[] = [Mainnet, Local, Devnet, Zeko, Lightnet];
+const networks: MinaNetwork[] = [
+  Mainnet,
+  Local,
+  Devnet,
+  Zeko,
+  ZekoAlphaNet,
+  Lightnet,
+];
 
 /*
 // not supported by o1js v1

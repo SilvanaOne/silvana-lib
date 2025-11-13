@@ -76,8 +76,11 @@ import { randomMetadata } from "./helpers/metadata.js";
 import { Whitelist, Storage, OffChainList } from "@silvana-one/storage";
 
 let { chain, useAdvancedAdmin, approveTransfer, noLog } = processArguments();
-const networkId = chain === "mainnet" ? "mainnet" : "devnet";
-const expectedTxStatus = chain === "zeko" ? "pending" : "included";
+const networkId = chain === "mina:mainnet" ? "mainnet" : "devnet";
+const expectedTxStatus =
+  chain === "zeko:testnet" || chain === "zeko:alphanet"
+    ? "pending"
+    : "included";
 const vk = nftVerificationKeys[networkId].vk;
 
 const { TestPublicKey } = Mina;
@@ -170,23 +173,29 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
 
   it("should initialize a blockchain", async () => {
     if (
-      chain === "devnet" ||
-      chain === "zeko" ||
-      chain === "mainnet" ||
+      chain === "mina:devnet" ||
+      chain === "zeko:testnet" ||
+      chain === "mina:mainnet" ||
       chain === "zeko:alphanet"
     ) {
-      await initBlockchain(chain);
+      await initBlockchain({ chain });
       admin = TestPublicKey.fromBase58(TEST_ACCOUNTS[0].privateKey);
       users = TEST_ACCOUNTS.slice(1).map((account) =>
         TestPublicKey.fromBase58(account.privateKey)
       );
-    } else if (chain === "local") {
-      const { keys } = await initBlockchain(chain, NUMBER_OF_USERS + 2);
+    } else if (chain === "mina:local") {
+      const { keys } = await initBlockchain({
+        chain,
+        deployersNumber: NUMBER_OF_USERS + 2,
+      });
       faucet = TestPublicKey(keys[0].key);
       admin = TestPublicKey(keys[1].key);
       users = keys.slice(2);
-    } else if (chain === "lightnet") {
-      const { keys } = await initBlockchain(chain, NUMBER_OF_USERS + 2);
+    } else if (chain === "mina:lightnet") {
+      const { keys } = await initBlockchain({
+        chain,
+        deployersNumber: NUMBER_OF_USERS + 2,
+      });
 
       faucet = TestPublicKey(keys[0].key);
       admin = TestPublicKey(keys[1].key);
@@ -208,7 +217,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     console.log("Bid contract address:", zkBidKey.toBase58());
     console.log("Offer contract address:", zkOfferKey.toBase58());
 
-    if (chain === "local" || chain === "lightnet") {
+    if (chain === "mina:local" || chain === "mina:lightnet") {
       await fetchMinaAccount({ publicKey: faucet, force: true });
       let nonce = Number(Mina.getAccount(faucet).nonce.toBigint());
       let txs: (
@@ -499,7 +508,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
       }
 
       const validatorState = new ValidatorsState({
-        chainId: ChainId[chain === "devnet" ? "mina:devnet" : "zeko:devnet"],
+        chainId:
+          ChainId[chain === "mina:devnet" ? "mina:devnet" : "zeko:devnet"],
         root: validatorsList.root,
         count: UInt32.from(validatorsCount),
       });
@@ -548,9 +558,9 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     }
     collectionName = name;
     const slot =
-      chain === "local"
+      chain === "mina:local"
         ? Mina.currentSlot()
-        : chain === "zeko"
+        : chain === "zeko:testnet" || chain === "zeko:alphanet"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
     const expiry = slot.add(UInt32.from(1_000_000n));
@@ -663,9 +673,9 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
     await fetchMinaAccount({ publicKey: zkAdminKey, force: true });
     owner = creator;
     const slot =
-      chain === "local"
+      chain === "mina:local"
         ? Mina.currentSlot()
-        : chain === "zeko"
+        : chain === "zeko:testnet" || chain === "zeko:alphanet"
         ? UInt32.zero
         : (await fetchLastBlock()).globalSlotSinceGenesis;
     const expiry = slot.add(UInt32.from(1_000_000n));
@@ -692,7 +702,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
           fee: UInt64.from(10_000_000_000),
           storage: Storage.fromString(ipfsHash),
         });
-        if (chain === "zeko") {
+        if (chain === "zeko:testnet" || chain === "zeko:alphanet") {
           const au = AccountUpdate.createSigned(creator);
           au.balance.addInPlace(900_000_000n);
         }
@@ -923,7 +933,7 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
           UInt64.from(5_000_000_000),
           UInt64.from(1000)
         );
-        if (chain === "zeko") {
+        if (chain === "zeko:testnet" || chain === "zeko:alphanet") {
           const au = AccountUpdate.createSigned(buyer);
           au.balance.addInPlace(900_000_000n);
         }
@@ -1556,7 +1566,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
         storage,
       });
       const validatorState = new ValidatorsState({
-        chainId: ChainId[chain === "devnet" ? "mina:devnet" : "zeko:devnet"],
+        chainId:
+          ChainId[chain === "mina:devnet" ? "mina:devnet" : "zeko:devnet"],
         root: map.root,
         count: UInt32.from(data.validatorsCount),
       });
@@ -1599,7 +1610,8 @@ describe(`NFT contracts tests: ${chain} ${useAdvancedAdmin ? "advanced " : ""}${
         message: fieldFromString("Set UpgradeAuthority"),
         decisionType: ValidatorDecisionType["updateDatabase"],
         contractAddress: upgradeAuthority,
-        chainId: ChainId[chain === "devnet" ? "mina:devnet" : "zeko:devnet"],
+        chainId:
+          ChainId[chain === "mina:devnet" ? "mina:devnet" : "zeko:devnet"],
         validators: validatorState,
         upgradeDatabase: new UpgradeDatabaseState({
           root: db.root,
