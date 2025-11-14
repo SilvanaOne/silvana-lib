@@ -18,6 +18,10 @@ import {
   type GetSettlementsResponse,
   type SubmitOrderResponse,
   type CancelOrderResponse,
+  type CreatePartyResponse,
+  type CreateInstrumentResponse,
+  type CreateMarketResponse,
+  type UpdateMarketPriceFeedsResponse,
   GetOrdersRequestSchema,
   GetOrderbookDepthRequestSchema,
   GetSettlementProposalsRequestSchema,
@@ -28,6 +32,10 @@ import {
   GetSettlementsRequestSchema,
   SubmitOrderRequestSchema,
   CancelOrderRequestSchema,
+  CreatePartyRequestSchema,
+  CreateInstrumentRequestSchema,
+  CreateMarketRequestSchema,
+  UpdateMarketPriceFeedsRequestSchema,
   SubscribeOrderbookRequestSchema,
   SubscribeOrdersRequestSchema,
   SubscribeSettlementsRequestSchema,
@@ -352,5 +360,88 @@ export class OrderbookClient {
       ...params,
     });
     return this.client.subscribeSettlements(request);
+  }
+
+  /**
+   * Create a new party (admin operation)
+   */
+  async createParty(params: {
+    partyId: string;
+    partyName: string;
+    partyType: string;
+    userServiceCid?: string;
+    operatorConfigCid?: string;
+    metadata?: any;
+  }): Promise<CreatePartyResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(CreatePartyRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.createParty(request);
+    }, 'createParty');
+  }
+
+  /**
+   * Create a new instrument (admin operation)
+   */
+  async createInstrument(params: {
+    instrumentId: string;
+    instrumentType: string;
+    name: string;
+    symbol: string;
+    description?: string;
+    issuer?: string;
+    registry?: string;
+    metadata?: any;
+  }): Promise<CreateInstrumentResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(CreateInstrumentRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.createInstrument(request);
+    }, 'createInstrument');
+  }
+
+  /**
+   * Create a new market (admin operation)
+   */
+  async createMarket(params: {
+    marketId: string;
+    marketType: MarketType;
+    baseInstrument?: string;
+    quoteInstrument?: string;
+    minOrderSize: string;
+    maxOrderSize?: string;
+    tickSize: string;
+    makerFee: string;
+    takerFee: string;
+    metadata?: any;
+    priceFeeds?: any;
+  }): Promise<CreateMarketResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(CreateMarketRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.createMarket(request);
+    }, 'createMarket');
+  }
+
+  /**
+   * Update market price feeds (admin operation)
+   */
+  async updateMarketPriceFeeds(params: {
+    marketId: string;
+    priceFeeds: any;
+  }): Promise<UpdateMarketPriceFeedsResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(UpdateMarketPriceFeedsRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.updateMarketPriceFeeds(request);
+    }, 'updateMarketPriceFeeds');
   }
 }
