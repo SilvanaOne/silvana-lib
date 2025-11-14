@@ -10,9 +10,11 @@
     "@connectrpc/connect-node": "^2.1.0"
   },
   "devDependencies": {
+    "@noble/ed25519": "^2.1.0",
     "@types/node": "^24.9.1",
-    "esbuild": "^0.25.11",
     "dotenv": "^17.2.3",
+    "esbuild": "^0.25.11",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "engines": {
