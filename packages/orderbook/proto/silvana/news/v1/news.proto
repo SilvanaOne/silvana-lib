@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package silvana.news.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;news";
+
+// ============================================================================
+// News Service
+// ============================================================================
+
+service NewsService {
+  // Get news articles for specific cryptocurrencies
+  rpc GetNews(GetNewsRequest) returns (GetNewsResponse);
+
+  // Stream real-time news updates (optional future enhancement)
+  rpc StreamNews(StreamNewsRequest) returns (stream NewsArticle);
+}
+
+// ============================================================================
+// News Messages
+// ============================================================================
+
+// News article source information
+message Source {
+  optional string id = 1;
+  string name = 2;
+}
+
+// News article
+message NewsArticle {
+  Source source = 1;
+  optional string author = 2;
+  string title = 3;
+  optional string description = 4;
+  string url = 5;
+  optional string url_to_image = 6;
+  google.protobuf.Timestamp published_at = 7;
+  optional string content = 8;
+  int32 text_size = 9; // Total text size (title + description + content)
+}
+
+// Request for news articles
+message GetNewsRequest {
+  // Cryptocurrency tokens to fetch news for (e.g., "btc", "eth", "mina")
+  // If empty, fetches news for default tokens (btc, eth, mina)
+  repeated string tokens = 1;
+
+  // Maximum number of articles per token
+  optional int32 limit = 2; // Default: 5
+
+  // Filter by language (e.g., "en")
+  optional string language = 3; // Default: "en"
+
+  // Time window in hours (e.g., 48 for last 48 hours)
+  optional int32 hours = 4; // Default: 48
+}
+
+// Response containing news articles
+message GetNewsResponse {
+  bool success = 1;
+  string message = 2;
+
+  // News results grouped by token
+  repeated TokenNews token_news = 3;
+
+  // Indicates if results were served from cache
+  bool from_cache = 4;
+
+  // Cache expiration time (if from_cache = true)
+  optional google.protobuf.Timestamp cache_expires_at = 5;
+}
+
+// News articles for a specific token
+message TokenNews {
+  string token = 1; // e.g., "btc", "eth", "mina"
+  string query = 2; // Search query used (e.g., "bitcoin", "ethereum")
+  int32 total_results = 3;
+  repeated NewsArticle articles = 4;
+  google.protobuf.Timestamp fetched_at = 5;
+}
+
+// Request for streaming news updates
+message StreamNewsRequest {
+  // Cryptocurrency tokens to stream news for
+  repeated string tokens = 1;
+
+  // Minimum time between updates in seconds
+  optional int32 update_interval = 2; // Default: 300 (5 minutes)
+}

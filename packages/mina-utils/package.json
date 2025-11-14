@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/mina-utils",
   "description": "Silvana Mina Utils",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
@@ -48,7 +48,7 @@
   "main": "dist/web/index.js",
   "peerDependencies": {
     "o1js": "2.10.0",
-    "@silvana-one/api": "1.1.9"
+    "@silvana-one/api": "1.1.10"
   },
   "publishConfig": {
     "access": "public"
