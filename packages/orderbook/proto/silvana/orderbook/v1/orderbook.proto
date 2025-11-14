@@ -98,6 +98,13 @@ message Market {
   optional google.protobuf.Struct metadata = 12;
   google.protobuf.Timestamp created_at = 13;
   google.protobuf.Timestamp updated_at = 14;
+  optional google.protobuf.Struct price_feeds = 15; // Price feed configurations
+
+  // Optional price information (populated if available)
+  optional double current_price = 16;
+  optional double change_24h = 17;
+  optional double volume_24h = 18;
+  optional google.protobuf.Timestamp price_updated_at = 19;
 }
 
 // Order message
@@ -465,6 +472,94 @@ message CancelOrderResponse {
 }
 
 // ============================================================================
+// Admin Operations (require operator authentication)
+// ============================================================================
+
+// Create a new party (operator, registry, or trader)
+message CreatePartyRequest {
+  JWTAuth auth = 1;
+  string party_id = 2;
+  string party_name = 3;
+  string party_type = 4; // trader, operator, registry, issuer
+  optional string user_service_cid = 5; // UserService contract ID for traders
+  optional string operator_config_cid = 6; // OperatorConfiguration contract ID for operators
+  optional google.protobuf.Struct metadata = 7;
+}
+
+message CreatePartyResponse {
+  bool success = 1;
+  string message = 2;
+  Party party = 3;
+}
+
+// Party information
+message Party {
+  string party_id = 1;
+  string party_name = 2;
+  string party_type = 3;
+  optional string user_service_cid = 4;
+  optional string operator_config_cid = 5;
+  bool is_active = 6;
+  optional google.protobuf.Struct metadata = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// Create a new instrument
+message CreateInstrumentRequest {
+  JWTAuth auth = 1;
+  string instrument_id = 2;
+  string instrument_type = 3; // token, asset, commodity, native
+  string name = 4;
+  string symbol = 5;
+  optional string description = 6;
+  optional string issuer = 7; // Canton party ID
+  optional string registry = 8; // Canton registry party ID
+  optional google.protobuf.Struct metadata = 9;
+}
+
+message CreateInstrumentResponse {
+  bool success = 1;
+  string message = 2;
+  Instrument instrument = 3;
+}
+
+// Create a new market
+message CreateMarketRequest {
+  JWTAuth auth = 1;
+  string market_id = 2;
+  MarketType market_type = 3;
+  optional string base_instrument = 4; // Optional for general markets
+  optional string quote_instrument = 5; // Optional for general markets
+  string min_order_size = 6; // DECIMAL as string
+  optional string max_order_size = 7; // DECIMAL as string
+  string tick_size = 8; // Minimum price increment
+  string maker_fee = 9; // DECIMAL as string (e.g., "0.001" for 0.1%)
+  string taker_fee = 10; // DECIMAL as string (e.g., "0.002" for 0.2%)
+  optional google.protobuf.Struct metadata = 11;
+  optional google.protobuf.Struct price_feeds = 12; // Price feed configurations
+}
+
+message CreateMarketResponse {
+  bool success = 1;
+  string message = 2;
+  Market market = 3;
+}
+
+// Update price feeds for an existing market
+message UpdateMarketPriceFeedsRequest {
+  JWTAuth auth = 1;
+  string market_id = 2;
+  google.protobuf.Struct price_feeds = 3; // New price feed configuration
+}
+
+message UpdateMarketPriceFeedsResponse {
+  bool success = 1;
+  string message = 2;
+  Market market = 3; // Updated market info
+}
+
+// ============================================================================
 // Service Definition
 // ============================================================================
 
@@ -482,6 +577,12 @@ service OrderbookService {
   // Order management operations
   rpc SubmitOrder(SubmitOrderRequest) returns (SubmitOrderResponse);
   rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+
+  // Admin operations (require operator authentication)
+  rpc CreateParty(CreatePartyRequest) returns (CreatePartyResponse);
+  rpc CreateInstrument(CreateInstrumentRequest) returns (CreateInstrumentResponse);
+  rpc CreateMarket(CreateMarketRequest) returns (CreateMarketResponse);
+  rpc UpdateMarketPriceFeeds(UpdateMarketPriceFeedsRequest) returns (UpdateMarketPriceFeedsResponse);
 
   // Streaming subscriptions
   rpc SubscribeOrderbook(SubscribeOrderbookRequest) returns (stream OrderbookUpdate);

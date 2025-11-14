@@ -1,0 +1,7 @@
+version: v2
+
+plugins:
+  # Generate TypeScript client for pricing
+  - remote: buf.build/bufbuild/es
+    out: src
+    opt: target=ts,js_import_style=module

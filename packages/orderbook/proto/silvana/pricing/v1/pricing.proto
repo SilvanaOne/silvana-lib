@@ -1,0 +1,226 @@
+syntax = "proto3";
+
+package silvana.pricing.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;pricing";
+
+// ============================================================================
+// Pricing Service
+// ============================================================================
+
+service PricingService {
+  // Get current price for a market
+  rpc GetPrice(GetPriceRequest) returns (GetPriceResponse);
+
+  // Get multiple market prices
+  rpc GetPrices(GetPricesRequest) returns (GetPricesResponse);
+
+  // Get kline/candle data
+  rpc GetKlines(GetKlinesRequest) returns (GetKlinesResponse);
+
+  // Get order book snapshot
+  rpc GetOrderBook(GetOrderBookRequest) returns (GetOrderBookResponse);
+
+  // Stream real-time price updates
+  rpc StreamPrices(StreamPricesRequest) returns (stream PriceUpdate);
+
+  // Get calculated pivot points
+  rpc GetPivotPoints(GetPivotPointsRequest) returns (GetPivotPointsResponse);
+}
+
+// ============================================================================
+// Price Messages
+// ============================================================================
+
+message GetPriceRequest {
+  string market_id = 1;  // e.g., "BTC-USD"
+  optional string source = 2;  // Optional: specific source (binance_spot, bybit, coingecko)
+}
+
+message GetPriceResponse {
+  string market_id = 1;
+  optional double bid = 2;  // Not available from all sources (e.g., CoinGecko, Binance Futures)
+  optional double ask = 3;  // Not available from all sources
+  double last = 4;
+  optional double volume_24h = 5;
+  optional double change_24h_percent = 6;
+  optional double high_24h = 7;  // Not available from CoinGecko simple API
+  optional double low_24h = 8;   // Not available from CoinGecko simple API
+  string source = 9;  // Source that provided this price
+  google.protobuf.Timestamp timestamp = 10;
+}
+
+message GetPricesRequest {
+  repeated string market_ids = 1;  // List of market IDs
+  optional string source = 2;  // Optional: specific source for all
+}
+
+message GetPricesResponse {
+  repeated Price prices = 1;
+}
+
+message Price {
+  string market_id = 1;
+  optional double bid = 2;  // Not available from all sources (e.g., CoinGecko, Binance Futures)
+  optional double ask = 3;  // Not available from all sources
+  double last = 4;
+  optional double volume_24h = 5;
+  optional double change_24h_percent = 6;
+  optional double high_24h = 7;  // Not available from CoinGecko simple API
+  optional double low_24h = 8;   // Not available from CoinGecko simple API
+  string source = 9;
+  google.protobuf.Timestamp timestamp = 10;
+}
+
+// ============================================================================
+// Kline/Candle Messages
+// ============================================================================
+
+message GetKlinesRequest {
+  string market_id = 1;
+  string interval = 2;  // "1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"
+  optional int32 limit = 3;  // Number of candles (default 100)
+  optional google.protobuf.Timestamp start_time = 4;
+  optional google.protobuf.Timestamp end_time = 5;
+  optional string source = 6;  // Optional: specific source
+}
+
+message GetKlinesResponse {
+  string market_id = 1;
+  string interval = 2;
+  repeated Kline klines = 3;
+  string source = 4;
+}
+
+message Kline {
+  google.protobuf.Timestamp open_time = 1;
+  double open = 2;
+  double high = 3;
+  double low = 4;
+  double close = 5;
+  double volume = 6;
+  google.protobuf.Timestamp close_time = 7;
+  double quote_volume = 8;  // Volume in quote currency
+  int32 trades = 9;  // Number of trades
+}
+
+// ============================================================================
+// Order Book Messages
+// ============================================================================
+
+message GetOrderBookRequest {
+  string market_id = 1;
+  optional int32 depth = 2;  // Number of levels (default 20)
+  optional string source = 3;  // Optional: specific source
+}
+
+message GetOrderBookResponse {
+  string market_id = 1;
+  repeated OrderBookLevel bids = 2;
+  repeated OrderBookLevel asks = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  string source = 5;
+}
+
+message OrderBookLevel {
+  double price = 1;
+  double quantity = 2;
+}
+
+// ============================================================================
+// Streaming Messages
+// ============================================================================
+
+message StreamPricesRequest {
+  repeated string market_ids = 1;  // Markets to subscribe to
+  optional bool include_orderbook = 2;  // Include order book updates
+  optional bool include_trades = 3;  // Include trade updates
+}
+
+message PriceUpdate {
+  string market_id = 1;
+  double price = 2;
+  optional double bid = 3;
+  optional double ask = 4;
+  optional double volume = 5;
+  string source = 6;
+  google.protobuf.Timestamp timestamp = 7;
+
+  // Optional: order book update
+  optional OrderBookUpdate orderbook = 8;
+
+  // Optional: trade update
+  optional TradeUpdate trade = 9;
+}
+
+message OrderBookUpdate {
+  repeated OrderBookLevel bids = 1;
+  repeated OrderBookLevel asks = 2;
+}
+
+message TradeUpdate {
+  double price = 1;
+  double quantity = 2;
+  bool is_buyer_maker = 3;  // true if buyer was the maker
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// ============================================================================
+// Pivot Points Messages
+// ============================================================================
+
+message GetPivotPointsRequest {
+  string market_id = 1;
+  string timeframe = 2;  // "daily", "weekly", "monthly"
+  optional string source = 3;  // Optional: specific source
+}
+
+message GetPivotPointsResponse {
+  string market_id = 1;
+  PivotPoints classic = 2;  // Classic pivot points
+  optional PivotPoints fibonacci = 3;  // Fibonacci pivot points
+  optional PivotPoints camarilla = 4;  // Camarilla pivot points
+  optional PivotPoints woodie = 5;  // Woodie pivot points
+  optional PivotPoints demark = 6;  // DeMark pivot points
+  google.protobuf.Timestamp calculated_at = 7;
+}
+
+message PivotPoints {
+  double pivot = 1;  // Pivot point
+  double r1 = 2;  // Resistance 1
+  double r2 = 3;  // Resistance 2
+  double r3 = 4;  // Resistance 3
+  double s1 = 5;  // Support 1
+  double s2 = 6;  // Support 2
+  double s3 = 7;  // Support 3
+  optional double r4 = 8;  // Resistance 4 (Camarilla)
+  optional double s4 = 9;  // Support 4 (Camarilla)
+}
+
+// ============================================================================
+// Price Feed Configuration
+// ============================================================================
+
+message PriceFeedConfig {
+  message DirectFeed {
+    string source = 1;  // "binance_spot", "binance_futures", "bybit", "coingecko"
+    string symbol = 2;  // Exchange-specific symbol (e.g., "BTCUSDT")
+    bool enabled = 3;
+    int32 priority = 4;  // Lower number = higher priority
+    optional google.protobuf.Struct metadata = 5;  // Exchange-specific config
+  }
+
+  message SyntheticFeed {
+    string type = 1;  // "cross_rate", "index", "weighted_average"
+    string base_market = 2;  // e.g., "BTC-USD"
+    string quote_market = 3;  // e.g., "CC-USD"
+    string operation = 4;  // "divide", "multiply"
+    optional google.protobuf.Struct metadata = 5;
+  }
+
+  repeated DirectFeed direct = 1;
+  optional SyntheticFeed synthetic = 2;
+}

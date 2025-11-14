@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/orderbook",
   "description": "Silvana Orderbook Client",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
@@ -49,7 +49,9 @@
   },
   "repository": "SilvanaOne/silvana-lib.git",
   "scripts": {
-    "proto": "rm -rf src/proto && cp -R ../../../canton-agent/proto/silvana/orderbook proto/silvana && buf generate --template buf.gen.orderbook.yaml",
+    "proto:orderbook": "rm -rf src/proto/silvana/orderbook && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/orderbook proto/silvana && buf generate --template buf.gen.orderbook.yaml",
+    "proto:pricing": "rm -rf src/proto/silvana/pricing && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/pricing proto/silvana && buf generate --template buf.gen.pricing.yaml",
+    "proto": "npm run proto:orderbook && npm run proto:pricing",
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
     "release": "npm publish --access public",
     "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test"
