@@ -1,5 +1,5 @@
 import { createGrpcTransport } from "@connectrpc/connect-node";
-import { createClient, ConnectError, Interceptor } from "@connectrpc/connect";
+import { createClient, ConnectError } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
@@ -95,15 +95,8 @@ export class OrderbookClient {
    * @param config Client configuration
    */
   constructor(config: OrderbookClientConfig) {
-    // Create interceptor to add Authorization header
-    const authInterceptor: Interceptor = (next) => async (req) => {
-      req.header.set("authorization", `Bearer ${config.token}`);
-      return await next(req);
-    };
-
     const transport = createGrpcTransport({
       baseUrl: config.baseUrl,
-      interceptors: [authInterceptor],
     });
 
     this.client = createClient(OrderbookService, transport);
