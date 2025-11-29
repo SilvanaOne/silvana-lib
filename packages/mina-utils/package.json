@@ -1,15 +1,15 @@
 {
   "name": "@silvana-one/mina-utils",
   "description": "Silvana Mina Utils",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@types/node": "^24.9.1",
-    "esbuild": "^0.25.11",
+    "@types/node": "^24.10.1",
+    "esbuild": "^0.27.0",
     "o1js": "2.10.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
@@ -48,7 +48,7 @@
   "main": "dist/web/index.js",
   "peerDependencies": {
     "o1js": "2.10.0",
-    "@silvana-one/api": "1.1.11"
+    "@silvana-one/api": "1.1.12"
   },
   "publishConfig": {
     "access": "public"

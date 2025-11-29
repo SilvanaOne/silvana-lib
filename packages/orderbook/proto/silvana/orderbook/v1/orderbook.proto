@@ -484,12 +484,103 @@ message CreatePartyRequest {
   optional string user_service_cid = 5; // UserService contract ID for traders
   optional string operator_config_cid = 6; // OperatorConfiguration contract ID for operators
   optional google.protobuf.Struct metadata = 7;
+  optional string user_service_request_cid = 8; // UserService request contract ID
+  google.protobuf.Struct user_data = 9; // User-specific data (KYC, credentials, etc.)
 }
 
 message CreatePartyResponse {
   bool success = 1;
   string message = 2;
   Party party = 3;
+}
+
+// Update an existing party (admin operation)
+message UpdatePartyRequest {
+  JWTAuth auth = 1;
+  string party_id = 2;                            // Required - which party to update
+  uint64 expected_version = 3;                    // Required - optimistic locking
+  optional string party_name = 4;
+  optional string user_service_cid = 5;
+  optional string operator_config_cid = 6;
+  optional string user_service_request_cid = 7;
+  optional google.protobuf.Struct user_data = 8;
+  optional google.protobuf.Struct metadata = 9;
+  optional string change_reason = 10;             // Audit: why this change
+}
+
+message UpdatePartyResponse {
+  bool success = 1;
+  string message = 2;
+  Party party = 3;
+}
+
+// Deactivate a party (soft delete - admin operation)
+message DeactivatePartyRequest {
+  JWTAuth auth = 1;
+  string party_id = 2;
+  uint64 expected_version = 3;
+  string change_reason = 4;                       // Required for deactivation
+}
+
+message DeactivatePartyResponse {
+  bool success = 1;
+  string message = 2;
+  Party party = 3;
+}
+
+// Get party change history (audit trail)
+message GetPartyHistoryRequest {
+  JWTAuth auth = 1;
+  string party_id = 2;
+  optional uint32 limit = 3;
+  optional uint32 offset = 4;
+}
+
+// Single entry in party history
+message PartyHistoryEntry {
+  uint64 history_id = 1;
+  string party_id = 2;
+  string action = 3;                              // created, updated, deactivated, reactivated
+  string changed_by = 4;
+  optional string change_reason = 5;
+  uint64 version = 6;
+  Party party_snapshot = 7;                       // Full party state at this version
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message GetPartyHistoryResponse {
+  bool success = 1;
+  string message = 2;
+  repeated PartyHistoryEntry history = 3;
+  uint32 total = 4;
+}
+
+// Get a single party by ID
+message GetPartyRequest {
+  JWTAuth auth = 1;
+  string party_id = 2;
+}
+
+message GetPartyResponse {
+  bool success = 1;
+  string message = 2;
+  Party party = 3;
+}
+
+// List parties with filters and pagination
+message GetPartiesRequest {
+  JWTAuth auth = 1;
+  optional string party_type = 2;           // Filter by type: trader, operator, registry, issuer
+  optional bool active_only = 3;            // If true, only return active parties (default: all)
+  optional uint32 limit = 4;                // Max results (default: 50, max: 1000)
+  optional uint32 offset = 5;               // Pagination offset
+}
+
+message GetPartiesResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Party parties = 3;
+  uint32 total = 4;
 }
 
 // Party information
@@ -503,6 +594,9 @@ message Party {
   optional google.protobuf.Struct metadata = 7;
   google.protobuf.Timestamp created_at = 8;
   google.protobuf.Timestamp updated_at = 9;
+  optional string user_service_request_cid = 10;  // UserService request contract ID
+  google.protobuf.Struct user_data = 11;           // User-specific data (KYC, credentials, etc.)
+  uint64 version = 12;                             // Optimistic locking version
 }
 
 // Create a new instrument
@@ -578,8 +672,15 @@ service OrderbookService {
   rpc SubmitOrder(SubmitOrderRequest) returns (SubmitOrderResponse);
   rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
 
+  // Party operations
+  rpc GetParty(GetPartyRequest) returns (GetPartyResponse);
+  rpc GetParties(GetPartiesRequest) returns (GetPartiesResponse);
+
   // Admin operations (require operator authentication)
   rpc CreateParty(CreatePartyRequest) returns (CreatePartyResponse);
+  rpc UpdateParty(UpdatePartyRequest) returns (UpdatePartyResponse);
+  rpc DeactivateParty(DeactivatePartyRequest) returns (DeactivatePartyResponse);
+  rpc GetPartyHistory(GetPartyHistoryRequest) returns (GetPartyHistoryResponse);
   rpc CreateInstrument(CreateInstrumentRequest) returns (CreateInstrumentResponse);
   rpc CreateMarket(CreateMarketRequest) returns (CreateMarketResponse);
   rpc UpdateMarketPriceFeeds(UpdateMarketPriceFeedsRequest) returns (UpdateMarketPriceFeedsResponse);

@@ -1,19 +1,19 @@
 {
   "name": "@silvana-one/orderbook",
   "description": "Silvana Orderbook Client",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "@bufbuild/protobuf": "^2.10.0",
-    "@connectrpc/connect": "^2.1.0",
-    "@connectrpc/connect-node": "^2.1.0"
+    "@bufbuild/protobuf": "^2.10.1",
+    "@connectrpc/connect": "^2.1.1",
+    "@connectrpc/connect-node": "^2.1.1"
   },
   "devDependencies": {
-    "@noble/ed25519": "^2.1.0",
-    "@types/node": "^24.9.1",
+    "@noble/ed25519": "^3.0.0",
+    "@types/node": "^24.10.1",
     "dotenv": "^17.2.3",
-    "esbuild": "^0.25.11",
+    "esbuild": "^0.27.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
@@ -54,7 +54,8 @@
     "proto:orderbook": "rm -rf src/proto/silvana/orderbook && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/orderbook proto/silvana && buf generate --template buf.gen.orderbook.yaml",
     "proto:pricing": "rm -rf src/proto/silvana/pricing && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/pricing proto/silvana && buf generate --template buf.gen.pricing.yaml",
     "proto:news": "rm -rf src/proto/silvana/news && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/news proto/silvana && buf generate --template buf.gen.news.yaml",
-    "proto": "npm run proto:orderbook && npm run proto:pricing && npm run proto:news",
+    "proto:settlement": "rm -rf src/proto/silvana/settlement && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/settlement proto/silvana && buf generate --template buf.gen.settlement.yaml",
+    "proto": "npm run proto:orderbook && npm run proto:pricing && npm run proto:news && npm run proto:settlement",
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
     "release": "npm publish --access public",
     "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test"
