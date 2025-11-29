@@ -22,6 +22,11 @@ import {
   type CreateInstrumentResponse,
   type CreateMarketResponse,
   type UpdateMarketPriceFeedsResponse,
+  type GetPartyResponse,
+  type GetPartiesResponse,
+  type UpdatePartyResponse,
+  type DeactivatePartyResponse,
+  type GetPartyHistoryResponse,
   GetOrdersRequestSchema,
   GetOrderbookDepthRequestSchema,
   GetSettlementProposalsRequestSchema,
@@ -36,6 +41,11 @@ import {
   CreateInstrumentRequestSchema,
   CreateMarketRequestSchema,
   UpdateMarketPriceFeedsRequestSchema,
+  GetPartyRequestSchema,
+  GetPartiesRequestSchema,
+  UpdatePartyRequestSchema,
+  DeactivatePartyRequestSchema,
+  GetPartyHistoryRequestSchema,
   SubscribeOrderbookRequestSchema,
   SubscribeOrdersRequestSchema,
   SubscribeSettlementsRequestSchema,
@@ -372,6 +382,8 @@ export class OrderbookClient {
     userServiceCid?: string;
     operatorConfigCid?: string;
     metadata?: any;
+    userServiceRequestCid?: string;
+    userData: any;
   }): Promise<CreatePartyResponse> {
     return await this.wrapCall(async () => {
       const request = create(CreatePartyRequestSchema, {
@@ -380,6 +392,96 @@ export class OrderbookClient {
       });
       return await this.client.createParty(request);
     }, 'createParty');
+  }
+
+  /**
+   * Get a single party by ID
+   */
+  async getParty(params: {
+    partyId: string;
+  }): Promise<GetPartyResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetPartyRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.getParty(request);
+    }, 'getParty');
+  }
+
+  /**
+   * List parties with filters and pagination
+   */
+  async getParties(params?: {
+    partyType?: string;
+    activeOnly?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<GetPartiesResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetPartiesRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.getParties(request);
+    }, 'getParties');
+  }
+
+  /**
+   * Update an existing party (admin operation)
+   */
+  async updateParty(params: {
+    partyId: string;
+    expectedVersion: bigint;
+    partyName?: string;
+    userServiceCid?: string;
+    operatorConfigCid?: string;
+    userServiceRequestCid?: string;
+    userData?: any;
+    metadata?: any;
+    changeReason?: string;
+  }): Promise<UpdatePartyResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(UpdatePartyRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.updateParty(request);
+    }, 'updateParty');
+  }
+
+  /**
+   * Deactivate a party (soft delete - admin operation)
+   */
+  async deactivateParty(params: {
+    partyId: string;
+    expectedVersion: bigint;
+    changeReason: string;
+  }): Promise<DeactivatePartyResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(DeactivatePartyRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.deactivateParty(request);
+    }, 'deactivateParty');
+  }
+
+  /**
+   * Get party change history (audit trail)
+   */
+  async getPartyHistory(params: {
+    partyId: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<GetPartyHistoryResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetPartyHistoryRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.getPartyHistory(request);
+    }, 'getPartyHistory');
   }
 
   /**
