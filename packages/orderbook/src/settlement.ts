@@ -1,5 +1,5 @@
-import { createGrpcTransport } from "@connectrpc/connect-node";
 import { createClient, ConnectError } from "@connectrpc/connect";
+import type { Transport } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 
 // Export all types and schemas from the generated protobuf file
@@ -9,13 +9,16 @@ import {
   SettlementService,
   type GetPendingProposalsResponse,
   type GetSettlementStatusResponse,
+  type UpdateSettlementProposalResponse,
   GetPendingProposalsRequestSchema,
   GetSettlementStatusRequestSchema,
   SubmitPreconfirmationRequestSchema,
+  UpdateSettlementProposalRequestSchema,
   CantonToServerMessageSchema,
   type CantonNodeAuth,
   type PreconfirmationDecision,
   type CantonToServerMessage,
+  SettlementStage,
 } from "./proto/silvana/settlement/v1/settlement_pb.js";
 
 /**
@@ -36,8 +39,8 @@ export class SettlementError extends Error {
  * Settlement client configuration
  */
 export interface SettlementClientConfig {
-  /** Base URL of the settlement service (e.g., "http://localhost:50055") */
-  baseUrl: string;
+  /** Transport instance (create with @connectrpc/connect-node or @connectrpc/connect-web) */
+  transport: Transport;
 }
 
 /**
@@ -51,11 +54,7 @@ export class SettlementClient {
    * @param config Client configuration
    */
   constructor(config: SettlementClientConfig) {
-    const transport = createGrpcTransport({
-      baseUrl: config.baseUrl,
-    });
-
-    this.client = createClient(SettlementService, transport);
+    this.client = createClient(SettlementService, config.transport);
   }
 
   /**
@@ -129,5 +128,33 @@ export class SettlementClient {
       const request = create(SubmitPreconfirmationRequestSchema, params);
       await this.client.submitPreconfirmation(request);
     }, 'submitPreconfirmation');
+  }
+
+  /**
+   * Update settlement proposal (frontend user action with version control for concurrency)
+   */
+  async updateSettlementProposal(params: {
+    auth: CantonNodeAuth;
+    proposalId: bigint;
+    expectedVersion: bigint;
+    dvpProposalCid?: string;
+    dvpProposalUpdateId?: string;
+    dvpCid?: string;
+    dvpUpdateId?: string;
+    allocationBuyerCid?: string;
+    allocationBuyerUpdateId?: string;
+    allocationSellerCid?: string;
+    allocationSellerUpdateId?: string;
+    settledDvpCid?: string;
+    settlementUpdateId?: string;
+    settlementCompletionOffset?: string;
+    newStage?: SettlementStage;
+    errorMessage?: string;
+    metadata?: any;
+  }): Promise<UpdateSettlementProposalResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(UpdateSettlementProposalRequestSchema, params);
+      return await this.client.updateSettlementProposal(request);
+    }, 'updateSettlementProposal');
   }
 }

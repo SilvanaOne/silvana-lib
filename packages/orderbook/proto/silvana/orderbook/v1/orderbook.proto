@@ -80,6 +80,7 @@ message Instrument {
   optional google.protobuf.Struct metadata = 8;
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp updated_at = 10;
+  string news_symbol = 11;  // Symbol for news API search (e.g., 'BTC' for WBTC)
 }
 
 // Market message
@@ -289,6 +290,18 @@ message GetSettlementProposalsResponse {
   uint32 total = 4;
 }
 
+// Get a single settlement proposal by ID
+message GetSettlementProposalRequest {
+  JWTAuth auth = 1;
+  uint64 proposal_id = 2;
+}
+
+message GetSettlementProposalResponse {
+  bool success = 1;
+  string message = 2;
+  optional SettlementProposal proposal = 3;
+}
+
 // Get available instruments (filtered by JWT permissions)
 message GetInstrumentsRequest {
   JWTAuth auth = 1;
@@ -432,6 +445,7 @@ message SettlementUpdate {
     EVENT_TYPE_SETTLED = 7;
     EVENT_TYPE_FAILED = 8;
     EVENT_TYPE_CANCELLED = 9;
+    EVENT_TYPE_UPDATED = 10;  // Generic update (e.g., frontend-initiated changes)
   }
   EventType event_type = 1;
   SettlementProposal proposal = 2;
@@ -610,6 +624,7 @@ message CreateInstrumentRequest {
   optional string issuer = 7; // Canton party ID
   optional string registry = 8; // Canton registry party ID
   optional google.protobuf.Struct metadata = 9;
+  string news_symbol = 10;  // Symbol for news API search (e.g., 'BTC' for WBTC)
 }
 
 message CreateInstrumentResponse {
@@ -662,6 +677,7 @@ service OrderbookService {
   rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse);
   rpc GetOrderbookDepth(GetOrderbookDepthRequest) returns (GetOrderbookDepthResponse);
   rpc GetSettlementProposals(GetSettlementProposalsRequest) returns (GetSettlementProposalsResponse);
+  rpc GetSettlementProposal(GetSettlementProposalRequest) returns (GetSettlementProposalResponse);
   rpc GetInstruments(GetInstrumentsRequest) returns (GetInstrumentsResponse);
   rpc GetMarkets(GetMarketsRequest) returns (GetMarketsResponse);
   rpc GetOrderHistory(GetOrderHistoryRequest) returns (GetOrderHistoryResponse);

@@ -372,6 +372,9 @@ service SettlementService {
 
   // Manual preconfirmation (if not using stream)
   rpc SubmitPreconfirmation(SubmitPreconfirmationRequest) returns (google.protobuf.Empty);
+
+  // Update settlement proposal (frontend user action with version control for concurrency)
+  rpc UpdateSettlementProposal(UpdateSettlementProposalRequest) returns (UpdateSettlementProposalResponse);
 }
 
 // ============================================================================
@@ -410,4 +413,34 @@ message GetSettlementStatusResponse {
 message SubmitPreconfirmationRequest {
   CantonNodeAuth auth = 1;
   PreconfirmationDecision decision = 2;
+}
+
+// Update settlement proposal request with optimistic locking
+message UpdateSettlementProposalRequest {
+  CantonNodeAuth auth = 1;
+  uint64 proposal_id = 2;
+  uint64 expected_version = 3;  // For optimistic locking - must match current version
+
+  // Fields that can be updated (all optional - only set fields will be updated)
+  optional string dvp_proposal_cid = 4;
+  optional string dvp_proposal_update_id = 5;
+  optional string dvp_cid = 6;
+  optional string dvp_update_id = 7;
+  optional string allocation_buyer_cid = 8;
+  optional string allocation_buyer_update_id = 9;
+  optional string allocation_seller_cid = 10;
+  optional string allocation_seller_update_id = 11;
+  optional string settled_dvp_cid = 12;
+  optional string settlement_update_id = 13;
+  optional string settlement_completion_offset = 14;
+  optional SettlementStage new_stage = 15;  // Move to a new stage
+  optional string error_message = 16;
+  optional google.protobuf.Struct metadata = 17;
+}
+
+message UpdateSettlementProposalResponse {
+  bool success = 1;
+  string message = 2;
+  uint64 new_version = 3;  // New version after update
+  SettlementStage current_stage = 4;
 }

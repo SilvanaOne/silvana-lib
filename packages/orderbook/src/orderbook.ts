@@ -1,5 +1,5 @@
-import { createGrpcTransport } from "@connectrpc/connect-node";
 import { createClient, ConnectError } from "@connectrpc/connect";
+import type { Transport } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
@@ -87,8 +87,8 @@ export class OrderbookError extends Error {
  * Orderbook client configuration
  */
 export interface OrderbookClientConfig {
-  /** Base URL of the orderbook service (e.g., "http://localhost:50052") */
-  baseUrl: string;
+  /** Transport instance (create with @connectrpc/connect-node or @connectrpc/connect-web) */
+  transport: Transport;
   /** JWT token for authentication */
   token: string;
 }
@@ -105,11 +105,7 @@ export class OrderbookClient {
    * @param config Client configuration
    */
   constructor(config: OrderbookClientConfig) {
-    const transport = createGrpcTransport({
-      baseUrl: config.baseUrl,
-    });
-
-    this.client = createClient(OrderbookService, transport);
+    this.client = createClient(OrderbookService, config.transport);
     this.token = config.token;
   }
 
