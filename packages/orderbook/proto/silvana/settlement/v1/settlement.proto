@@ -375,6 +375,12 @@ service SettlementService {
 
   // Update settlement proposal (frontend user action with version control for concurrency)
   rpc UpdateSettlementProposal(UpdateSettlementProposalRequest) returns (UpdateSettlementProposalResponse);
+
+  // Save a disclosed contract (buyer/seller saves during allocation)
+  rpc SaveDisclosedContract(SaveDisclosedContractRequest) returns (SaveDisclosedContractResponse);
+
+  // Get disclosed contracts (operator gets all, buyer/seller gets own)
+  rpc GetDisclosedContracts(GetDisclosedContractsRequest) returns (GetDisclosedContractsResponse);
 }
 
 // ============================================================================
@@ -443,4 +449,42 @@ message UpdateSettlementProposalResponse {
   string message = 2;
   uint64 new_version = 3;  // New version after update
   SettlementStage current_stage = 4;
+}
+
+// ============================================================================
+// Disclosed Contracts Messages
+// ============================================================================
+
+// A disclosed contract for settlement
+// Buyers/sellers save these during allocation for cross-party visibility
+message DisclosedContractMessage {
+  string contract_id = 1;         // Canton contract ID
+  string template_id = 2;         // Template identifier (e.g., "splice-amulet:Splice.Amulet:LockedAmulet")
+  string created_event_blob = 3;  // Base64-encoded blob required for disclosures
+  string synchronizer_id = 4;     // Canton synchronizer/domain ID
+}
+
+// Save disclosed contract request (buyer/seller saves their contracts during allocation)
+message SaveDisclosedContractRequest {
+  CantonNodeAuth auth = 1;
+  uint64 proposal_id = 2;
+  DisclosedContractMessage contract = 3;
+}
+
+// Save disclosed contract response
+message SaveDisclosedContractResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Get disclosed contracts request
+message GetDisclosedContractsRequest {
+  CantonNodeAuth auth = 1;
+  uint64 proposal_id = 2;
+  optional string owner = 3;  // "buyer" or "seller", omit for all (operator only)
+}
+
+// Get disclosed contracts response
+message GetDisclosedContractsResponse {
+  repeated DisclosedContractMessage contracts = 1;
 }

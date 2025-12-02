@@ -10,10 +10,15 @@ import {
   type GetPendingProposalsResponse,
   type GetSettlementStatusResponse,
   type UpdateSettlementProposalResponse,
+  type SaveDisclosedContractResponse,
+  type GetDisclosedContractsResponse,
+  type DisclosedContractMessage,
   GetPendingProposalsRequestSchema,
   GetSettlementStatusRequestSchema,
   SubmitPreconfirmationRequestSchema,
   UpdateSettlementProposalRequestSchema,
+  SaveDisclosedContractRequestSchema,
+  GetDisclosedContractsRequestSchema,
   CantonToServerMessageSchema,
   type CantonNodeAuth,
   type PreconfirmationDecision,
@@ -156,5 +161,33 @@ export class SettlementClient {
       const request = create(UpdateSettlementProposalRequestSchema, params);
       return await this.client.updateSettlementProposal(request);
     }, 'updateSettlementProposal');
+  }
+
+  /**
+   * Save a disclosed contract (buyer/seller saves during allocation)
+   */
+  async saveDisclosedContract(params: {
+    auth: CantonNodeAuth;
+    proposalId: bigint;
+    contract: DisclosedContractMessage;
+  }): Promise<SaveDisclosedContractResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(SaveDisclosedContractRequestSchema, params);
+      return await this.client.saveDisclosedContract(request);
+    }, 'saveDisclosedContract');
+  }
+
+  /**
+   * Get disclosed contracts (operator gets all, buyer/seller gets own)
+   */
+  async getDisclosedContracts(params: {
+    auth: CantonNodeAuth;
+    proposalId: bigint;
+    owner?: string;
+  }): Promise<GetDisclosedContractsResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetDisclosedContractsRequestSchema, params);
+      return await this.client.getDisclosedContracts(request);
+    }, 'getDisclosedContracts');
   }
 }
