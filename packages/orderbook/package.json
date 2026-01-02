@@ -1,11 +1,11 @@
 {
   "name": "@silvana-one/orderbook",
   "description": "Silvana Orderbook Client",
-  "version": "1.1.18",
+  "version": "1.1.22",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
-    "@bufbuild/protobuf": "^2.10.1",
+    "@bufbuild/protobuf": "^2.10.2",
     "@connectrpc/connect": "^2.1.1"
   },
   "peerDependencies": {
@@ -22,9 +22,9 @@
   },
   "devDependencies": {
     "@noble/ed25519": "^3.0.0",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.0.3",
     "dotenv": "^17.2.3",
-    "esbuild": "^0.27.0",
+    "esbuild": "^0.27.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },

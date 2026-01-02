@@ -45,6 +45,40 @@ enum PartyRole {
   PARTY_ROLE_OPERATOR = 3;
 }
 
+// Transaction type for history tracking
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  TRANSACTION_TYPE_USER_SERVICE_REQUEST = 1;
+  TRANSACTION_TYPE_USER_SERVICE_REQUEST_ACCEPT = 2;
+  TRANSACTION_TYPE_USER_SERVICE_CANCEL = 3;
+  TRANSACTION_TYPE_DVP_PROPOSE = 4;
+  TRANSACTION_TYPE_DVP_ACCEPT = 5;
+  TRANSACTION_TYPE_DVP_CANCEL = 6;
+  TRANSACTION_TYPE_DVP_SETTLE = 7;
+  TRANSACTION_TYPE_ALLOCATE = 8;
+  TRANSACTION_TYPE_ALLOCATE_CANCEL = 9;
+  TRANSACTION_TYPE_FEE_TRANSFER = 10;
+  TRANSACTION_TYPE_MERGE = 11;
+  TRANSACTION_TYPE_UNLOCK = 12;
+}
+
+// Sender type for transaction history
+enum SenderType {
+  SENDER_TYPE_UNSPECIFIED = 0;
+  SENDER_TYPE_OPERATOR = 1;
+  SENDER_TYPE_USER = 2;
+  SENDER_TYPE_BUYER = 3;
+  SENDER_TYPE_SELLER = 4;
+}
+
+// Transaction result
+enum TransactionResult {
+  TRANSACTION_RESULT_UNSPECIFIED = 0;
+  TRANSACTION_RESULT_PENDING = 1;
+  TRANSACTION_RESULT_SUCCESS = 2;
+  TRANSACTION_RESULT_FAILED = 3;
+}
+
 // ============================================================================
 // Core Messages for Settlement Flow
 // ============================================================================
@@ -68,8 +102,8 @@ message SettlementInstrument {
 
 // Settlement proposal from orderbook
 message SettlementProposalMessage {
-  uint64 proposal_id = 1; // Database proposal ID
-  string settlement_id = 2; // Unique settlement identifier for Canton
+  string proposal_id = 1; // UUID v7 - single ID used everywhere
+  string settlement_id = 2; // Same as proposal_id for DVP operations
   string market_id = 3;
   string buyer_party = 4; // Canton party ID
   string seller_party = 5; // Canton party ID
@@ -84,7 +118,7 @@ message SettlementProposalMessage {
 
 // Preconfirmation request
 message PreconfirmationRequest {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   SettlementProposalMessage proposal = 3;
   string requesting_party = 4; // Who is requesting confirmation
@@ -94,7 +128,7 @@ message PreconfirmationRequest {
 
 // Preconfirmation decision from Canton node
 message PreconfirmationDecision {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   PreconfirmationResponse response = 3;
   optional string rejection_reason = 4;
@@ -105,7 +139,7 @@ message PreconfirmationDecision {
 
 // DVP contract creation notification
 message DvpContractCreated {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   string dvp_proposal_cid = 3; // DvpProposal contract ID
   string dvp_proposal_update_id = 4; // Canton ledger update ID
@@ -116,7 +150,7 @@ message DvpContractCreated {
 
 // DVP acceptance notification
 message DvpContractAccepted {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   string dvp_cid = 3; // Dvp contract ID
   string dvp_update_id = 4; // Canton ledger update ID
@@ -126,7 +160,7 @@ message DvpContractAccepted {
 
 // Allocation status update
 message AllocationStatus {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   PartyRole party_role = 3;
   string party_id = 4;
@@ -141,7 +175,7 @@ message AllocationStatus {
 
 // Settlement execution status
 message SettlementExecutionStatus {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   string dvp_cid = 3;
   string settled_dvp_cid = 4; // SettledDvp contract ID
@@ -237,7 +271,7 @@ message CantonToServerMessage {
 
 // Report DVP proposal creation
 message DvpCreationReport {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   bool success = 3;
   optional string dvp_proposal_cid = 4;
@@ -248,7 +282,7 @@ message DvpCreationReport {
 
 // Report DVP acceptance
 message DvpAcceptanceReport {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   bool success = 3;
   optional string dvp_cid = 4;
@@ -259,7 +293,7 @@ message DvpAcceptanceReport {
 
 // Report allocation completion
 message AllocationReport {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   PartyRole party_role = 3;
   bool success = 4;
@@ -272,7 +306,7 @@ message AllocationReport {
 
 // Report settlement completion
 message SettlementReport {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   bool success = 3;
   optional string settled_dvp_cid = 4;
@@ -285,7 +319,7 @@ message SettlementReport {
 
 // Error report
 message ErrorReport {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   SettlementStage stage = 3;
   string error_code = 4;
@@ -296,7 +330,7 @@ message ErrorReport {
 
 // Status update
 message StatusUpdate {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   SettlementStage current_stage = 3;
   optional string message = 4;
@@ -321,7 +355,7 @@ message SettlementCommand {
   }
 
   CommandType command_type = 1;
-  uint64 proposal_id = 2;
+  string proposal_id = 2;  // UUID v7
   string settlement_id = 3;
   optional google.protobuf.Struct parameters = 4;
   google.protobuf.Timestamp execute_by = 5; // Deadline
@@ -381,6 +415,15 @@ service SettlementService {
 
   // Get disclosed contracts (operator gets all, buyer/seller gets own)
   rpc GetDisclosedContracts(GetDisclosedContractsRequest) returns (GetDisclosedContractsResponse);
+
+  // Record a completed settlement (updates proposal AND creates settlements table record)
+  rpc RecordSettlement(RecordSettlementRequest) returns (RecordSettlementResponse);
+
+  // Record a transaction in history
+  rpc RecordTransaction(RecordTransactionRequest) returns (RecordTransactionResponse);
+
+  // Get transaction history
+  rpc GetTransactionHistory(GetTransactionHistoryRequest) returns (GetTransactionHistoryResponse);
 }
 
 // ============================================================================
@@ -404,7 +447,7 @@ message GetSettlementStatusRequest {
 }
 
 message GetSettlementStatusResponse {
-  uint64 proposal_id = 1;
+  string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
   SettlementStage stage = 3;
   optional string dvp_proposal_cid = 4;
@@ -424,7 +467,7 @@ message SubmitPreconfirmationRequest {
 // Update settlement proposal request with optimistic locking
 message UpdateSettlementProposalRequest {
   CantonNodeAuth auth = 1;
-  uint64 proposal_id = 2;
+  string proposal_id = 2;  // UUID v7
   uint64 expected_version = 3;  // For optimistic locking - must match current version
 
   // Fields that can be updated (all optional - only set fields will be updated)
@@ -442,6 +485,8 @@ message UpdateSettlementProposalRequest {
   optional SettlementStage new_stage = 15;  // Move to a new stage
   optional string error_message = 16;
   optional google.protobuf.Struct metadata = 17;
+  optional bool buyer_fee_sent = 18;    // Set buyer fee transfer initiated
+  optional bool seller_fee_sent = 19;   // Set seller fee transfer initiated
 }
 
 message UpdateSettlementProposalResponse {
@@ -467,7 +512,7 @@ message DisclosedContractMessage {
 // Save disclosed contract request (buyer/seller saves their contracts during allocation)
 message SaveDisclosedContractRequest {
   CantonNodeAuth auth = 1;
-  uint64 proposal_id = 2;
+  string proposal_id = 2;  // UUID v7
   DisclosedContractMessage contract = 3;
 }
 
@@ -480,11 +525,118 @@ message SaveDisclosedContractResponse {
 // Get disclosed contracts request
 message GetDisclosedContractsRequest {
   CantonNodeAuth auth = 1;
-  uint64 proposal_id = 2;
+  string proposal_id = 2;  // UUID v7
   optional string owner = 3;  // "buyer" or "seller", omit for all (operator only)
 }
 
 // Get disclosed contracts response
 message GetDisclosedContractsResponse {
   repeated DisclosedContractMessage contracts = 1;
+}
+
+// ============================================================================
+// Record Settlement Messages
+// ============================================================================
+
+// Record a completed settlement request
+// Called by settlement operator after successful Dvp_Settle execution
+message RecordSettlementRequest {
+  CantonNodeAuth auth = 1;
+  string proposal_id = 2;  // UUID v7
+  string settled_dvp_cid = 3;              // SettledDvp contract ID from Canton
+  string settlement_update_id = 4;          // Canton ledger update ID
+  string settlement_completion_offset = 5;  // Canton ledger offset
+}
+
+// Record settlement response
+message RecordSettlementResponse {
+  bool success = 1;
+  string message = 2;
+  string settlement_id = 3;  // UUID v7 - The proposal_id used as settlement ID
+}
+
+// ============================================================================
+// Transaction History Messages
+// ============================================================================
+
+// Record a transaction in history
+message RecordTransactionRequest {
+  CantonNodeAuth auth = 1;
+  TransactionType tx_type = 2;
+  string sender_party = 3;
+  SenderType sender_type = 4;
+
+  // Optional Canton IDs
+  optional string update_id = 5;
+  optional string submission_id = 6;
+  optional string settlement_proposal_id = 7;
+
+  // Transaction context
+  optional string market_id = 8;
+  optional string counterparty = 9;
+
+  // Contract references
+  optional string contract_id = 10;
+  optional string choice_name = 11;
+
+  // Financial data
+  optional string amount = 12;  // DECIMAL(38,10) as string
+  optional string rewards_amount = 13;
+  optional uint64 rewards_round = 14;
+  optional uint64 traffic_request = 15;
+  optional uint64 traffic_response = 16;
+  optional uint64 traffic_total = 17;
+  optional uint64 activity_marker_created = 18;
+
+  // Result
+  TransactionResult result = 19;
+  optional string error_message = 20;
+  optional google.protobuf.Struct metadata = 21;
+}
+
+message RecordTransactionResponse {
+  bool success = 1;
+  string message = 2;
+  uint64 transaction_id = 3;  // Auto-generated ID
+}
+
+// Get transaction history
+message GetTransactionHistoryRequest {
+  CantonNodeAuth auth = 1;
+  optional string sender_party = 2;
+  optional TransactionType tx_type = 3;
+  optional string settlement_proposal_id = 4;
+  optional TransactionResult result = 5;
+  optional uint32 limit = 6;
+  optional uint32 offset = 7;
+}
+
+message GetTransactionHistoryResponse {
+  repeated TransactionHistoryEntry transactions = 1;
+  uint32 total = 2;
+}
+
+message TransactionHistoryEntry {
+  uint64 id = 1;
+  TransactionType tx_type = 2;
+  string sender_party = 3;
+  SenderType sender_type = 4;
+  optional string update_id = 5;
+  optional string submission_id = 6;
+  optional string settlement_proposal_id = 7;
+  optional string market_id = 8;
+  optional string counterparty = 9;
+  optional string contract_id = 10;
+  optional string choice_name = 11;
+  optional string amount = 12;
+  optional string rewards_amount = 13;
+  optional uint64 rewards_round = 14;
+  optional uint64 traffic_request = 15;
+  optional uint64 traffic_response = 16;
+  optional uint64 traffic_total = 17;
+  optional uint64 activity_marker_created = 18;
+  TransactionResult result = 19;
+  optional string error_message = 20;
+  optional google.protobuf.Struct metadata = 21;
+  google.protobuf.Timestamp created_at = 22;
 }

@@ -12,6 +12,9 @@ import {
   type UpdateSettlementProposalResponse,
   type SaveDisclosedContractResponse,
   type GetDisclosedContractsResponse,
+  type RecordSettlementResponse,
+  type RecordTransactionResponse,
+  type GetTransactionHistoryResponse,
   type DisclosedContractMessage,
   GetPendingProposalsRequestSchema,
   GetSettlementStatusRequestSchema,
@@ -19,11 +22,17 @@ import {
   UpdateSettlementProposalRequestSchema,
   SaveDisclosedContractRequestSchema,
   GetDisclosedContractsRequestSchema,
+  RecordSettlementRequestSchema,
+  RecordTransactionRequestSchema,
+  GetTransactionHistoryRequestSchema,
   CantonToServerMessageSchema,
   type CantonNodeAuth,
   type PreconfirmationDecision,
   type CantonToServerMessage,
   SettlementStage,
+  TransactionType,
+  SenderType,
+  TransactionResult,
 } from "./proto/silvana/settlement/v1/settlement_pb.js";
 
 /**
@@ -140,7 +149,7 @@ export class SettlementClient {
    */
   async updateSettlementProposal(params: {
     auth: CantonNodeAuth;
-    proposalId: bigint;
+    proposalId: string;
     expectedVersion: bigint;
     dvpProposalCid?: string;
     dvpProposalUpdateId?: string;
@@ -156,6 +165,8 @@ export class SettlementClient {
     newStage?: SettlementStage;
     errorMessage?: string;
     metadata?: any;
+    buyerFeeSent?: boolean;
+    sellerFeeSent?: boolean;
   }): Promise<UpdateSettlementProposalResponse> {
     return await this.wrapCall(async () => {
       const request = create(UpdateSettlementProposalRequestSchema, params);
@@ -168,7 +179,7 @@ export class SettlementClient {
    */
   async saveDisclosedContract(params: {
     auth: CantonNodeAuth;
-    proposalId: bigint;
+    proposalId: string;
     contract: DisclosedContractMessage;
   }): Promise<SaveDisclosedContractResponse> {
     return await this.wrapCall(async () => {
@@ -182,12 +193,79 @@ export class SettlementClient {
    */
   async getDisclosedContracts(params: {
     auth: CantonNodeAuth;
-    proposalId: bigint;
+    proposalId: string;
     owner?: string;
   }): Promise<GetDisclosedContractsResponse> {
     return await this.wrapCall(async () => {
       const request = create(GetDisclosedContractsRequestSchema, params);
       return await this.client.getDisclosedContracts(request);
     }, 'getDisclosedContracts');
+  }
+
+  /**
+   * Record a completed settlement (updates proposal AND creates settlements table record)
+   * Called by settlement operator after successful Dvp_Settle execution
+   */
+  async recordSettlement(params: {
+    auth: CantonNodeAuth;
+    proposalId: string;
+    settledDvpCid: string;
+    settlementUpdateId: string;
+    settlementCompletionOffset: string;
+  }): Promise<RecordSettlementResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(RecordSettlementRequestSchema, params);
+      return await this.client.recordSettlement(request);
+    }, 'recordSettlement');
+  }
+
+  /**
+   * Record a transaction in history
+   */
+  async recordTransaction(params: {
+    auth: CantonNodeAuth;
+    txType: TransactionType;
+    senderParty: string;
+    senderType: SenderType;
+    result: TransactionResult;
+    updateId?: string;
+    submissionId?: string;
+    settlementProposalId?: string;
+    marketId?: string;
+    counterparty?: string;
+    contractId?: string;
+    choiceName?: string;
+    amount?: string;
+    rewardsAmount?: string;
+    rewardsRound?: bigint;
+    trafficRequest?: bigint;
+    trafficResponse?: bigint;
+    trafficTotal?: bigint;
+    activityMarkerCreated?: bigint;
+    errorMessage?: string;
+    metadata?: any;
+  }): Promise<RecordTransactionResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(RecordTransactionRequestSchema, params);
+      return await this.client.recordTransaction(request);
+    }, 'recordTransaction');
+  }
+
+  /**
+   * Get transaction history with optional filters
+   */
+  async getTransactionHistory(params: {
+    auth: CantonNodeAuth;
+    senderParty?: string;
+    txType?: TransactionType;
+    settlementProposalId?: string;
+    result?: TransactionResult;
+    limit?: number;
+    offset?: number;
+  }): Promise<GetTransactionHistoryResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetTransactionHistoryRequestSchema, params);
+      return await this.client.getTransactionHistory(request);
+    }, 'getTransactionHistory');
   }
 }

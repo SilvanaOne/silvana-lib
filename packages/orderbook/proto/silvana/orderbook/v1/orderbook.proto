@@ -63,9 +63,20 @@ enum MarketType {
 // Core Data Messages (matching SQL tables)
 // ============================================================================
 
-// JWT authentication token
+// JWT authentication token (for server-signed tokens using JWT_PRIVATE_KEY)
 message JWTAuth {
-  string token = 1; // JWT signed with Ed25519 private key
+  string token = 1; // JWT signed with server's Ed25519 private key (JWT_PRIVATE_KEY)
+}
+
+// External account authentication
+// JWT is signed by the external account's Ed25519 private key
+// The public_key is verified against the party_id fingerprint:
+//   fingerprint = SHA256(0x0000000C || public_key_bytes)
+//   party_id format: "identifier::1220{fingerprint}"
+message ExternalAuth {
+  string jwt = 1;              // JWT signed with external account's Ed25519 private key
+  string party_id = 2;         // Canton party ID of the external account
+  string public_key = 3;       // Ed25519 public key (hex) - verified against party_id fingerprint
 }
 
 // Instrument message
@@ -153,7 +164,7 @@ message OrderbookDepth {
 
 // Settlement proposal message
 message SettlementProposal {
-  uint64 proposal_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT
+  string proposal_id = 1; // UUID v7 - single ID used everywhere
   string market_id = 2;
   string buyer = 3;
   string seller = 4;
@@ -176,7 +187,7 @@ message SettlementProposal {
   optional string dvp_proposal_update_id = 17;
   optional string dvp_cid = 18;
   optional string dvp_update_id = 19;
-  optional string dvp_settlement_id = 20;
+  // Field 20 removed (was dvp_settlement_id - now using proposal_id as settlement ID)
   optional string allocation_buyer_cid = 21;
   optional string allocation_buyer_update_id = 22;
   optional string allocation_seller_cid = 23;
@@ -197,23 +208,30 @@ message SettlementProposal {
 
   optional string error_message = 36;
   optional google.protobuf.Struct metadata = 37;
+
+  // Fee tracking
+  string buyer_fee = 38;                    // DECIMAL(38,10) as string
+  string seller_fee = 39;                   // DECIMAL(38,10) as string
+  optional bool buyer_fee_sent = 40;
+  optional bool seller_fee_sent = 41;
+  optional bool buyer_fee_received = 42;
+  optional bool seller_fee_received = 43;
 }
 
 // Order match message
 message OrderMatch {
-  uint64 match_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT
-  uint64 settlement_proposal_id = 2;
-  uint64 bid_order_id = 3;
-  uint64 offer_order_id = 4;
-  string matched_quantity = 5; // DECIMAL(38,10) as string
-  string matched_price = 6; // DECIMAL(38,10) as string
-  google.protobuf.Timestamp created_at = 7;
+  string settlement_proposal_id = 1; // UUID v7 - primary key (same as proposal_id)
+  uint64 bid_order_id = 2;
+  uint64 offer_order_id = 3;
+  string matched_quantity = 4; // DECIMAL(38,10) as string
+  string matched_price = 5; // DECIMAL(38,10) as string
+  google.protobuf.Timestamp created_at = 6;
 }
 
 // Settlement (completed) message
 message Settlement {
-  uint64 settlement_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT
-  uint64 proposal_id = 2;
+  uint64 settlement_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT (internal DB key)
+  string proposal_id = 2; // UUID v7 - reference to settlement proposal
   string market_id = 3;
   string buyer = 4;
   string seller = 5;
@@ -252,6 +270,7 @@ message GetOrdersRequest {
   optional OrderType order_type = 4;
   optional uint32 limit = 5;
   optional uint32 offset = 6;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetOrdersResponse {
@@ -266,6 +285,7 @@ message GetOrderbookDepthRequest {
   JWTAuth auth = 1;
   string market_id = 2;
   optional uint32 depth = 3; // Number of price levels (default 20)
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetOrderbookDepthResponse {
@@ -281,6 +301,7 @@ message GetSettlementProposalsRequest {
   optional SettlementStatus status = 3;
   optional uint32 limit = 4;
   optional uint32 offset = 5;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetSettlementProposalsResponse {
@@ -293,7 +314,8 @@ message GetSettlementProposalsResponse {
 // Get a single settlement proposal by ID
 message GetSettlementProposalRequest {
   JWTAuth auth = 1;
-  uint64 proposal_id = 2;
+  string proposal_id = 2;  // UUID v7
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetSettlementProposalResponse {
@@ -308,6 +330,7 @@ message GetInstrumentsRequest {
   optional string instrument_type = 2;
   optional uint32 limit = 3;
   optional uint32 offset = 4;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetInstrumentsResponse {
@@ -326,6 +349,7 @@ message GetMarketsRequest {
   optional bool active_only = 5;
   optional uint32 limit = 6;
   optional uint32 offset = 7;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetMarketsResponse {
@@ -343,6 +367,7 @@ message GetOrderHistoryRequest {
   optional google.protobuf.Timestamp to_time = 4;
   optional uint32 limit = 5;
   optional uint32 offset = 6;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetOrderHistoryResponse {
@@ -356,6 +381,7 @@ message GetOrderHistoryResponse {
 message GetMarketDataRequest {
   JWTAuth auth = 1;
   repeated string market_ids = 2; // Empty = all accessible markets
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetMarketDataResponse {
@@ -372,6 +398,7 @@ message GetSettlementsRequest {
   optional google.protobuf.Timestamp to_time = 4;
   optional uint32 limit = 5;
   optional uint32 offset = 6;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetSettlementsResponse {
@@ -386,6 +413,7 @@ message SubscribeOrderbookRequest {
   JWTAuth auth = 1;
   string market_id = 2;
   optional uint32 depth = 3; // Number of price levels
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 // Orderbook update event
@@ -407,6 +435,7 @@ message OrderbookUpdate {
 message SubscribeOrdersRequest {
   JWTAuth auth = 1;
   optional string market_id = 2;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 // Order update event
@@ -430,6 +459,7 @@ message OrderUpdate {
 message SubscribeSettlementsRequest {
   JWTAuth auth = 1;
   optional string market_id = 2;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 // Settlement update event
@@ -465,6 +495,7 @@ message SubmitOrderRequest {
   optional google.protobuf.Struct credentials = 9;
   optional google.protobuf.Struct requirements = 10;
   optional google.protobuf.Struct metadata = 11;
+  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
 message SubmitOrderResponse {
@@ -477,6 +508,7 @@ message SubmitOrderResponse {
 message CancelOrderRequest {
   JWTAuth auth = 1;
   uint64 order_id = 2;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message CancelOrderResponse {
@@ -500,6 +532,7 @@ message CreatePartyRequest {
   optional google.protobuf.Struct metadata = 7;
   optional string user_service_request_cid = 8; // UserService request contract ID
   google.protobuf.Struct user_data = 9; // User-specific data (KYC, credentials, etc.)
+  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
 message CreatePartyResponse {
@@ -520,6 +553,7 @@ message UpdatePartyRequest {
   optional google.protobuf.Struct user_data = 8;
   optional google.protobuf.Struct metadata = 9;
   optional string change_reason = 10;             // Audit: why this change
+  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
 message UpdatePartyResponse {
@@ -534,6 +568,7 @@ message DeactivatePartyRequest {
   string party_id = 2;
   uint64 expected_version = 3;
   string change_reason = 4;                       // Required for deactivation
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message DeactivatePartyResponse {
@@ -548,6 +583,7 @@ message GetPartyHistoryRequest {
   string party_id = 2;
   optional uint32 limit = 3;
   optional uint32 offset = 4;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 // Single entry in party history
@@ -573,6 +609,7 @@ message GetPartyHistoryResponse {
 message GetPartyRequest {
   JWTAuth auth = 1;
   string party_id = 2;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetPartyResponse {
@@ -588,6 +625,7 @@ message GetPartiesRequest {
   optional bool active_only = 3;            // If true, only return active parties (default: all)
   optional uint32 limit = 4;                // Max results (default: 50, max: 1000)
   optional uint32 offset = 5;               // Pagination offset
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetPartiesResponse {
@@ -625,6 +663,7 @@ message CreateInstrumentRequest {
   optional string registry = 8; // Canton registry party ID
   optional google.protobuf.Struct metadata = 9;
   string news_symbol = 10;  // Symbol for news API search (e.g., 'BTC' for WBTC)
+  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
 message CreateInstrumentResponse {
@@ -647,6 +686,7 @@ message CreateMarketRequest {
   string taker_fee = 10; // DECIMAL as string (e.g., "0.002" for 0.2%)
   optional google.protobuf.Struct metadata = 11;
   optional google.protobuf.Struct price_feeds = 12; // Price feed configurations
+  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
 message CreateMarketResponse {
@@ -660,6 +700,7 @@ message UpdateMarketPriceFeedsRequest {
   JWTAuth auth = 1;
   string market_id = 2;
   google.protobuf.Struct price_feeds = 3; // New price feed configuration
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message UpdateMarketPriceFeedsResponse {
