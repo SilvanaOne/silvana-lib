@@ -1,5 +1,5 @@
-import { createGrpcTransport } from "@connectrpc/connect-node";
 import { createClient, ConnectError } from "@connectrpc/connect";
+import type { Transport } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 
 // Export all types and schemas from the generated protobuf file
@@ -30,8 +30,8 @@ export class NewsError extends Error {
  * News client configuration
  */
 export interface NewsClientConfig {
-  /** Base URL of the news service (e.g., "http://localhost:50054") */
-  baseUrl: string;
+  /** Transport instance (create with @connectrpc/connect-node or @connectrpc/connect-web) */
+  transport: Transport;
 }
 
 /**
@@ -45,11 +45,7 @@ export class NewsClient {
    * @param config Client configuration
    */
   constructor(config: NewsClientConfig) {
-    const transport = createGrpcTransport({
-      baseUrl: config.baseUrl,
-    });
-
-    this.client = createClient(NewsService, transport);
+    this.client = createClient(NewsService, config.transport);
   }
 
   /**

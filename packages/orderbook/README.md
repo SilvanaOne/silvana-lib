@@ -1,6 +1,6 @@
 # @silvana-one/orderbook
 
-Silvana Orderbook Client - A TypeScript/JavaScript client library for interacting with the Silvana Orderbook Service via gRPC.
+Silvana Orderbook Client for Node.js and Browser environments.
 
 ## Installation
 
@@ -8,109 +8,140 @@ Silvana Orderbook Client - A TypeScript/JavaScript client library for interactin
 npm install @silvana-one/orderbook
 ```
 
+For Node.js:
+```bash
+npm install @connectrpc/connect-node
+```
+
+For Browser:
+```bash
+npm install @connectrpc/connect-web
+```
+
 ## Usage
 
-### Basic Setup
+### Node.js
 
 ```typescript
-import { OrderbookClient, OrderType, OrderStatus, TimeInForce } from '@silvana-one/orderbook';
+import { createGrpcTransport } from "@connectrpc/connect-node";
+import { OrderbookClient, OrderType, TimeInForce } from "@silvana-one/orderbook";
 
-// Initialize the client
+const transport = createGrpcTransport({
+  baseUrl: "https://api.silvana.one",
+});
+
 const client = new OrderbookClient({
-  baseUrl: 'http://localhost:50052',
-  token: 'your-jwt-token-here'
+  transport,
+  token: "your-jwt-token",
 });
-```
 
-### Submitting Orders
+// Get markets
+const markets = await client.getMarkets();
+console.log(markets.markets);
 
-```typescript
-// Submit a buy order
-const response = await client.submitOrder({
-  marketId: 'BTC-USD',
+// Submit an order
+const order = await client.submitOrder({
+  marketId: "BTC-USD",
   orderType: OrderType.BID,
-  price: '50000.00',
-  quantity: '0.5',
+  price: "50000.00",
+  quantity: "0.1",
   timeInForce: TimeInForce.GTC,
-  expiresAt: new Date('2024-12-31'),
-  traderOrderRef: 'my-order-123'
-});
-
-if (response.success) {
-  console.log('Order submitted:', response.order);
-}
-```
-
-### Querying Orders
-
-```typescript
-// Get your active orders
-const orders = await client.getOrders({
-  marketId: 'BTC-USD',
-  status: OrderStatus.ACTIVE,
-  limit: 50
-});
-
-// Get order history
-const history = await client.getOrderHistory({
-  marketId: 'BTC-USD',
-  fromTime: new Date('2024-01-01'),
-  toTime: new Date(),
-  limit: 100
 });
 ```
 
-### Market Data
+### Browser
 
 ```typescript
-// Get orderbook depth
-const depth = await client.getOrderbookDepth({
-  marketId: 'BTC-USD',
-  depth: 20
+import { createGrpcWebTransport } from "@connectrpc/connect-web";
+import { OrderbookClient, OrderType, TimeInForce } from "@silvana-one/orderbook";
+
+const transport = createGrpcWebTransport({
+  baseUrl: "https://api.silvana.one",
 });
 
-console.log('Bids:', depth.orderbook?.bids);
-console.log('Offers:', depth.orderbook?.offers);
-
-// Get market data for multiple markets
-const marketData = await client.getMarketData({
-  marketIds: ['BTC-USD', 'ETH-USD']
+const client = new OrderbookClient({
+  transport,
+  token: "your-jwt-token",
 });
+
+// Same API as Node.js
+const markets = await client.getMarkets();
 ```
 
-### Streaming Real-time Updates
+## Clients
+
+### OrderbookClient
+
+Main client for trading operations.
 
 ```typescript
-// Subscribe to orderbook updates
-const orderbookStream = client.subscribeOrderbook({
-  marketId: 'BTC-USD',
-  depth: 10
-});
+import { OrderbookClient } from "@silvana-one/orderbook";
 
-for await (const update of orderbookStream) {
-  console.log('Orderbook update:', update);
-}
+const client = new OrderbookClient({ transport, token });
 
-// Subscribe to your order updates
-const orderStream = client.subscribeOrders({
-  marketId: 'BTC-USD'
-});
+// Trading
+await client.getMarkets();
+await client.getOrders({ marketId: "BTC-USD" });
+await client.submitOrder({ ... });
+await client.cancelOrder({ orderId: 123n });
 
-for await (const update of orderStream) {
-  console.log('Order update:', update.eventType, update.order);
+// Market data
+await client.getOrderbookDepth({ marketId: "BTC-USD", depth: 10 });
+await client.getMarketData({ marketIds: ["BTC-USD"] });
+
+// Streaming
+for await (const update of client.subscribeOrderbook({ marketId: "BTC-USD" })) {
+  console.log(update);
 }
 ```
 
-### Canceling Orders
+### PricingClient
+
+Client for price data and market feeds.
 
 ```typescript
-const cancelResponse = await client.cancelOrder({
-  orderId: BigInt(12345)
-});
+import { PricingClient } from "@silvana-one/orderbook";
 
-if (cancelResponse.success) {
-  console.log('Order cancelled');
+const client = new PricingClient({ transport });
+
+await client.getPrice({ marketId: "BTC-USD" });
+await client.getPrices({ marketIds: ["BTC-USD", "ETH-USD"] });
+await client.getKlines({ marketId: "BTC-USD", interval: "1h", limit: 100 });
+
+// Streaming
+for await (const update of client.streamPrices({ marketIds: ["BTC-USD"] })) {
+  console.log(update);
 }
+```
+
+### NewsClient
+
+Client for news and market updates.
+
+```typescript
+import { NewsClient } from "@silvana-one/orderbook";
+
+const client = new NewsClient({ transport });
+
+await client.getNews({ tokens: ["BTC", "ETH"], limit: 10 });
+
+// Streaming
+for await (const news of client.streamNews({ tokens: ["BTC"] })) {
+  console.log(news);
+}
+```
+
+### SettlementClient
+
+Client for settlement operations (Canton node integration).
+
+```typescript
+import { SettlementClient } from "@silvana-one/orderbook";
+
+const client = new SettlementClient({ transport });
+
+await client.getPendingProposals({ auth, partyId: "party-1" });
+await client.getSettlementStatus({ auth, settlementId: "settlement-1" });
 ```
 
 ## API Methods
@@ -136,54 +167,21 @@ if (cancelResponse.success) {
 - `subscribeOrders()` - Stream order updates
 - `subscribeSettlements()` - Stream settlement updates
 
-## Types and Enums
+## Types
 
-The package exports all necessary types and enums:
+All protobuf types are exported from the package:
 
 ```typescript
 import {
+  Order,
   OrderType,
   OrderStatus,
   TimeInForce,
   MarketType,
   SettlementStatus,
-  type Order,
-  type Market,
-  type Instrument,
-  type Settlement,
-  type OrderbookDepth
-} from '@silvana-one/orderbook';
-```
-
-## JWT Authentication
-
-All methods require JWT authentication. The token should be signed with an Ed25519 private key and include the necessary claims for accessing the orderbook service.
-
-```typescript
-const token = generateJWT({
-  sub: 'trader-id',
-  exp: Date.now() + 3600000,
-  // ... other required claims
-});
-
-const client = new OrderbookClient({
-  baseUrl: 'http://orderbook-service:50052',
-  token
-});
-```
-
-## Error Handling
-
-All async methods may throw errors. It's recommended to wrap calls in try-catch blocks:
-
-```typescript
-try {
-  const response = await client.submitOrder({
-    // ... order parameters
-  });
-} catch (error) {
-  console.error('Failed to submit order:', error);
-}
+  Market,
+  Instrument,
+} from "@silvana-one/orderbook";
 ```
 
 ## License

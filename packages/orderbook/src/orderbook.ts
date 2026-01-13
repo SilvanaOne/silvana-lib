@@ -1,5 +1,5 @@
-import { createGrpcTransport } from "@connectrpc/connect-node";
 import { createClient, ConnectError } from "@connectrpc/connect";
+import type { Transport } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
@@ -22,6 +22,11 @@ import {
   type CreateInstrumentResponse,
   type CreateMarketResponse,
   type UpdateMarketPriceFeedsResponse,
+  type GetPartyResponse,
+  type GetPartiesResponse,
+  type UpdatePartyResponse,
+  type DeactivatePartyResponse,
+  type GetPartyHistoryResponse,
   GetOrdersRequestSchema,
   GetOrderbookDepthRequestSchema,
   GetSettlementProposalsRequestSchema,
@@ -36,6 +41,11 @@ import {
   CreateInstrumentRequestSchema,
   CreateMarketRequestSchema,
   UpdateMarketPriceFeedsRequestSchema,
+  GetPartyRequestSchema,
+  GetPartiesRequestSchema,
+  UpdatePartyRequestSchema,
+  DeactivatePartyRequestSchema,
+  GetPartyHistoryRequestSchema,
   SubscribeOrderbookRequestSchema,
   SubscribeOrdersRequestSchema,
   SubscribeSettlementsRequestSchema,
@@ -77,8 +87,8 @@ export class OrderbookError extends Error {
  * Orderbook client configuration
  */
 export interface OrderbookClientConfig {
-  /** Base URL of the orderbook service (e.g., "http://localhost:50052") */
-  baseUrl: string;
+  /** Transport instance (create with @connectrpc/connect-node or @connectrpc/connect-web) */
+  transport: Transport;
   /** JWT token for authentication */
   token: string;
 }
@@ -95,11 +105,7 @@ export class OrderbookClient {
    * @param config Client configuration
    */
   constructor(config: OrderbookClientConfig) {
-    const transport = createGrpcTransport({
-      baseUrl: config.baseUrl,
-    });
-
-    this.client = createClient(OrderbookService, transport);
+    this.client = createClient(OrderbookService, config.transport);
     this.token = config.token;
   }
 
@@ -372,6 +378,8 @@ export class OrderbookClient {
     userServiceCid?: string;
     operatorConfigCid?: string;
     metadata?: any;
+    userServiceRequestCid?: string;
+    userData: any;
   }): Promise<CreatePartyResponse> {
     return await this.wrapCall(async () => {
       const request = create(CreatePartyRequestSchema, {
@@ -380,6 +388,96 @@ export class OrderbookClient {
       });
       return await this.client.createParty(request);
     }, 'createParty');
+  }
+
+  /**
+   * Get a single party by ID
+   */
+  async getParty(params: {
+    partyId: string;
+  }): Promise<GetPartyResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetPartyRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.getParty(request);
+    }, 'getParty');
+  }
+
+  /**
+   * List parties with filters and pagination
+   */
+  async getParties(params?: {
+    partyType?: string;
+    activeOnly?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<GetPartiesResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetPartiesRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.getParties(request);
+    }, 'getParties');
+  }
+
+  /**
+   * Update an existing party (admin operation)
+   */
+  async updateParty(params: {
+    partyId: string;
+    expectedVersion: bigint;
+    partyName?: string;
+    userServiceCid?: string;
+    operatorConfigCid?: string;
+    userServiceRequestCid?: string;
+    userData?: any;
+    metadata?: any;
+    changeReason?: string;
+  }): Promise<UpdatePartyResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(UpdatePartyRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.updateParty(request);
+    }, 'updateParty');
+  }
+
+  /**
+   * Deactivate a party (soft delete - admin operation)
+   */
+  async deactivateParty(params: {
+    partyId: string;
+    expectedVersion: bigint;
+    changeReason: string;
+  }): Promise<DeactivatePartyResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(DeactivatePartyRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.deactivateParty(request);
+    }, 'deactivateParty');
+  }
+
+  /**
+   * Get party change history (audit trail)
+   */
+  async getPartyHistory(params: {
+    partyId: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<GetPartyHistoryResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetPartyHistoryRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.getPartyHistory(request);
+    }, 'getPartyHistory');
   }
 
   /**

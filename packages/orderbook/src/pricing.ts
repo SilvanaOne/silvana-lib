@@ -1,5 +1,5 @@
-import { createGrpcTransport } from "@connectrpc/connect-node";
 import { createClient, ConnectError } from "@connectrpc/connect";
+import type { Transport } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
@@ -48,8 +48,8 @@ export class PricingError extends Error {
  * Pricing client configuration
  */
 export interface PricingClientConfig {
-  /** Base URL of the pricing service (e.g., "http://localhost:50053") */
-  baseUrl: string;
+  /** Transport instance (create with @connectrpc/connect-node or @connectrpc/connect-web) */
+  transport: Transport;
 }
 
 /**
@@ -63,11 +63,7 @@ export class PricingClient {
    * @param config Client configuration
    */
   constructor(config: PricingClientConfig) {
-    const transport = createGrpcTransport({
-      baseUrl: config.baseUrl,
-    });
-
-    this.client = createClient(PricingService, transport);
+    this.client = createClient(PricingService, config.transport);
   }
 
   /**
