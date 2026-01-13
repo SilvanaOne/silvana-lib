@@ -60,6 +60,7 @@ enum TransactionType {
   TRANSACTION_TYPE_FEE_TRANSFER = 10;
   TRANSACTION_TYPE_MERGE = 11;
   TRANSACTION_TYPE_UNLOCK = 12;
+  TRANSACTION_TYPE_OTHER = 13;
 }
 
 // Sender type for transaction history
@@ -223,6 +224,22 @@ message Heartbeat {
   uint64 sequence_number = 3;
 }
 
+// Liquidity provider ping message (Canton node to server)
+// Sent periodically by settlement agents to indicate LP is active
+message LiquidityProviderPing {
+  string liquidity_provider_name = 1;  // LP name to update activity for
+  google.protobuf.Timestamp timestamp = 2;
+}
+
+// Liquidity provider pong message (server to Canton node)
+// Acknowledgment of ping receipt
+message LiquidityProviderPong {
+  string liquidity_provider_name = 1;  // LP name that was updated
+  bool success = 2;                     // Whether the update succeeded
+  optional string error_message = 3;    // Error details if failed
+  google.protobuf.Timestamp server_time = 4;
+}
+
 // Stream message from server to Canton node
 message ServerToCantonMessage {
   string session_id = 1;
@@ -239,6 +256,7 @@ message ServerToCantonMessage {
     SettlementExecutionStatus settlement_status = 10;
     SettlementCommand command = 11;
     SettlementQuery query = 12;
+    LiquidityProviderPong lp_pong = 14;  // Pong acknowledgment for LP activity ping
   }
 
   google.protobuf.Timestamp sent_at = 13;
@@ -260,6 +278,7 @@ message CantonToServerMessage {
     SettlementResponse response = 10;
     ErrorReport error = 11;
     StatusUpdate status = 12;
+    LiquidityProviderPing lp_ping = 14;  // Ping from settlement agent for LP activity
   }
 
   google.protobuf.Timestamp sent_at = 13;
@@ -487,6 +506,10 @@ message UpdateSettlementProposalRequest {
   optional google.protobuf.Struct metadata = 17;
   optional bool buyer_fee_sent = 18;    // Set buyer fee transfer initiated
   optional bool seller_fee_sent = 19;   // Set seller fee transfer initiated
+  optional string buyer_fee_update_id = 20;   // Canton update ID for buyer fee transfer
+  optional string seller_fee_update_id = 21;  // Canton update ID for seller fee transfer
+  optional google.protobuf.Timestamp buyer_fee_paid_at = 22;   // When buyer fee was paid
+  optional google.protobuf.Timestamp seller_fee_paid_at = 23;  // When seller fee was paid
 }
 
 message UpdateSettlementProposalResponse {
@@ -546,6 +569,10 @@ message RecordSettlementRequest {
   string settled_dvp_cid = 3;              // SettledDvp contract ID from Canton
   string settlement_update_id = 4;          // Canton ledger update ID
   string settlement_completion_offset = 5;  // Canton ledger offset
+  // Optional fields to correct DB state (on-chain is source of truth)
+  optional string dvp_cid = 6;              // DVP contract ID (if missing in DB)
+  optional string allocation_buyer_cid = 7;  // Buyer's allocation CID
+  optional string allocation_seller_cid = 8; // Seller's allocation CID
 }
 
 // Record settlement response
@@ -592,6 +619,12 @@ message RecordTransactionRequest {
   TransactionResult result = 19;
   optional string error_message = 20;
   optional google.protobuf.Struct metadata = 21;
+  optional google.protobuf.Struct update = 22;  // Additional update data from Canton
+
+  // Daml template and choice info
+  string daml_template_id = 23;     // Daml template ID (required)
+  string daml_choice = 24;          // Daml choice name (required)
+  optional google.protobuf.Struct daml_choices = 25; // Additional choice data as JSON
 }
 
 message RecordTransactionResponse {
@@ -639,4 +672,10 @@ message TransactionHistoryEntry {
   optional string error_message = 20;
   optional google.protobuf.Struct metadata = 21;
   google.protobuf.Timestamp created_at = 22;
+  optional google.protobuf.Struct update = 23;  // Additional update data from Canton
+
+  // Daml template and choice info
+  string daml_template_id = 24;     // Daml template ID
+  string daml_choice = 25;          // Daml choice name
+  optional google.protobuf.Struct daml_choices = 26; // Additional choice data
 }

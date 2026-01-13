@@ -271,6 +271,9 @@ message GetOrdersRequest {
   optional uint32 limit = 5;
   optional uint32 offset = 6;
   optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
+  // Liquidity provider filtering (returns orders from LP parties)
+  optional uint32 liquidity_provider_active_seconds = 11;  // Only LPs active within N seconds (default 60)
+  repeated string liquidity_provider_names = 12;           // Filter by specific LP names
 }
 
 message GetOrdersResponse {
@@ -533,6 +536,9 @@ message CreatePartyRequest {
   optional string user_service_request_cid = 8; // UserService request contract ID
   google.protobuf.Struct user_data = 9; // User-specific data (KYC, credentials, etc.)
   optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
+  // Liquidity provider fields (creates/links LP entry when party is created)
+  optional string liquidity_provider_name = 16;        // LP name to create/link
+  optional string liquidity_provider_description = 17; // LP description (for new LPs)
 }
 
 message CreatePartyResponse {
@@ -651,6 +657,32 @@ message Party {
   uint64 version = 12;                             // Optimistic locking version
 }
 
+// Liquidity provider information
+message LiquidityProvider {
+  string name = 1;                                  // Primary key name
+  string party_id = 2;                              // Canton party ID
+  optional string description = 3;                  // Description
+  optional google.protobuf.Timestamp last_active_time = 4;  // Last ping time
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+// Get liquidity providers list
+message GetLiquidityProvidersRequest {
+  JWTAuth auth = 1;
+  optional uint32 active_seconds = 2;  // Only return LPs active within N seconds (default: all)
+  optional uint32 limit = 3;           // Pagination
+  optional uint32 offset = 4;
+  optional ExternalAuth external_auth = 10;
+}
+
+message GetLiquidityProvidersResponse {
+  bool success = 1;
+  string message = 2;
+  repeated LiquidityProvider liquidity_providers = 3;
+  uint32 total = 4;
+}
+
 // Create a new instrument
 message CreateInstrumentRequest {
   JWTAuth auth = 1;
@@ -732,6 +764,9 @@ service OrderbookService {
   // Party operations
   rpc GetParty(GetPartyRequest) returns (GetPartyResponse);
   rpc GetParties(GetPartiesRequest) returns (GetPartiesResponse);
+
+  // Liquidity provider operations
+  rpc GetLiquidityProviders(GetLiquidityProvidersRequest) returns (GetLiquidityProvidersResponse);
 
   // Admin operations (require operator authentication)
   rpc CreateParty(CreatePartyRequest) returns (CreatePartyResponse);

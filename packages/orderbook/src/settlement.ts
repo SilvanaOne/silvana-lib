@@ -167,6 +167,10 @@ export class SettlementClient {
     metadata?: any;
     buyerFeeSent?: boolean;
     sellerFeeSent?: boolean;
+    buyerFeeUpdateId?: string;
+    sellerFeeUpdateId?: string;
+    buyerFeePaidAt?: { seconds: bigint; nanos: number };
+    sellerFeePaidAt?: { seconds: bigint; nanos: number };
   }): Promise<UpdateSettlementProposalResponse> {
     return await this.wrapCall(async () => {
       const request = create(UpdateSettlementProposalRequestSchema, params);
@@ -244,6 +248,10 @@ export class SettlementClient {
     activityMarkerCreated?: bigint;
     errorMessage?: string;
     metadata?: any;
+    update?: any;
+    damlTemplateId: string;
+    damlChoice: string;
+    damlChoices?: any;
   }): Promise<RecordTransactionResponse> {
     return await this.wrapCall(async () => {
       const request = create(RecordTransactionRequestSchema, params);
