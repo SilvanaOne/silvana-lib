@@ -55,6 +55,12 @@ import {
   TimeInForce,
   MarketType,
   SettlementStatus,
+  AddWaitingListEntryRequestSchema,
+  type AddWaitingListEntryResponse,
+  GetInviteRequestSchema,
+  type GetInviteResponse,
+  UseInviteRequestSchema,
+  type UseInviteResponse,
 } from "./proto/silvana/orderbook/v1/orderbook_pb.js";
 
 // Re-export commonly used enums for convenience
@@ -380,6 +386,10 @@ export class OrderbookClient {
     metadata?: any;
     userServiceRequestCid?: string;
     userData: any;
+    email?: string;
+    publicKey?: string;
+    inviteCode?: string;
+    source?: string;
   }): Promise<CreatePartyResponse> {
     return await this.wrapCall(async () => {
       const request = create(CreatePartyRequestSchema, {
@@ -436,6 +446,10 @@ export class OrderbookClient {
     userData?: any;
     metadata?: any;
     changeReason?: string;
+    email?: string;
+    publicKey?: string;
+    inviteCode?: string;
+    source?: string;
   }): Promise<UpdatePartyResponse> {
     return await this.wrapCall(async () => {
       const request = create(UpdatePartyRequestSchema, {
@@ -541,5 +555,53 @@ export class OrderbookClient {
       });
       return await this.client.updateMarketPriceFeeds(request);
     }, 'updateMarketPriceFeeds');
+  }
+
+  /**
+   * Add an entry to the waiting list (requires 'onboard' user JWT)
+   */
+  async addWaitingListEntry(params: {
+    userData: any;
+    source: string;
+    email?: string;
+    publicKey?: string;
+    metadata?: any;
+  }): Promise<AddWaitingListEntryResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(AddWaitingListEntryRequestSchema, {
+        auth: this.createAuth(),
+        ...params,
+      });
+      return await this.client.addWaitingListEntry(request);
+    }, 'addWaitingListEntry');
+  }
+
+  /**
+   * Get an invite by code
+   */
+  async getInvite(params: {
+    inviteCode: string;
+  }): Promise<GetInviteResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetInviteRequestSchema, {
+        ...params,
+      });
+      return await this.client.getInvite(request);
+    }, 'getInvite');
+  }
+
+  /**
+   * Use an invite code (increments count)
+   */
+  async useInvite(params: {
+    inviteCode: string;
+    partyId?: string;
+  }): Promise<UseInviteResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(UseInviteRequestSchema, {
+        ...params,
+      });
+      return await this.client.useInvite(request);
+    }, 'useInvite');
   }
 }
