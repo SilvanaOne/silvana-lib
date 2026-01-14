@@ -535,6 +535,10 @@ message CreatePartyRequest {
   optional google.protobuf.Struct metadata = 7;
   optional string user_service_request_cid = 8; // UserService request contract ID
   google.protobuf.Struct user_data = 9; // User-specific data (KYC, credentials, etc.)
+  optional string email = 10;                            // Party email address
+  optional string public_key = 11;                       // Base58 public key
+  optional string invite_code = 12;                      // Invite code used during registration
+  optional string source = 13;                           // Source: loop_wallet, form, supa_wallet, admin
   optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
   // Liquidity provider fields (creates/links LP entry when party is created)
   optional string liquidity_provider_name = 16;        // LP name to create/link
@@ -559,6 +563,10 @@ message UpdatePartyRequest {
   optional google.protobuf.Struct user_data = 8;
   optional google.protobuf.Struct metadata = 9;
   optional string change_reason = 10;             // Audit: why this change
+  optional string email = 11;                     // Party email address
+  optional string public_key = 12;                // Base58 public key
+  optional string invite_code = 13;               // Invite code used during registration
+  optional string source = 14;                    // Source: loop_wallet, form, supa_wallet, admin
   optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
@@ -655,6 +663,10 @@ message Party {
   optional string user_service_request_cid = 10;  // UserService request contract ID
   google.protobuf.Struct user_data = 11;           // User-specific data (KYC, credentials, etc.)
   uint64 version = 12;                             // Optimistic locking version
+  optional string email = 13;                      // Party email address
+  optional string public_key = 14;                 // Base58 public key
+  optional string invite_code = 15;                // Invite code used during registration
+  string source = 16;                              // Source: loop_wallet, form, supa_wallet, admin
 }
 
 // Liquidity provider information
@@ -681,6 +693,105 @@ message GetLiquidityProvidersResponse {
   string message = 2;
   repeated LiquidityProvider liquidity_providers = 3;
   uint32 total = 4;
+}
+
+// ============================================================================
+// Waiting List
+// ============================================================================
+
+// Waiting list entry for users pending onboarding
+message WaitingListEntry {
+  uint64 id = 1;
+  optional string party_id = 2;
+  google.protobuf.Struct user_data = 3;
+  string source = 4;                    // loop_wallet, form, supa_wallet
+  optional string email = 5;
+  optional string public_key = 6;
+  bool is_onboarded = 7;
+  uint64 version = 8;
+  optional google.protobuf.Struct metadata = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+// Add entry to waiting list (JWT auth with user 'onboard')
+message AddWaitingListEntryRequest {
+  JWTAuth auth = 1;
+  google.protobuf.Struct user_data = 2;
+  string source = 3;
+  optional string email = 4;
+  optional string public_key = 5;
+  optional google.protobuf.Struct metadata = 6;
+}
+
+message AddWaitingListEntryResponse {
+  bool success = 1;
+  string message = 2;
+  uint64 id = 3;
+}
+
+// ============================================================================
+// Rounds
+// ============================================================================
+
+// Canton round with conversion coefficients for reward calculations
+message Round {
+  uint64 round_number = 1;
+  optional string issuance_per_featured_app_reward_coupon = 2;    // DECIMAL(38,10) as string
+  optional string issuance_per_unfeatured_app_reward_coupon = 3;  // DECIMAL(38,10) as string
+  optional string cc_usd_rate = 4;                                 // DECIMAL(38,10) as string
+  optional string traffic_cost_usd_per_mb = 5;                     // DECIMAL(38,10) as string
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// ============================================================================
+// Invites
+// ============================================================================
+
+// Invite status enum
+enum InviteStatus {
+  INVITE_STATUS_UNSPECIFIED = 0;
+  INVITE_STATUS_VALID = 1;
+  INVITE_STATUS_EXPIRED = 2;
+  INVITE_STATUS_USED = 3;
+  INVITE_STATUS_CANCELLED = 4;
+}
+
+// Invite code for user onboarding
+message Invite {
+  string invite_code = 1;
+  string channel = 2;
+  optional string rewards = 3;           // DECIMAL(38,10) as string
+  optional google.protobuf.Struct metadata = 4;
+  InviteStatus status = 5;
+  uint32 count_used = 6;
+  optional uint32 max_count = 7;
+  string created_by = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// Get invite by code
+message GetInviteRequest {
+  string invite_code = 1;
+}
+
+message GetInviteResponse {
+  bool found = 1;
+  optional Invite invite = 2;
+}
+
+// Use invite code (increments count, marks used if at max)
+message UseInviteRequest {
+  string invite_code = 1;
+  optional string party_id = 2;  // Who is using the invite
+}
+
+message UseInviteResponse {
+  bool success = 1;
+  string message = 2;
+  optional Invite invite = 3;    // Updated invite after use
 }
 
 // Create a new instrument
@@ -767,6 +878,13 @@ service OrderbookService {
 
   // Liquidity provider operations
   rpc GetLiquidityProviders(GetLiquidityProvidersRequest) returns (GetLiquidityProvidersResponse);
+
+  // Waiting list operations (JWT auth with user 'onboard')
+  rpc AddWaitingListEntry(AddWaitingListEntryRequest) returns (AddWaitingListEntryResponse);
+
+  // Invite operations
+  rpc GetInvite(GetInviteRequest) returns (GetInviteResponse);
+  rpc UseInvite(UseInviteRequest) returns (UseInviteResponse);
 
   // Admin operations (require operator authentication)
   rpc CreateParty(CreatePartyRequest) returns (CreatePartyResponse);
