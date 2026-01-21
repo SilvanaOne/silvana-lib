@@ -2,37 +2,174 @@ import { createClient, ConnectError } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 
-// Export all types and schemas from the generated protobuf file
-export * from "./proto/silvana/settlement/v1/settlement_pb.js";
-
+// Import types needed for internal implementation
 import {
   SettlementService,
   type GetPendingProposalsResponse,
   type GetSettlementStatusResponse,
-  type UpdateSettlementProposalResponse,
   type SaveDisclosedContractResponse,
   type GetDisclosedContractsResponse,
   type RecordSettlementResponse,
   type RecordTransactionResponse,
   type GetTransactionHistoryResponse,
+  type RecordSettlementEventResponse,
+  type GetSettlementHistoryResponse,
+  type UpdateProposalStatusResponse,
+  type GetSettlementProposalByIdResponse,
   type DisclosedContractMessage,
+  type CantonNodeAuth,
+  type PreconfirmationDecision,
+  type CantonToServerMessage,
   GetPendingProposalsRequestSchema,
   GetSettlementStatusRequestSchema,
   SubmitPreconfirmationRequestSchema,
-  UpdateSettlementProposalRequestSchema,
   SaveDisclosedContractRequestSchema,
   GetDisclosedContractsRequestSchema,
   RecordSettlementRequestSchema,
   RecordTransactionRequestSchema,
   GetTransactionHistoryRequestSchema,
-  CantonToServerMessageSchema,
-  type CantonNodeAuth,
-  type PreconfirmationDecision,
-  type CantonToServerMessage,
-  SettlementStage,
+  RecordSettlementEventRequestSchema,
+  GetSettlementHistoryRequestSchema,
+  UpdateProposalStatusRequestSchema,
+  GetSettlementProposalByIdRequestSchema,
   TransactionType,
   SenderType,
   TransactionResult,
+  SettlementEventType,
+  RecordedByRole,
+  SettlementEventResult,
+  UpdateProposalStatusRequest_NewStatus,
+} from "./proto/silvana/settlement/v1/settlement_pb.js";
+
+// Export all types and schemas from the generated protobuf file
+// Exclude ExternalAuth and ExternalAuthSchema as they conflict with orderbook exports
+export {
+  file_proto_silvana_settlement_v1_settlement,
+  type CantonNodeAuth,
+  CantonNodeAuthSchema,
+  type SettlementInstrument,
+  SettlementInstrumentSchema,
+  type SettlementProposalMessage,
+  SettlementProposalMessageSchema,
+  type PreconfirmationRequest,
+  PreconfirmationRequestSchema,
+  type PreconfirmationDecision,
+  PreconfirmationDecisionSchema,
+  type DvpContractCreated,
+  DvpContractCreatedSchema,
+  type DvpContractAccepted,
+  DvpContractAcceptedSchema,
+  type AllocationStatus,
+  AllocationStatusSchema,
+  type SettlementExecutionStatus,
+  SettlementExecutionStatusSchema,
+  type UserServiceInfo,
+  UserServiceInfoSchema,
+  type SettlementHandshake,
+  SettlementHandshakeSchema,
+  type HandshakeAck,
+  HandshakeAckSchema,
+  type Heartbeat,
+  HeartbeatSchema,
+  type LiquidityProviderPing,
+  LiquidityProviderPingSchema,
+  type LiquidityProviderPong,
+  LiquidityProviderPongSchema,
+  type ServerToCantonMessage,
+  ServerToCantonMessageSchema,
+  type CantonToServerMessage,
+  CantonToServerMessageSchema,
+  type DvpCreationReport,
+  DvpCreationReportSchema,
+  type DvpAcceptanceReport,
+  DvpAcceptanceReportSchema,
+  type AllocationReport,
+  AllocationReportSchema,
+  type SettlementReport,
+  SettlementReportSchema,
+  type ErrorReport,
+  ErrorReportSchema,
+  type StatusUpdate,
+  StatusUpdateSchema,
+  type SettlementCommand,
+  SettlementCommandSchema,
+  type GetPendingProposalsRequest,
+  GetPendingProposalsRequestSchema,
+  type GetPendingProposalsResponse,
+  GetPendingProposalsResponseSchema,
+  type GetSettlementStatusRequest,
+  GetSettlementStatusRequestSchema,
+  type GetSettlementStatusResponse,
+  GetSettlementStatusResponseSchema,
+  type SubmitPreconfirmationRequest,
+  SubmitPreconfirmationRequestSchema,
+  type SaveDisclosedContractRequest,
+  SaveDisclosedContractRequestSchema,
+  type SaveDisclosedContractResponse,
+  SaveDisclosedContractResponseSchema,
+  type GetDisclosedContractsRequest,
+  GetDisclosedContractsRequestSchema,
+  type GetDisclosedContractsResponse,
+  GetDisclosedContractsResponseSchema,
+  type DisclosedContractMessage,
+  DisclosedContractMessageSchema,
+  type RecordSettlementRequest,
+  RecordSettlementRequestSchema,
+  type RecordSettlementResponse,
+  RecordSettlementResponseSchema,
+  type RecordTransactionRequest,
+  RecordTransactionRequestSchema,
+  type RecordTransactionResponse,
+  RecordTransactionResponseSchema,
+  type GetTransactionHistoryRequest,
+  GetTransactionHistoryRequestSchema,
+  type GetTransactionHistoryResponse,
+  GetTransactionHistoryResponseSchema,
+  type TransactionHistoryEntry,
+  TransactionHistoryEntrySchema,
+  type RecordSettlementEventRequest,
+  RecordSettlementEventRequestSchema,
+  type RecordSettlementEventResponse,
+  RecordSettlementEventResponseSchema,
+  type GetSettlementHistoryRequest,
+  GetSettlementHistoryRequestSchema,
+  type GetSettlementHistoryResponse,
+  GetSettlementHistoryResponseSchema,
+  type SettlementHistoryEntry,
+  SettlementHistoryEntrySchema,
+  type UpdateProposalStatusRequest,
+  UpdateProposalStatusRequestSchema,
+  UpdateProposalStatusRequest_NewStatus,
+  UpdateProposalStatusRequest_NewStatusSchema,
+  type UpdateProposalStatusResponse,
+  UpdateProposalStatusResponseSchema,
+  type GetSettlementProposalByIdRequest,
+  GetSettlementProposalByIdRequestSchema,
+  type GetSettlementProposalByIdResponse,
+  GetSettlementProposalByIdResponseSchema,
+  type DvpStepStatus,
+  DvpStepStatusSchema,
+  SettlementStage,
+  SettlementStageSchema,
+  PreconfirmationResponse,
+  PreconfirmationResponseSchema,
+  PartyRole,
+  PartyRoleSchema,
+  TransactionType,
+  TransactionTypeSchema,
+  SenderType,
+  SenderTypeSchema,
+  TransactionResult,
+  TransactionResultSchema,
+  SettlementEventType,
+  SettlementEventTypeSchema,
+  RecordedByRole,
+  RecordedByRoleSchema,
+  SettlementEventResult,
+  SettlementEventResultSchema,
+  DvpStepStatusEnum,
+  DvpStepStatusEnumSchema,
+  SettlementService,
 } from "./proto/silvana/settlement/v1/settlement_pb.js";
 
 /**
@@ -145,37 +282,75 @@ export class SettlementClient {
   }
 
   /**
-   * Update settlement proposal (frontend user action with version control for concurrency)
+   * Record a settlement event to the settlement_proposal_history table
+   * Any party (buyer/seller/operator/system) can record events for DVP flow tracking
    */
-  async updateSettlementProposal(params: {
+  async recordSettlementEvent(params: {
     auth: CantonNodeAuth;
     proposalId: string;
-    expectedVersion: bigint;
-    dvpProposalCid?: string;
-    dvpProposalUpdateId?: string;
-    dvpCid?: string;
-    dvpUpdateId?: string;
-    allocationBuyerCid?: string;
-    allocationBuyerUpdateId?: string;
-    allocationSellerCid?: string;
-    allocationSellerUpdateId?: string;
-    settledDvpCid?: string;
-    settlementUpdateId?: string;
-    settlementCompletionOffset?: string;
-    newStage?: SettlementStage;
+    recordedBy: string;
+    recordedByRole: RecordedByRole;
+    eventType: SettlementEventType;
+    submissionId?: string;
+    updateId?: string;
+    contractId?: string;
+    templateId?: string;
+    result: SettlementEventResult;
     errorMessage?: string;
     metadata?: any;
-    buyerFeeSent?: boolean;
-    sellerFeeSent?: boolean;
-    buyerFeeUpdateId?: string;
-    sellerFeeUpdateId?: string;
-    buyerFeePaidAt?: { seconds: bigint; nanos: number };
-    sellerFeePaidAt?: { seconds: bigint; nanos: number };
-  }): Promise<UpdateSettlementProposalResponse> {
+  }): Promise<RecordSettlementEventResponse> {
     return await this.wrapCall(async () => {
-      const request = create(UpdateSettlementProposalRequestSchema, params);
-      return await this.client.updateSettlementProposal(request);
-    }, 'updateSettlementProposal');
+      const request = create(RecordSettlementEventRequestSchema, params);
+      return await this.client.recordSettlementEvent(request);
+    }, 'recordSettlementEvent');
+  }
+
+  /**
+   * Get settlement event history for a proposal
+   */
+  async getSettlementHistory(params: {
+    auth: CantonNodeAuth;
+    proposalId: string;
+    eventType?: SettlementEventType;
+    result?: SettlementEventResult;
+    limit?: number;
+    offset?: number;
+  }): Promise<GetSettlementHistoryResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetSettlementHistoryRequestSchema, params);
+      return await this.client.getSettlementHistory(request);
+    }, 'getSettlementHistory');
+  }
+
+  /**
+   * Update proposal status (operator only)
+   */
+  async updateProposalStatus(params: {
+    auth: CantonNodeAuth;
+    proposalId: string;
+    newStatus: UpdateProposalStatusRequest_NewStatus;
+    errorMessage?: string;
+  }): Promise<UpdateProposalStatusResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(UpdateProposalStatusRequestSchema, params);
+      return await this.client.updateProposalStatus(request);
+    }, 'updateProposalStatus');
+  }
+
+  /**
+   * Get a settlement proposal by ID
+   */
+  async getSettlementProposalById(params: {
+    auth: CantonNodeAuth;
+    proposalId: string;
+  }): Promise<GetSettlementProposalByIdResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetSettlementProposalByIdRequestSchema, {
+        auth: { case: "cantonAuth", value: params.auth },
+        proposalId: params.proposalId,
+      });
+      return await this.client.getSettlementProposalById(request);
+    }, 'getSettlementProposalById');
   }
 
   /**

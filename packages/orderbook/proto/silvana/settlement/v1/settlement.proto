@@ -81,6 +81,104 @@ enum TransactionResult {
 }
 
 // ============================================================================
+// Settlement Proposal History Event Types (DVP Flow)
+// ============================================================================
+
+// Event types for settlement proposal history (all 11 DVP transactions + contract lifecycle)
+enum SettlementEventType {
+  SETTLEMENT_EVENT_TYPE_UNSPECIFIED = 0;
+
+  // Step 1: DVP Processing Fee (buyer pays)
+  SETTLEMENT_EVENT_TYPE_DVP_PROCESSING_FEE_BUYER_SUBMITTED = 1;
+  SETTLEMENT_EVENT_TYPE_DVP_PROCESSING_FEE_BUYER_COMPLETED = 2;
+  SETTLEMENT_EVENT_TYPE_DVP_PROCESSING_FEE_BUYER_RECEIVED = 3;
+
+  // Step 2: DVP Request (buyer creates DvpProposal)
+  SETTLEMENT_EVENT_TYPE_DVP_REQUEST_SUBMITTED = 4;
+  SETTLEMENT_EVENT_TYPE_DVP_REQUEST_COMPLETED = 5;
+  SETTLEMENT_EVENT_TYPE_DVP_REQUEST_WITNESSED = 6;
+  SETTLEMENT_EVENT_TYPE_DVP_REQUEST_REJECTED = 7;
+  SETTLEMENT_EVENT_TYPE_DVP_REQUEST_CANCELLED = 8;
+
+  // Step 3: DVP Processing Fee (seller pays)
+  SETTLEMENT_EVENT_TYPE_DVP_PROCESSING_FEE_SELLER_SUBMITTED = 9;
+  SETTLEMENT_EVENT_TYPE_DVP_PROCESSING_FEE_SELLER_COMPLETED = 10;
+  SETTLEMENT_EVENT_TYPE_DVP_PROCESSING_FEE_SELLER_RECEIVED = 11;
+
+  // Step 4: Accept DVP (seller accepts, creates Dvp contract)
+  SETTLEMENT_EVENT_TYPE_DVP_ACCEPT_SUBMITTED = 12;
+  SETTLEMENT_EVENT_TYPE_DVP_ACCEPT_COMPLETED = 13;
+  SETTLEMENT_EVENT_TYPE_DVP_ACCEPTED_WITNESSED = 14;
+  SETTLEMENT_EVENT_TYPE_DVP_REJECTED = 15;
+  SETTLEMENT_EVENT_TYPE_DVP_WITHDRAWN = 16;
+  SETTLEMENT_EVENT_TYPE_DVP_CANCELLED = 17;
+
+  // Step 5: Allocation Processing Fee (buyer pays)
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_BUYER_SUBMITTED = 18;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_BUYER_COMPLETED = 19;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_BUYER_RECEIVED = 20;
+
+  // Step 6: Allocate CC (buyer allocates base instrument)
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_BUYER_SUBMITTED = 21;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_BUYER_COMPLETED = 22;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_BUYER_WITNESSED = 23;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_BUYER_WITHDRAWN = 24;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_BUYER_CANCELLED = 25;
+
+  // Step 7: Allocation Processing Fee (seller pays)
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_SELLER_SUBMITTED = 26;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_SELLER_COMPLETED = 27;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_SELLER_RECEIVED = 28;
+
+  // Step 8: Allocate USDC (seller allocates quote instrument)
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_SELLER_SUBMITTED = 29;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_SELLER_COMPLETED = 30;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_SELLER_WITNESSED = 31;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_SELLER_WITHDRAWN = 32;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_SELLER_CANCELLED = 33;
+
+  // Step 9: DVP Settlement (operator executes atomic swap)
+  SETTLEMENT_EVENT_TYPE_SETTLEMENT_SUBMITTED = 34;
+  SETTLEMENT_EVENT_TYPE_SETTLEMENT_COMPLETED = 35;
+  SETTLEMENT_EVENT_TYPE_SETTLEMENT_WITNESSED = 36;
+
+  // Step 10: Traffic Compensation to Buyer
+  SETTLEMENT_EVENT_TYPE_TRAFFIC_COMPENSATION_BUYER_SUBMITTED = 37;
+  SETTLEMENT_EVENT_TYPE_TRAFFIC_COMPENSATION_BUYER_COMPLETED = 38;
+
+  // Step 11: Traffic Compensation to Seller
+  SETTLEMENT_EVENT_TYPE_TRAFFIC_COMPENSATION_SELLER_SUBMITTED = 39;
+  SETTLEMENT_EVENT_TYPE_TRAFFIC_COMPENSATION_SELLER_COMPLETED = 40;
+
+  // Preconfirmation (optional off-chain flow)
+  SETTLEMENT_EVENT_TYPE_PRECONFIRMATION_REQUESTED = 41;
+  SETTLEMENT_EVENT_TYPE_PRECONFIRMATION_BUYER = 42;
+  SETTLEMENT_EVENT_TYPE_PRECONFIRMATION_SELLER = 43;
+  SETTLEMENT_EVENT_TYPE_PRECONFIRMATION_CANCELLED = 44;
+
+  // Timeout (for expired proposals)
+  SETTLEMENT_EVENT_TYPE_TIMEOUT = 45;
+}
+
+// Role of the party recording the event
+enum RecordedByRole {
+  RECORDED_BY_ROLE_UNSPECIFIED = 0;
+  RECORDED_BY_ROLE_BUYER = 1;
+  RECORDED_BY_ROLE_SELLER = 2;
+  RECORDED_BY_ROLE_OPERATOR = 3;
+  RECORDED_BY_ROLE_SYSTEM = 4;
+}
+
+// Result of a settlement event
+enum SettlementEventResult {
+  SETTLEMENT_EVENT_RESULT_UNSPECIFIED = 0;
+  SETTLEMENT_EVENT_RESULT_PENDING = 1;
+  SETTLEMENT_EVENT_RESULT_SUCCESS = 2;
+  SETTLEMENT_EVENT_RESULT_FAILED = 3;
+  SETTLEMENT_EVENT_RESULT_TIMEOUT = 4;
+}
+
+// ============================================================================
 // Core Messages for Settlement Flow
 // ============================================================================
 
@@ -90,6 +188,17 @@ message CantonNodeAuth {
   string jwt_token = 2; // JWT for Canton ledger API
   string node_instance = 3; // Node instance identifier
   google.protobuf.Timestamp connected_at = 4;
+}
+
+// External account authentication (using Ed25519 signed JWT)
+// For external parties that sign JWTs with their own private keys
+// Public key is verified against party_id fingerprint:
+//   fingerprint = SHA256(0x0000000C || public_key_bytes)
+//   party_id format: "identifier::1220{fingerprint}"
+message ExternalAuth {
+  string jwt = 1;              // JWT signed with external account's Ed25519 private key
+  string party_id = 2;         // Canton party ID of the external account
+  string public_key = 3;       // Ed25519 public key (hex) - verified against party_id fingerprint
 }
 
 // Instrument details for settlement
@@ -115,6 +224,11 @@ message SettlementProposalMessage {
   google.protobuf.Timestamp settle_before = 10; // Deadline for settlement
   optional google.protobuf.Struct metadata = 11;
   google.protobuf.Timestamp created_at = 12;
+  // Processing fees (DECIMAL as string)
+  string dvp_processing_fee_buyer = 13;
+  string dvp_processing_fee_seller = 14;
+  string allocation_processing_fee_buyer = 15;
+  string allocation_processing_fee_seller = 16;
 }
 
 // Preconfirmation request
@@ -426,9 +540,6 @@ service SettlementService {
   // Manual preconfirmation (if not using stream)
   rpc SubmitPreconfirmation(SubmitPreconfirmationRequest) returns (google.protobuf.Empty);
 
-  // Update settlement proposal (frontend user action with version control for concurrency)
-  rpc UpdateSettlementProposal(UpdateSettlementProposalRequest) returns (UpdateSettlementProposalResponse);
-
   // Save a disclosed contract (buyer/seller saves during allocation)
   rpc SaveDisclosedContract(SaveDisclosedContractRequest) returns (SaveDisclosedContractResponse);
 
@@ -443,6 +554,19 @@ service SettlementService {
 
   // Get transaction history
   rpc GetTransactionHistory(GetTransactionHistoryRequest) returns (GetTransactionHistoryResponse);
+
+  // Settlement proposal history (append-only event log)
+  // Record a settlement event (any party can record for their settlements)
+  rpc RecordSettlementEvent(RecordSettlementEventRequest) returns (RecordSettlementEventResponse);
+
+  // Get settlement history for a proposal
+  rpc GetSettlementHistory(GetSettlementHistoryRequest) returns (GetSettlementHistoryResponse);
+
+  // Update proposal status (operator only: pending → settled/cancelled/failed)
+  rpc UpdateProposalStatus(UpdateProposalStatusRequest) returns (UpdateProposalStatusResponse);
+
+  // Get settlement proposal by ID (for external parties to fetch proposal details)
+  rpc GetSettlementProposalById(GetSettlementProposalByIdRequest) returns (GetSettlementProposalByIdResponse);
 }
 
 // ============================================================================
@@ -465,58 +589,98 @@ message GetSettlementStatusRequest {
   string settlement_id = 2;
 }
 
+// Status of a single step in the DVP flow
+enum DvpStepStatusEnum {
+  DVP_STEP_STATUS_UNSPECIFIED = 0;
+  DVP_STEP_STATUS_PENDING = 1;      // Not started
+  DVP_STEP_STATUS_SUBMITTED = 2;    // Transaction submitted
+  DVP_STEP_STATUS_COMPLETED = 3;    // Transaction completed
+  DVP_STEP_STATUS_CONFIRMED = 4;    // Confirmed by operator (or witnessed on-chain)
+  DVP_STEP_STATUS_FAILED = 5;       // Failed
+  DVP_STEP_STATUS_REJECTED = 6;     // Rejected by counterparty
+  DVP_STEP_STATUS_WITHDRAWN = 7;    // Withdrawn
+  DVP_STEP_STATUS_CANCELLED = 8;    // Cancelled
+  DVP_STEP_STATUS_TIMEOUT = 9;      // Timed out
+}
+
+// Status of a single step in the DVP flow with details
+message DvpStepStatus {
+  // Step name (e.g., "dvp_processing_fee_buyer", "dvp_request", etc.)
+  string step_name = 1;
+
+  // Current status
+  DvpStepStatusEnum status = 2;
+
+  // Contract ID (if created)
+  optional string contract_id = 3;
+
+  // Update ID (Canton ledger update)
+  optional string update_id = 4;
+
+  // Latest event timestamp
+  optional google.protobuf.Timestamp updated_at = 5;
+
+  // Error message (if failed)
+  optional string error_message = 6;
+
+  // Who confirmed this step (party ID)
+  optional string confirmed_by = 7;
+
+  // Role of who confirmed (buyer/seller/operator)
+  optional RecordedByRole confirmed_by_role = 8;
+}
+
+// Enhanced GetSettlementStatusResponse with detailed DVP flow progress
 message GetSettlementStatusResponse {
   string proposal_id = 1;  // UUID v7
   string settlement_id = 2;
+
+  // Overall settlement stage
   SettlementStage stage = 3;
-  optional string dvp_proposal_cid = 4;
-  optional string dvp_cid = 5;
-  optional string allocation_buyer_cid = 6;
-  optional string allocation_seller_cid = 7;
-  optional string settled_dvp_cid = 8;
-  optional string error_message = 9;
-  google.protobuf.Timestamp updated_at = 10;
+
+  // Overall error message (if failed)
+  optional string error_message = 4;
+
+  // Last updated timestamp
+  google.protobuf.Timestamp updated_at = 5;
+
+  // ============================================================================
+  // Detailed DVP Step Statuses
+  // Each step is analyzed from settlement_proposal_history events using priority:
+  // 1. Operator confirmation (received/witnessed events)
+  // 2. Buyer/Seller completed with update_id
+  // 3. Submitted but not confirmed
+  // 4. Failure/Rejection/Cancellation
+  // ============================================================================
+
+  // Fee payment steps
+  DvpStepStatus dvp_processing_fee_buyer = 10;
+  DvpStepStatus dvp_processing_fee_seller = 11;
+  DvpStepStatus allocation_processing_fee_buyer = 12;
+  DvpStepStatus allocation_processing_fee_seller = 13;
+
+  // DVP contract steps
+  DvpStepStatus dvp_request = 14;
+  DvpStepStatus dvp_accept = 15;
+
+  // Allocation steps
+  DvpStepStatus allocation_buyer = 16;
+  DvpStepStatus allocation_seller = 17;
+
+  // Settlement step
+  DvpStepStatus settlement = 18;
+
+  // Traffic compensation steps
+  DvpStepStatus traffic_compensation_buyer = 19;
+  DvpStepStatus traffic_compensation_seller = 20;
+
+  // Preconfirmation step (optional)
+  DvpStepStatus preconfirmation = 21;
 }
 
 message SubmitPreconfirmationRequest {
   CantonNodeAuth auth = 1;
   PreconfirmationDecision decision = 2;
-}
-
-// Update settlement proposal request with optimistic locking
-message UpdateSettlementProposalRequest {
-  CantonNodeAuth auth = 1;
-  string proposal_id = 2;  // UUID v7
-  uint64 expected_version = 3;  // For optimistic locking - must match current version
-
-  // Fields that can be updated (all optional - only set fields will be updated)
-  optional string dvp_proposal_cid = 4;
-  optional string dvp_proposal_update_id = 5;
-  optional string dvp_cid = 6;
-  optional string dvp_update_id = 7;
-  optional string allocation_buyer_cid = 8;
-  optional string allocation_buyer_update_id = 9;
-  optional string allocation_seller_cid = 10;
-  optional string allocation_seller_update_id = 11;
-  optional string settled_dvp_cid = 12;
-  optional string settlement_update_id = 13;
-  optional string settlement_completion_offset = 14;
-  optional SettlementStage new_stage = 15;  // Move to a new stage
-  optional string error_message = 16;
-  optional google.protobuf.Struct metadata = 17;
-  optional bool buyer_fee_sent = 18;    // Set buyer fee transfer initiated
-  optional bool seller_fee_sent = 19;   // Set seller fee transfer initiated
-  optional string buyer_fee_update_id = 20;   // Canton update ID for buyer fee transfer
-  optional string seller_fee_update_id = 21;  // Canton update ID for seller fee transfer
-  optional google.protobuf.Timestamp buyer_fee_paid_at = 22;   // When buyer fee was paid
-  optional google.protobuf.Timestamp seller_fee_paid_at = 23;  // When seller fee was paid
-}
-
-message UpdateSettlementProposalResponse {
-  bool success = 1;
-  string message = 2;
-  uint64 new_version = 3;  // New version after update
-  SettlementStage current_stage = 4;
 }
 
 // ============================================================================
@@ -537,6 +701,7 @@ message SaveDisclosedContractRequest {
   CantonNodeAuth auth = 1;
   string proposal_id = 2;  // UUID v7
   DisclosedContractMessage contract = 3;
+  optional ExternalAuth external_auth = 10;  // Alternative auth for external parties
 }
 
 // Save disclosed contract response
@@ -625,6 +790,9 @@ message RecordTransactionRequest {
   string daml_template_id = 23;     // Daml template ID (required)
   string daml_choice = 24;          // Daml choice name (required)
   optional google.protobuf.Struct daml_choices = 25; // Additional choice data as JSON
+
+  // Alternative auth for external parties
+  optional ExternalAuth external_auth = 30;
 }
 
 message RecordTransactionResponse {
@@ -678,4 +846,112 @@ message TransactionHistoryEntry {
   string daml_template_id = 24;     // Daml template ID
   string daml_choice = 25;          // Daml choice name
   optional google.protobuf.Struct daml_choices = 26; // Additional choice data
+}
+
+// ============================================================================
+// Settlement Proposal History Messages (Append-only Event Log)
+// ============================================================================
+
+// Record a settlement event (any party can record for their settlements)
+message RecordSettlementEventRequest {
+  CantonNodeAuth auth = 1;
+  string proposal_id = 2;  // UUID v7
+  string recorded_by = 3;  // Party ID who is recording
+  RecordedByRole recorded_by_role = 4;
+  SettlementEventType event_type = 5;
+
+  // Canton transaction tracking (two-phase)
+  optional string submission_id = 6;  // Phase 1: received on tx submit
+  optional string update_id = 7;       // Phase 2: received after ledger poll
+  optional string contract_id = 8;     // Canton contract ID
+  optional string template_id = 9;     // Daml template ID
+
+  // Result
+  SettlementEventResult result = 10;
+  optional string error_message = 11;
+  optional google.protobuf.Struct metadata = 12;
+
+  // Alternative auth for external parties
+  optional ExternalAuth external_auth = 20;
+}
+
+message RecordSettlementEventResponse {
+  bool success = 1;
+  string message = 2;
+  uint64 event_id = 3;  // Auto-generated history entry ID
+}
+
+// Get settlement history (parties can only see their own settlements)
+message GetSettlementHistoryRequest {
+  CantonNodeAuth auth = 1;
+  string proposal_id = 2;  // UUID v7
+  optional SettlementEventType event_type = 3;  // Filter by event type
+  optional SettlementEventResult result = 4;     // Filter by result
+  optional uint32 limit = 5;
+  optional uint32 offset = 6;
+}
+
+message GetSettlementHistoryResponse {
+  repeated SettlementHistoryEntry events = 1;
+  uint32 total = 2;
+}
+
+// Settlement history entry (matches settlement_proposal_history table)
+message SettlementHistoryEntry {
+  uint64 id = 1;
+  string proposal_id = 2;
+  string recorded_by = 3;
+  RecordedByRole recorded_by_role = 4;
+  SettlementEventType event_type = 5;
+
+  // Canton transaction tracking
+  optional string submission_id = 6;
+  optional string update_id = 7;
+  optional string contract_id = 8;
+  optional string template_id = 9;
+
+  // Result
+  SettlementEventResult result = 10;
+  optional string error_message = 11;
+  optional google.protobuf.Struct metadata = 12;
+
+  google.protobuf.Timestamp created_at = 13;
+}
+
+// Update proposal status (operator only)
+message UpdateProposalStatusRequest {
+  CantonNodeAuth auth = 1;
+  string proposal_id = 2;  // UUID v7
+  enum NewStatus {
+    NEW_STATUS_UNSPECIFIED = 0;
+    NEW_STATUS_SETTLED = 1;
+    NEW_STATUS_CANCELLED = 2;
+    NEW_STATUS_FAILED = 3;
+  }
+  NewStatus new_status = 3;  // Only pending → settled/cancelled/failed allowed
+  optional string error_message = 4;  // Required if failed
+}
+
+message UpdateProposalStatusResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ============================================================================
+// Get Settlement Proposal By ID Messages
+// ============================================================================
+
+// Get settlement proposal by ID request
+message GetSettlementProposalByIdRequest {
+  oneof auth {
+    CantonNodeAuth canton_auth = 1;
+    ExternalAuth external_auth = 2;
+  }
+  string proposal_id = 3;  // UUID v7
+}
+
+// Get settlement proposal by ID response
+message GetSettlementProposalByIdResponse {
+  bool found = 1;
+  SettlementProposalMessage proposal = 2;
 }

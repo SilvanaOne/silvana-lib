@@ -38,17 +38,13 @@ enum TimeInForce {
   TIME_IN_FORCE_GTD = 4; // Good Till Date
 }
 
-// Settlement status enumeration
+// Settlement status enumeration (simplified - 4 states only)
 enum SettlementStatus {
   SETTLEMENT_STATUS_UNSPECIFIED = 0;
-  SETTLEMENT_STATUS_CREATED = 1;
-  SETTLEMENT_STATUS_PRECONFIRMED = 2;
-  SETTLEMENT_STATUS_DVP_REQUEST_CREATED = 3;
-  SETTLEMENT_STATUS_DVP_REQUEST_ACCEPTED = 4;
-  SETTLEMENT_STATUS_INSTRUMENTS_ALLOCATED = 5;
-  SETTLEMENT_STATUS_SETTLED = 6;
-  SETTLEMENT_STATUS_CANCELLED = 7;
-  SETTLEMENT_STATUS_FAILED = 8;
+  SETTLEMENT_STATUS_PENDING = 1;
+  SETTLEMENT_STATUS_SETTLED = 2;
+  SETTLEMENT_STATUS_CANCELLED = 3;
+  SETTLEMENT_STATUS_FAILED = 4;
 }
 
 // Market type enumeration
@@ -143,6 +139,8 @@ message Order {
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
   optional google.protobuf.Timestamp cancelled_at = 22;
+  optional string signature = 23;  // Base64-encoded Ed25519 signature for order authentication
+  int64 nonce = 24;  // Unique nonce per trader for replay protection
 }
 
 // Orderbook depth level (aggregated view without user details)
@@ -162,60 +160,30 @@ message OrderbookDepth {
   google.protobuf.Timestamp snapshot_time = 5;
 }
 
-// Settlement proposal message
+// Settlement proposal message (simplified - immutable values + status only)
 message SettlementProposal {
   string proposal_id = 1; // UUID v7 - single ID used everywhere
   string market_id = 2;
   string buyer = 3;
   string seller = 4;
-  string base_quantity = 5; // DECIMAL(38,10) as string
-  string quote_quantity = 6; // DECIMAL(38,10) as string
-  string settlement_price = 7; // DECIMAL(38,10) as string
-  SettlementStatus status = 8;
-  uint64 version = 9; // Optimistic locking
+  string base_instrument = 5;
+  string quote_instrument = 6;
+  string base_quantity = 7; // DECIMAL(38,10) as string
+  string quote_quantity = 8; // DECIMAL(38,10) as string
+  string settlement_price = 9; // DECIMAL(38,10) as string
 
-  // Preconfirmation tracking
-  optional google.protobuf.Struct preconfirmation_request = 10;
-  optional google.protobuf.Timestamp preconfirmation_request_sent_at = 11;
-  optional google.protobuf.Struct buyer_preconfirmation = 12;
-  optional google.protobuf.Timestamp buyer_preconfirmation_received_at = 13;
-  optional google.protobuf.Struct seller_preconfirmation = 14;
-  optional google.protobuf.Timestamp seller_preconfirmation_received_at = 15;
+  // Fee schedule (set by matching engine, to be paid by parties)
+  string dvp_processing_fee_buyer = 10; // DECIMAL(38,10) as string
+  string dvp_processing_fee_seller = 11; // DECIMAL(38,10) as string
+  string allocation_processing_fee_buyer = 12; // DECIMAL(38,10) as string
+  string allocation_processing_fee_seller = 13; // DECIMAL(38,10) as string
 
-  // Canton DVP integration fields
-  optional string dvp_proposal_cid = 16;
-  optional string dvp_proposal_update_id = 17;
-  optional string dvp_cid = 18;
-  optional string dvp_update_id = 19;
-  // Field 20 removed (was dvp_settlement_id - now using proposal_id as settlement ID)
-  optional string allocation_buyer_cid = 21;
-  optional string allocation_buyer_update_id = 22;
-  optional string allocation_seller_cid = 23;
-  optional string allocation_seller_update_id = 24;
-  optional string settled_dvp_cid = 25;
-  optional string settlement_update_id = 26;
-  optional string settlement_completion_offset = 27;
-
-  // Timestamps
-  google.protobuf.Timestamp created_at = 28;
-  optional google.protobuf.Timestamp preconfirmed_at = 29;
-  optional google.protobuf.Timestamp dvp_created_at = 30;
-  optional google.protobuf.Timestamp dvp_accepted_at = 31;
-  optional google.protobuf.Timestamp allocated_at = 32;
-  optional google.protobuf.Timestamp settled_at = 33;
-  optional google.protobuf.Timestamp cancelled_at = 34;
-  optional google.protobuf.Timestamp failed_at = 35;
-
-  optional string error_message = 36;
-  optional google.protobuf.Struct metadata = 37;
-
-  // Fee tracking
-  string buyer_fee = 38;                    // DECIMAL(38,10) as string
-  string seller_fee = 39;                   // DECIMAL(38,10) as string
-  optional bool buyer_fee_sent = 40;
-  optional bool seller_fee_sent = 41;
-  optional bool buyer_fee_received = 42;
-  optional bool seller_fee_received = 43;
+  SettlementStatus status = 14;
+  optional string error_message = 15;
+  google.protobuf.Timestamp created_at = 16;
+  optional google.protobuf.Timestamp settled_at = 17;
+  optional google.protobuf.Timestamp cancelled_at = 18;
+  optional google.protobuf.Timestamp failed_at = 19;
 }
 
 // Order match message
@@ -228,21 +196,28 @@ message OrderMatch {
   google.protobuf.Timestamp created_at = 6;
 }
 
-// Settlement (completed) message
+// Settlement (completed) message - audit trail for completed settlements
 message Settlement {
   uint64 settlement_id = 1; // BIGINT UNSIGNED AUTO_INCREMENT (internal DB key)
   string proposal_id = 2; // UUID v7 - reference to settlement proposal
   string market_id = 3;
   string buyer = 4;
   string seller = 5;
-  string base_quantity = 6; // DECIMAL(38,10) as string
-  string quote_quantity = 7; // DECIMAL(38,10) as string
-  string settlement_price = 8; // DECIMAL(38,10) as string
-  string settled_dvp_cid = 9;
-  string settlement_update_id = 10;
-  google.protobuf.Timestamp settled_at = 11;
-  google.protobuf.Timestamp created_at = 12;
-  optional google.protobuf.Struct metadata = 13;
+  string base_instrument = 6;
+  string quote_instrument = 7;
+  string base_quantity = 8; // DECIMAL(38,10) as string
+  string quote_quantity = 9; // DECIMAL(38,10) as string
+  string settlement_price = 10; // DECIMAL(38,10) as string
+
+  // Fees paid (copied from proposal for audit trail)
+  string dvp_processing_fee_buyer = 11; // DECIMAL(38,10) as string
+  string dvp_processing_fee_seller = 12; // DECIMAL(38,10) as string
+  string allocation_processing_fee_buyer = 13; // DECIMAL(38,10) as string
+  string allocation_processing_fee_seller = 14; // DECIMAL(38,10) as string
+
+  optional string settled_dvp_cid = 15; // Final SettledDvp contract ID
+  optional string settlement_update_id = 16; // Canton update ID
+  google.protobuf.Timestamp settled_at = 17;
 }
 
 // Market data message
@@ -465,20 +440,15 @@ message SubscribeSettlementsRequest {
   optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
-// Settlement update event
+// Settlement update event (for streaming - simplified to status changes)
 message SettlementUpdate {
   enum EventType {
     EVENT_TYPE_UNSPECIFIED = 0;
-    EVENT_TYPE_PROPOSAL_CREATED = 1;
-    EVENT_TYPE_PRECONFIRMATION_REQUESTED = 2;
-    EVENT_TYPE_PRECONFIRMED = 3;
-    EVENT_TYPE_DVP_CREATED = 4;
-    EVENT_TYPE_DVP_ACCEPTED = 5;
-    EVENT_TYPE_ALLOCATED = 6;
-    EVENT_TYPE_SETTLED = 7;
-    EVENT_TYPE_FAILED = 8;
-    EVENT_TYPE_CANCELLED = 9;
-    EVENT_TYPE_UPDATED = 10;  // Generic update (e.g., frontend-initiated changes)
+    EVENT_TYPE_PROPOSAL_CREATED = 1;  // New proposal created
+    EVENT_TYPE_STATUS_CHANGED = 2;    // Status changed (pending → settled/cancelled/failed)
+    EVENT_TYPE_SETTLED = 3;           // Settlement completed
+    EVENT_TYPE_FAILED = 4;            // Settlement failed
+    EVENT_TYPE_CANCELLED = 5;         // Settlement cancelled
   }
   EventType event_type = 1;
   SettlementProposal proposal = 2;
@@ -498,6 +468,8 @@ message SubmitOrderRequest {
   optional google.protobuf.Struct credentials = 9;
   optional google.protobuf.Struct requirements = 10;
   optional google.protobuf.Struct metadata = 11;
+  optional string signature = 12;  // Base64-encoded Ed25519 signature for order authentication
+  int64 nonce = 13;  // Unique nonce per trader for replay protection
   optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
@@ -745,6 +717,40 @@ message Round {
   google.protobuf.Timestamp updated_at = 7;
 }
 
+// Latest coefficient values (may come from different rounds)
+message LatestCoefficients {
+  // Issuance coefficient for featured apps (from most recent round with value)
+  optional string issuance_per_featured_app_reward_coupon = 1;
+  optional uint64 issuance_per_featured_app_reward_coupon_round = 2;
+
+  // Issuance coefficient for unfeatured apps (from most recent round with value)
+  optional string issuance_per_unfeatured_app_reward_coupon = 3;
+  optional uint64 issuance_per_unfeatured_app_reward_coupon_round = 4;
+
+  // CC/USD exchange rate (from most recent round with value)
+  optional string cc_usd_rate = 5;
+  optional uint64 cc_usd_rate_round = 6;
+
+  // Traffic cost in USD per MB (from most recent round with value)
+  optional string traffic_cost_usd_per_mb = 7;
+  optional uint64 traffic_cost_usd_per_mb_round = 8;
+}
+
+// Get rounds data with latest coefficients
+message GetRoundsDataRequest {
+  JWTAuth auth = 1;
+  optional uint32 limit = 2;  // Default: 10, max: 100
+  optional ExternalAuth external_auth = 10;
+}
+
+message GetRoundsDataResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Round rounds = 3;           // Last N rounds ordered by round_number DESC
+  LatestCoefficients latest = 4;       // Latest non-NULL values for each coefficient
+  uint32 total_rounds = 5;             // Total rounds in database
+}
+
 // ============================================================================
 // Invites
 // ============================================================================
@@ -885,6 +891,9 @@ service OrderbookService {
   // Invite operations
   rpc GetInvite(GetInviteRequest) returns (GetInviteResponse);
   rpc UseInvite(UseInviteRequest) returns (UseInviteResponse);
+
+  // Rounds operations
+  rpc GetRoundsData(GetRoundsDataRequest) returns (GetRoundsDataResponse);
 
   // Admin operations (require operator authentication)
   rpc CreateParty(CreatePartyRequest) returns (CreatePartyResponse);
