@@ -302,6 +302,8 @@ export class OrderbookClient {
     credentials?: any;
     requirements?: any;
     metadata?: any;
+    signature?: string;  // Base64-encoded Ed25519 signature for order authentication
+    nonce?: bigint;      // Unique nonce per trader for replay protection
   }): Promise<SubmitOrderResponse> {
     return await this.wrapCall(async () => {
       const request = create(SubmitOrderRequestSchema, {
@@ -316,6 +318,8 @@ export class OrderbookClient {
         credentials: params.credentials,
         requirements: params.requirements,
         metadata: params.metadata,
+        signature: params.signature,
+        nonce: params.nonce,
       });
       return await this.client.submitOrder(request);
     }, 'submitOrder');
