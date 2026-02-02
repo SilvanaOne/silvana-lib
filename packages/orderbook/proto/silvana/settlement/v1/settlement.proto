@@ -70,6 +70,7 @@ enum SenderType {
   SENDER_TYPE_USER = 2;
   SENDER_TYPE_BUYER = 3;
   SENDER_TYPE_SELLER = 4;
+  SENDER_TYPE_APP = 5;
 }
 
 // Transaction result
@@ -190,16 +191,9 @@ message CantonNodeAuth {
   google.protobuf.Timestamp connected_at = 4;
 }
 
-// External account authentication (using Ed25519 signed JWT)
-// For external parties that sign JWTs with their own private keys
-// Public key is verified against party_id fingerprint:
-//   fingerprint = SHA256(0x0000000C || public_key_bytes)
-//   party_id format: "identifier::1220{fingerprint}"
-message ExternalAuth {
-  string jwt = 1;              // JWT signed with external account's Ed25519 private key
-  string party_id = 2;         // Canton party ID of the external account
-  string public_key = 3;       // Ed25519 public key (hex) - verified against party_id fingerprint
-}
+// NOTE: External account authentication is via gRPC metadata header:
+//   authorization: Bearer <token>
+// JWT is self-describing with embedded public key in 'jwk' header (RFC 8037)
 
 // Instrument details for settlement
 message SettlementInstrument {
@@ -701,7 +695,7 @@ message SaveDisclosedContractRequest {
   CantonNodeAuth auth = 1;
   string proposal_id = 2;  // UUID v7
   DisclosedContractMessage contract = 3;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external parties
+  // Auth for external parties via gRPC metadata: authorization: Bearer <token>
 }
 
 // Save disclosed contract response
@@ -791,8 +785,7 @@ message RecordTransactionRequest {
   string daml_choice = 24;          // Daml choice name (required)
   optional google.protobuf.Struct daml_choices = 25; // Additional choice data as JSON
 
-  // Alternative auth for external parties
-  optional ExternalAuth external_auth = 30;
+  // Auth for external parties via gRPC metadata: authorization: Bearer <token>
 }
 
 message RecordTransactionResponse {
@@ -871,8 +864,7 @@ message RecordSettlementEventRequest {
   optional string error_message = 11;
   optional google.protobuf.Struct metadata = 12;
 
-  // Alternative auth for external parties
-  optional ExternalAuth external_auth = 20;
+  // Auth for external parties via gRPC metadata: authorization: Bearer <token>
 }
 
 message RecordSettlementEventResponse {
@@ -943,10 +935,9 @@ message UpdateProposalStatusResponse {
 
 // Get settlement proposal by ID request
 message GetSettlementProposalByIdRequest {
-  oneof auth {
-    CantonNodeAuth canton_auth = 1;
-    ExternalAuth external_auth = 2;
-  }
+  // Auth for external parties via gRPC metadata: authorization: Bearer <token>
+  // For internal Canton agents, use canton_auth field
+  optional CantonNodeAuth canton_auth = 1;
   string proposal_id = 3;  // UUID v7
 }
 

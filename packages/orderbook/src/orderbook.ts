@@ -49,7 +49,6 @@ import {
   SubscribeOrderbookRequestSchema,
   SubscribeOrdersRequestSchema,
   SubscribeSettlementsRequestSchema,
-  JWTAuthSchema,
   OrderType,
   OrderStatus,
   TimeInForce,
@@ -95,7 +94,7 @@ export class OrderbookError extends Error {
 export interface OrderbookClientConfig {
   /** Transport instance (create with @connectrpc/connect-node or @connectrpc/connect-web) */
   transport: Transport;
-  /** JWT token for authentication */
+  /** JWT token for authentication (passed via gRPC metadata header) */
   token: string;
 }
 
@@ -104,7 +103,7 @@ export interface OrderbookClientConfig {
  */
 export class OrderbookClient {
   private client: ReturnType<typeof createClient<typeof OrderbookService>>;
-  private token: string;
+  private authHeaders: HeadersInit;
 
   /**
    * Creates a new OrderbookClient instance
@@ -112,14 +111,14 @@ export class OrderbookClient {
    */
   constructor(config: OrderbookClientConfig) {
     this.client = createClient(OrderbookService, config.transport);
-    this.token = config.token;
+    this.authHeaders = { authorization: `Bearer ${config.token}` };
   }
 
   /**
-   * Creates JWT auth object
+   * Returns call options with authentication headers
    */
-  private createAuth() {
-    return create(JWTAuthSchema, { token: this.token });
+  private callOptions() {
+    return { headers: this.authHeaders };
   }
 
   /**
@@ -158,11 +157,8 @@ export class OrderbookClient {
     offset?: number;
   }): Promise<GetOrdersResponse> {
     return await this.wrapCall(async () => {
-      const request = create(GetOrdersRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.getOrders(request);
+      const request = create(GetOrdersRequestSchema, params ?? {});
+      return await this.client.getOrders(request, this.callOptions());
     }, 'getOrders');
   }
 
@@ -173,11 +169,8 @@ export class OrderbookClient {
     marketId: string;
     depth?: number;
   }): Promise<GetOrderbookDepthResponse> {
-    const request = create(GetOrderbookDepthRequestSchema, {
-      auth: this.createAuth(),
-      ...params,
-    });
-    return await this.client.getOrderbookDepth(request);
+    const request = create(GetOrderbookDepthRequestSchema, params);
+    return await this.client.getOrderbookDepth(request, this.callOptions());
   }
 
   /**
@@ -190,11 +183,8 @@ export class OrderbookClient {
     offset?: number;
   }): Promise<GetSettlementProposalsResponse> {
     return await this.wrapCall(async () => {
-      const request = create(GetSettlementProposalsRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.getSettlementProposals(request);
+      const request = create(GetSettlementProposalsRequestSchema, params ?? {});
+      return await this.client.getSettlementProposals(request, this.callOptions());
     }, 'getSettlementProposals');
   }
 
@@ -206,11 +196,8 @@ export class OrderbookClient {
     limit?: number;
     offset?: number;
   }): Promise<GetInstrumentsResponse> {
-    const request = create(GetInstrumentsRequestSchema, {
-      auth: this.createAuth(),
-      ...params,
-    });
-    return await this.client.getInstruments(request);
+    const request = create(GetInstrumentsRequestSchema, params);
+    return await this.client.getInstruments(request, this.callOptions());
   }
 
   /**
@@ -225,11 +212,8 @@ export class OrderbookClient {
     offset?: number;
   }): Promise<GetMarketsResponse> {
     return await this.wrapCall(async () => {
-      const request = create(GetMarketsRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.getMarkets(request);
+      const request = create(GetMarketsRequestSchema, params ?? {});
+      return await this.client.getMarkets(request, this.callOptions());
     }, 'getMarkets');
   }
 
@@ -244,14 +228,13 @@ export class OrderbookClient {
     offset?: number;
   }): Promise<GetOrderHistoryResponse> {
     const request = create(GetOrderHistoryRequestSchema, {
-      auth: this.createAuth(),
       marketId: params.marketId,
       fromTime: params.fromTime ? dateToTimestamp(params.fromTime) : undefined,
       toTime: params.toTime ? dateToTimestamp(params.toTime) : undefined,
       limit: params.limit,
       offset: params.offset,
     });
-    return await this.client.getOrderHistory(request);
+    return await this.client.getOrderHistory(request, this.callOptions());
   }
 
   /**
@@ -260,11 +243,8 @@ export class OrderbookClient {
   async getMarketData(params: {
     marketIds?: string[];
   }): Promise<GetMarketDataResponse> {
-    const request = create(GetMarketDataRequestSchema, {
-      auth: this.createAuth(),
-      ...params,
-    });
-    return await this.client.getMarketData(request);
+    const request = create(GetMarketDataRequestSchema, params);
+    return await this.client.getMarketData(request, this.callOptions());
   }
 
   /**
@@ -278,14 +258,13 @@ export class OrderbookClient {
     offset?: number;
   }): Promise<GetSettlementsResponse> {
     const request = create(GetSettlementsRequestSchema, {
-      auth: this.createAuth(),
       marketId: params.marketId,
       fromTime: params.fromTime ? dateToTimestamp(params.fromTime) : undefined,
       toTime: params.toTime ? dateToTimestamp(params.toTime) : undefined,
       limit: params.limit,
       offset: params.offset,
     });
-    return await this.client.getSettlements(request);
+    return await this.client.getSettlements(request, this.callOptions());
   }
 
   /**
@@ -307,7 +286,6 @@ export class OrderbookClient {
   }): Promise<SubmitOrderResponse> {
     return await this.wrapCall(async () => {
       const request = create(SubmitOrderRequestSchema, {
-        auth: this.createAuth(),
         marketId: params.marketId,
         orderType: params.orderType,
         price: params.price,
@@ -321,7 +299,7 @@ export class OrderbookClient {
         signature: params.signature,
         nonce: params.nonce,
       });
-      return await this.client.submitOrder(request);
+      return await this.client.submitOrder(request, this.callOptions());
     }, 'submitOrder');
   }
 
@@ -331,11 +309,8 @@ export class OrderbookClient {
   async cancelOrder(params: {
     orderId: bigint;
   }): Promise<CancelOrderResponse> {
-    const request = create(CancelOrderRequestSchema, {
-      auth: this.createAuth(),
-      ...params,
-    });
-    return await this.client.cancelOrder(request);
+    const request = create(CancelOrderRequestSchema, params);
+    return await this.client.cancelOrder(request, this.callOptions());
   }
 
   /**
@@ -345,11 +320,8 @@ export class OrderbookClient {
     marketId: string;
     depth?: number;
   }) {
-    const request = create(SubscribeOrderbookRequestSchema, {
-      auth: this.createAuth(),
-      ...params,
-    });
-    return this.client.subscribeOrderbook(request);
+    const request = create(SubscribeOrderbookRequestSchema, params);
+    return this.client.subscribeOrderbook(request, this.callOptions());
   }
 
   /**
@@ -358,11 +330,8 @@ export class OrderbookClient {
   subscribeOrders(params: {
     marketId?: string;
   }) {
-    const request = create(SubscribeOrdersRequestSchema, {
-      auth: this.createAuth(),
-      ...params,
-    });
-    return this.client.subscribeOrders(request);
+    const request = create(SubscribeOrdersRequestSchema, params);
+    return this.client.subscribeOrders(request, this.callOptions());
   }
 
   /**
@@ -371,11 +340,8 @@ export class OrderbookClient {
   subscribeSettlements(params: {
     marketId?: string;
   }) {
-    const request = create(SubscribeSettlementsRequestSchema, {
-      auth: this.createAuth(),
-      ...params,
-    });
-    return this.client.subscribeSettlements(request);
+    const request = create(SubscribeSettlementsRequestSchema, params);
+    return this.client.subscribeSettlements(request, this.callOptions());
   }
 
   /**
@@ -394,13 +360,12 @@ export class OrderbookClient {
     publicKey?: string;
     inviteCode?: string;
     source?: string;
+    liquidityProviderName?: string;
+    liquidityProviderDescription?: string;
   }): Promise<CreatePartyResponse> {
     return await this.wrapCall(async () => {
-      const request = create(CreatePartyRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.createParty(request);
+      const request = create(CreatePartyRequestSchema, params);
+      return await this.client.createParty(request, this.callOptions());
     }, 'createParty');
   }
 
@@ -411,11 +376,8 @@ export class OrderbookClient {
     partyId: string;
   }): Promise<GetPartyResponse> {
     return await this.wrapCall(async () => {
-      const request = create(GetPartyRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.getParty(request);
+      const request = create(GetPartyRequestSchema, params);
+      return await this.client.getParty(request, this.callOptions());
     }, 'getParty');
   }
 
@@ -429,11 +391,8 @@ export class OrderbookClient {
     offset?: number;
   }): Promise<GetPartiesResponse> {
     return await this.wrapCall(async () => {
-      const request = create(GetPartiesRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.getParties(request);
+      const request = create(GetPartiesRequestSchema, params ?? {});
+      return await this.client.getParties(request, this.callOptions());
     }, 'getParties');
   }
 
@@ -456,11 +415,8 @@ export class OrderbookClient {
     source?: string;
   }): Promise<UpdatePartyResponse> {
     return await this.wrapCall(async () => {
-      const request = create(UpdatePartyRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.updateParty(request);
+      const request = create(UpdatePartyRequestSchema, params);
+      return await this.client.updateParty(request, this.callOptions());
     }, 'updateParty');
   }
 
@@ -473,11 +429,8 @@ export class OrderbookClient {
     changeReason: string;
   }): Promise<DeactivatePartyResponse> {
     return await this.wrapCall(async () => {
-      const request = create(DeactivatePartyRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.deactivateParty(request);
+      const request = create(DeactivatePartyRequestSchema, params);
+      return await this.client.deactivateParty(request, this.callOptions());
     }, 'deactivateParty');
   }
 
@@ -490,11 +443,8 @@ export class OrderbookClient {
     offset?: number;
   }): Promise<GetPartyHistoryResponse> {
     return await this.wrapCall(async () => {
-      const request = create(GetPartyHistoryRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.getPartyHistory(request);
+      const request = create(GetPartyHistoryRequestSchema, params);
+      return await this.client.getPartyHistory(request, this.callOptions());
     }, 'getPartyHistory');
   }
 
@@ -506,17 +456,15 @@ export class OrderbookClient {
     instrumentType: string;
     name: string;
     symbol: string;
+    newsSymbol: string;
     description?: string;
     issuer?: string;
     registry?: string;
     metadata?: any;
   }): Promise<CreateInstrumentResponse> {
     return await this.wrapCall(async () => {
-      const request = create(CreateInstrumentRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.createInstrument(request);
+      const request = create(CreateInstrumentRequestSchema, params);
+      return await this.client.createInstrument(request, this.callOptions());
     }, 'createInstrument');
   }
 
@@ -537,11 +485,8 @@ export class OrderbookClient {
     priceFeeds?: any;
   }): Promise<CreateMarketResponse> {
     return await this.wrapCall(async () => {
-      const request = create(CreateMarketRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.createMarket(request);
+      const request = create(CreateMarketRequestSchema, params);
+      return await this.client.createMarket(request, this.callOptions());
     }, 'createMarket');
   }
 
@@ -553,11 +498,8 @@ export class OrderbookClient {
     priceFeeds: any;
   }): Promise<UpdateMarketPriceFeedsResponse> {
     return await this.wrapCall(async () => {
-      const request = create(UpdateMarketPriceFeedsRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.updateMarketPriceFeeds(request);
+      const request = create(UpdateMarketPriceFeedsRequestSchema, params);
+      return await this.client.updateMarketPriceFeeds(request, this.callOptions());
     }, 'updateMarketPriceFeeds');
   }
 
@@ -572,11 +514,8 @@ export class OrderbookClient {
     metadata?: any;
   }): Promise<AddWaitingListEntryResponse> {
     return await this.wrapCall(async () => {
-      const request = create(AddWaitingListEntryRequestSchema, {
-        auth: this.createAuth(),
-        ...params,
-      });
-      return await this.client.addWaitingListEntry(request);
+      const request = create(AddWaitingListEntryRequestSchema, params);
+      return await this.client.addWaitingListEntry(request, this.callOptions());
     }, 'addWaitingListEntry');
   }
 
@@ -587,10 +526,8 @@ export class OrderbookClient {
     inviteCode: string;
   }): Promise<GetInviteResponse> {
     return await this.wrapCall(async () => {
-      const request = create(GetInviteRequestSchema, {
-        ...params,
-      });
-      return await this.client.getInvite(request);
+      const request = create(GetInviteRequestSchema, params);
+      return await this.client.getInvite(request, this.callOptions());
     }, 'getInvite');
   }
 
@@ -602,10 +539,8 @@ export class OrderbookClient {
     partyId?: string;
   }): Promise<UseInviteResponse> {
     return await this.wrapCall(async () => {
-      const request = create(UseInviteRequestSchema, {
-        ...params,
-      });
-      return await this.client.useInvite(request);
+      const request = create(UseInviteRequestSchema, params);
+      return await this.client.useInvite(request, this.callOptions());
     }, 'useInvite');
   }
 }

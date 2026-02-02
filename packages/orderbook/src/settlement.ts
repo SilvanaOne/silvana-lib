@@ -346,7 +346,7 @@ export class SettlementClient {
   }): Promise<GetSettlementProposalByIdResponse> {
     return await this.wrapCall(async () => {
       const request = create(GetSettlementProposalByIdRequestSchema, {
-        auth: { case: "cantonAuth", value: params.auth },
+        cantonAuth: params.auth,
         proposalId: params.proposalId,
       });
       return await this.client.getSettlementProposalById(request);
