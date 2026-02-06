@@ -170,6 +170,18 @@ enum RecordedByRole {
   RECORDED_BY_ROLE_SYSTEM = 4;
 }
 
+// Next action for a party in the settlement flow
+enum NextAction {
+  NEXT_ACTION_NONE = 0;            // No action needed (terminal state or all done)
+  NEXT_ACTION_PRECONFIRM = 1;      // Confirm the settlement
+  NEXT_ACTION_PAY_DVP_FEE = 2;     // Pay DVP processing fee
+  NEXT_ACTION_CREATE_DVP = 3;      // Buyer: create DVP proposal
+  NEXT_ACTION_ACCEPT_DVP = 4;      // Seller: accept DVP proposal
+  NEXT_ACTION_PAY_ALLOC_FEE = 5;   // Pay allocation processing fee
+  NEXT_ACTION_ALLOCATE = 6;        // Allocate tokens
+  NEXT_ACTION_WAIT = 7;            // Waiting for counterparty/operator
+}
+
 // Result of a settlement event
 enum SettlementEventResult {
   SETTLEMENT_EVENT_RESULT_UNSPECIFIED = 0;
@@ -668,8 +680,16 @@ message GetSettlementStatusResponse {
   DvpStepStatus traffic_compensation_buyer = 19;
   DvpStepStatus traffic_compensation_seller = 20;
 
-  // Preconfirmation step (optional)
+  // Preconfirmation step (combined, kept for backward compat)
   DvpStepStatus preconfirmation = 21;
+
+  // Split preconfirmation into buyer/seller
+  DvpStepStatus preconfirmation_buyer = 22;
+  DvpStepStatus preconfirmation_seller = 23;
+
+  // Server-computed next actions for each party
+  NextAction buyer_next_action = 24;
+  NextAction seller_next_action = 25;
 }
 
 message SubmitPreconfirmationRequest {
