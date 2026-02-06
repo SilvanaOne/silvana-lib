@@ -1907,7 +1907,7 @@ export type CreatePartyRequest = Message<"silvana.orderbook.v1.CreatePartyReques
   partyName: string;
 
   /**
-   * trader, operator, registry, issuer
+   * trader, operator, registry, issuer, validator
    *
    * @generated from field: string party_type = 4;
    */
@@ -2399,7 +2399,7 @@ export type GetPartiesRequest = Message<"silvana.orderbook.v1.GetPartiesRequest"
   /**
    * Auth via gRPC metadata: authorization: Bearer <token>
    *
-   * Filter by type: trader, operator, registry, issuer
+   * Filter by type: trader, operator, registry, issuer, validator
    *
    * @generated from field: optional string party_type = 2;
    */

@@ -479,7 +479,7 @@ message CreatePartyRequest {
   // Auth via gRPC metadata: authorization: Bearer <token>
   string party_id = 2;
   string party_name = 3;
-  string party_type = 4; // trader, operator, registry, issuer
+  string party_type = 4; // trader, operator, registry, issuer, validator
   optional string user_service_cid = 5; // UserService contract ID for traders
   optional string operator_config_cid = 6; // OperatorConfiguration contract ID for operators
   optional google.protobuf.Struct metadata = 7;
@@ -582,7 +582,7 @@ message GetPartyResponse {
 // List parties with filters and pagination
 message GetPartiesRequest {
   // Auth via gRPC metadata: authorization: Bearer <token>
-  optional string party_type = 2;           // Filter by type: trader, operator, registry, issuer
+  optional string party_type = 2;           // Filter by type: trader, operator, registry, issuer, validator
   optional bool active_only = 3;            // If true, only return active parties (default: all)
   optional uint32 limit = 4;                // Max results (default: 50, max: 1000)
   optional uint32 offset = 5;               // Pagination offset
