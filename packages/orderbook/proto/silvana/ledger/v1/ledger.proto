@@ -1,0 +1,659 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// DAppProviderService
+//
+// Proxied ledger operations for cloud agents with two-phase transaction flow.
+// Authentication: JWT in gRPC metadata header "authorization: Bearer <token>"
+// JWT must be self-describing EdDSA with embedded JWK (RFC 8037).
+// Server verifies public key fingerprint matches party_id.
+// ============================================================================
+
+service DAppProviderService {
+  // === Streaming Query RPCs ===
+
+  // Stream active contracts for the authenticated party (one per message)
+  rpc GetActiveContracts(GetActiveContractsRequest) returns (stream GetActiveContractsResponse);
+
+  // Stream ledger updates from a given offset (for tx confirmation checks)
+  rpc GetUpdates(GetUpdatesRequest) returns (stream GetUpdatesResponse);
+
+  // === Unary Query RPCs (no signing needed, single call) ===
+
+  // Get current ledger end offset (for use with GetUpdates)
+  rpc GetLedgerEnd(GetLedgerEndRequest) returns (GetLedgerEndResponse);
+
+  // Get token balances (CIP-56 holdings + Canton Coin)
+  rpc GetBalances(GetBalancesRequest) returns (GetBalancesResponse);
+
+  // Fetch TransferPreapproval contracts
+  rpc GetPreapprovals(GetPreapprovalsRequest) returns (GetPreapprovalsResponse);
+
+  // Get DSO rates (CC/USD rate, current round)
+  rpc GetDsoRates(GetDsoRatesRequest) returns (GetDsoRatesResponse);
+
+  // Discover on-chain DvpProposal/Dvp contracts for active settlements
+  rpc GetSettlementContracts(GetSettlementContractsRequest) returns (GetSettlementContractsResponse);
+
+  // Get provider service info
+  rpc GetServiceInfo(GetServiceInfoRequest) returns (GetServiceInfoResponse);
+
+  // === Onboarding RPCs (Ed25519 message signing, no JWT required) ===
+
+  // Get agent configuration template (unauthenticated)
+  rpc GetAgentConfig(GetAgentConfigRequest) returns (GetAgentConfigResponse);
+
+  // Register agent on waiting list (signed by agent's Ed25519 key)
+  rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
+
+  // Poll onboarding status (signed by agent's Ed25519 key)
+  rpc GetOnboardingStatus(GetOnboardingStatusRequest) returns (GetOnboardingStatusResponse);
+
+  // Submit multihash signature (signed by agent's Ed25519 key)
+  rpc SubmitOnboardingSignature(SubmitOnboardingSignatureRequest) returns (SubmitOnboardingSignatureResponse);
+
+  // === Two-Phase Transaction RPCs ===
+
+  // Phase 1: Prepare transaction (server builds tx, returns hash to sign)
+  rpc PrepareTransaction(PrepareTransactionRequest) returns (PrepareTransactionResponse);
+
+  // Phase 2: Execute signed transaction
+  rpc ExecuteTransaction(ExecuteTransactionRequest) returns (ExecuteTransactionResponse);
+}
+
+// ============================================================================
+// Streaming Query Messages
+// ============================================================================
+
+// --- GetActiveContracts (server-streaming) ---
+
+message GetActiveContractsRequest {
+  repeated string template_filters = 1;  // Optional template ID filters (empty = all)
+}
+
+message ActiveContractInfo {
+  string contract_id = 1;
+  string template_id = 2;
+  string entity_name = 3;
+  google.protobuf.Struct create_arguments = 4;
+  string created_event_blob = 5;
+  string synchronizer_id = 6;
+
+  string network_id = 10;  // CAIP-2 network identifier (e.g. "canton:global-domain")
+}
+
+message GetActiveContractsResponse {
+  ActiveContractInfo contract = 1;  // One contract per streamed message
+}
+
+// --- GetUpdates (server-streaming) ---
+
+message GetUpdatesRequest {
+  int64 begin_exclusive = 1;            // Start offset (exclusive)
+  optional int64 end_inclusive = 2;     // End offset (inclusive); if unset, streams to current ledger end
+  repeated string template_filters = 3; // Optional template ID filters
+}
+
+message GetUpdatesResponse {
+  oneof update {
+    LedgerTransaction transaction = 1;
+    LedgerOffsetCheckpoint offset_checkpoint = 2;
+  }
+}
+
+message LedgerTransaction {
+  string update_id = 1;
+  string command_id = 2;
+  int64 offset = 3;
+  string synchronizer_id = 4;
+  repeated LedgerEvent events = 5;
+}
+
+message LedgerEvent {
+  oneof event {
+    LedgerCreatedEvent created = 1;
+    LedgerExercisedEvent exercised = 2;
+    LedgerArchivedEvent archived = 3;
+  }
+}
+
+message LedgerCreatedEvent {
+  string contract_id = 1;
+  string template_id = 2;
+  google.protobuf.Struct create_arguments = 3;
+}
+
+message LedgerExercisedEvent {
+  string contract_id = 1;
+  string template_id = 2;
+  string choice = 3;
+  bool consuming = 4;
+}
+
+message LedgerArchivedEvent {
+  string contract_id = 1;
+  string template_id = 2;
+}
+
+message LedgerOffsetCheckpoint {
+  int64 offset = 1;
+}
+
+// ============================================================================
+// Unary Query Messages
+// ============================================================================
+
+// --- GetLedgerEnd ---
+
+message GetLedgerEndRequest {
+  // party_id from JWT
+}
+
+message GetLedgerEndResponse {
+  int64 offset = 1;
+}
+
+message GetBalancesRequest {
+  // party_id from JWT
+}
+
+message TokenBalance {
+  string instrument_id = 1;
+  string instrument_admin = 2;
+  string total_amount = 3;
+  string locked_amount = 4;
+  string unlocked_amount = 5;
+  bool is_canton_coin = 6;
+}
+
+message GetBalancesResponse {
+  repeated TokenBalance balances = 1;
+}
+
+message GetPreapprovalsRequest {
+  // party_id from JWT
+}
+
+message PreapprovalInfo {
+  string contract_id = 1;
+  string provider = 2;
+  string receiver = 3;
+  google.protobuf.Timestamp expires_at = 4;
+  string source = 5;  // "grpc" or "scan"
+}
+
+message GetPreapprovalsResponse {
+  repeated PreapprovalInfo preapprovals = 1;
+}
+
+message GetDsoRatesRequest {}
+
+message OpenMiningRound {
+  uint64 round_number = 1;
+  string amulet_price = 2;
+  string opens_at = 3;
+  string target_closes_at = 4;
+  string issuing_for = 5;           // RelTime (microseconds)
+  string tick_duration = 6;          // RelTime (microseconds)
+  string transfer_config_usd = 7;   // JSON-encoded TransferConfig
+  string issuance_config = 8;       // JSON-encoded IssuanceConfig
+}
+
+message IssuingMiningRound {
+  uint64 round_number = 1;
+  string issuance_per_featured_app_reward_coupon = 2;
+  string issuance_per_unfeatured_app_reward_coupon = 3;
+  string issuance_per_validator_reward_coupon = 4;
+  string issuance_per_sv_reward_coupon = 5;
+  string opens_at = 6;
+  string target_closes_at = 7;
+  optional string opt_issuance_per_validator_faucet_coupon = 8;
+}
+
+message GetDsoRatesResponse {
+  string cc_usd_rate = 1;
+  string amulet_price = 2;
+  uint64 current_round = 3;
+  string dso_party_id = 4;
+  string featured_app_issuance = 5;
+  repeated OpenMiningRound open_mining_rounds = 6;
+  repeated IssuingMiningRound issuing_mining_rounds = 7;
+}
+
+message GetSettlementContractsRequest {
+  repeated string settlement_ids = 1;  // proposal/settlement IDs to search for
+}
+
+message DiscoveredContract {
+  string settlement_id = 1;
+  string contract_id = 2;
+  string contract_type = 3;  // "DvpProposal" or "Dvp"
+}
+
+message GetSettlementContractsResponse {
+  repeated DiscoveredContract contracts = 1;
+}
+
+// --- GetServiceInfo ---
+
+message GetServiceInfoRequest {}
+
+message GetServiceInfoResponse {
+  string provider_id = 1;                              // Service identifier
+  string version = 2;                                  // API version (e.g. "1.0.0")
+  string provider_type = 3;                            // "remote"
+  repeated TransactionOperation supported_operations = 4;
+  string network_id = 5;                               // CAIP-2 (e.g. "canton:global-domain")
+  string synchronizer_id = 6;
+  uint64 session_ttl_secs = 7;
+}
+
+// ============================================================================
+// Onboarding Messages
+//
+// Cloud agent self-service onboarding flow. RPCs use Ed25519 message-level
+// signing (same MessageSignature scheme as two-phase transactions) to prove
+// the caller owns the private key matching the public_key in the request.
+// No JWT required — identity is the Ed25519 public key.
+// ============================================================================
+
+// Onboarding status progression for cloud agent waiting list
+enum OnboardingStatus {
+  ONBOARDING_STATUS_UNSPECIFIED = 0;
+  ONBOARDING_STATUS_REQUESTED = 1;            // Agent registered, waiting for backend
+  ONBOARDING_STATUS_SIGNATURE_REQUIRED = 2;   // Backend created multihash; agent must sign
+  ONBOARDING_STATUS_TOPOLOGY_CREATED = 3;     // Backend created topology tx; agent can complete onboarding
+  ONBOARDING_STATUS_ONBOARDED = 4;            // Agent completed ledger onboarding
+}
+
+// --- GetAgentConfig (unauthenticated — returns env template for new agents) ---
+
+message GetAgentConfigRequest {}
+
+message GetAgentConfigResponse {
+  string synchronizer_id = 1;
+  string settlement_operator = 2;
+  string traffic_fee_party = 3;
+  string traffic_fee_price_usd_mb = 4;
+  string fee_party = 5;
+  string node_name = 6;
+  string ledger_service_public_key = 7;       // Base58 public key for response verification
+  string subscription_app_party = 8;           // App party for pay-as-you-go subscription
+  string subscription_amount = 9;              // Default subscription amount
+  string join_traffic_transactions = 10;       // "true" or "false"
+  string agent_fee_reserve_cc = 11;            // Default fee reserve in CC
+  string recurring_payment_package_name = 12;  // Package name for RecurringPayment templates
+}
+
+// --- RegisterAgent (signed — proves key ownership before insert) ---
+
+message RegisterAgentRequest {
+  string public_key = 1;                       // Base58 Ed25519 public key (agent identity)
+  optional string invite_code = 2;
+  optional string email = 3;
+  optional string agent_name = 4;
+
+  // Ed25519 message-level signature proving ownership of public_key
+  MessageSignature request_signature = 30;
+}
+
+message RegisterAgentResponse {
+  bool success = 1;
+  string message = 2;
+  uint64 waiting_list_id = 3;
+  OnboardingStatus status = 4;
+}
+
+// --- GetOnboardingStatus (signed — proves key ownership before read) ---
+
+message GetOnboardingStatusRequest {
+  string public_key = 1;                       // Base58 Ed25519 public key
+
+  // Ed25519 message-level signature proving ownership of public_key
+  MessageSignature request_signature = 30;
+}
+
+message GetOnboardingStatusResponse {
+  OnboardingStatus status = 1;
+  optional string party_id = 2;               // Set when status >= TOPOLOGY_CREATED
+  optional string multihash = 3;              // Base64 multihash (set when SIGNATURE_REQUIRED)
+  optional string error_message = 4;
+  uint64 waiting_list_id = 5;
+}
+
+// --- SubmitOnboardingSignature (signed — proves key ownership + multihash signature) ---
+
+message SubmitOnboardingSignatureRequest {
+  string public_key = 1;                       // Base58 Ed25519 public key
+  string multihash_signature = 2;              // Base64 Ed25519 signature of the multihash
+
+  // Ed25519 message-level signature proving ownership of public_key
+  MessageSignature request_signature = 30;
+}
+
+message SubmitOnboardingSignatureResponse {
+  bool success = 1;
+  string message = 2;
+  OnboardingStatus status = 3;                // Updated status after submission
+}
+
+// ============================================================================
+// Message-Level Signing
+//
+// Ed25519 signature over SHA-256(canonical_payload) for message integrity.
+// Cloud agent signs requests; dApp provider service signs responses.
+// ============================================================================
+
+message MessageSignature {
+  string signature = 1;       // Base64 Ed25519 signature of SHA-256(canonical_payload)
+  string public_key = 2;      // Base64url Ed25519 public key (32 bytes)
+  string signing_scheme = 3;  // "ed25519-sha256-v1"
+}
+
+// ============================================================================
+// Error Model (ProviderRpcError)
+//
+// Standardized error codes based on EIP-1193 and EIP-1474.
+// ============================================================================
+
+enum ProviderErrorCode {
+  PROVIDER_ERROR_UNSPECIFIED = 0;
+  PROVIDER_ERROR_USER_REJECTED = 1;        // 4001 — User rejected the request
+  PROVIDER_ERROR_UNAUTHORIZED = 2;          // 4100 — Method/account not authorized
+  PROVIDER_ERROR_UNSUPPORTED_METHOD = 3;    // 4200 — Provider doesn't support method
+  PROVIDER_ERROR_DISCONNECTED = 4;          // 4900 — Provider disconnected
+  PROVIDER_ERROR_INVALID_PARAMS = 5;        // -32602 — Invalid method parameters
+  PROVIDER_ERROR_INTERNAL = 6;              // -32603 — Internal error
+  PROVIDER_ERROR_TRANSACTION_REJECTED = 7;  // -32003 — Transaction creation failed
+  PROVIDER_ERROR_RESOURCE_NOT_FOUND = 8;    // -32001 — Requested resource not found
+  PROVIDER_ERROR_RESOURCE_UNAVAILABLE = 9;  // -32002 — Requested resource unavailable
+  PROVIDER_ERROR_LIMIT_EXCEEDED = 10;       // -32005 — Request exceeds limit
+}
+
+message ProviderError {
+  ProviderErrorCode code = 1;
+  string message = 2;
+  optional string data = 3;  // Optional JSON detail
+}
+
+// ============================================================================
+// Transaction Lifecycle
+//
+// Status progression: pending → signed → executed → completed | failed
+// ============================================================================
+
+enum TransactionStatus {
+  TRANSACTION_STATUS_UNSPECIFIED = 0;
+  TRANSACTION_STATUS_PENDING = 1;     // Prepared, awaiting signature
+  TRANSACTION_STATUS_SIGNED = 2;      // Signed by client
+  TRANSACTION_STATUS_EXECUTED = 3;    // Submitted to Canton
+  TRANSACTION_STATUS_COMPLETED = 4;   // Confirmed on-ledger
+  TRANSACTION_STATUS_FAILED = 5;      // Failed
+}
+
+// ============================================================================
+// Transaction Messages — Two-Phase Flow
+// ============================================================================
+
+// Predefined set of allowed operations (cloud agent cannot send arbitrary txs)
+enum TransactionOperation {
+  TRANSACTION_OPERATION_UNSPECIFIED = 0;
+
+  // Settlement steps
+  TRANSACTION_OPERATION_PAY_DVP_FEE = 1;
+  TRANSACTION_OPERATION_PROPOSE_DVP = 2;
+  TRANSACTION_OPERATION_ACCEPT_DVP = 3;
+  TRANSACTION_OPERATION_PAY_ALLOC_FEE = 4;
+  TRANSACTION_OPERATION_ALLOCATE = 5;
+
+  // Transfers
+  TRANSACTION_OPERATION_TRANSFER_CC = 6;
+
+  // Preapproval
+  TRANSACTION_OPERATION_REQUEST_PREAPPROVAL = 7;
+
+  // Recurring payments
+  TRANSACTION_OPERATION_REQUEST_RECURRING_PREPAID = 8;
+  TRANSACTION_OPERATION_REQUEST_RECURRING_PAYASYOUGO = 9;
+
+  // User service
+  TRANSACTION_OPERATION_REQUEST_USER_SERVICE = 10;
+
+  // CIP-56 token transfers
+  TRANSACTION_OPERATION_TRANSFER_CIP56 = 11;
+  TRANSACTION_OPERATION_ACCEPT_CIP56 = 12;
+}
+
+// --- PrepareTransaction ---
+
+message PrepareTransactionRequest {
+  TransactionOperation operation = 1;
+
+  oneof params {
+    PayFeeParams pay_fee = 10;
+    ProposeDvpParams propose_dvp = 11;
+    AcceptDvpParams accept_dvp = 12;
+    AllocateParams allocate = 13;
+    TransferCcParams transfer_cc = 14;
+    RequestPreapprovalParams request_preapproval = 15;
+    RequestRecurringPrepaidParams request_recurring_prepaid = 16;
+    RequestRecurringPayasyougoParams request_recurring_payasyougo = 17;
+    RequestUserServiceParams request_user_service = 18;
+    TransferCip56Params transfer_cip56 = 19;
+    AcceptCip56Params accept_cip56 = 20;
+  }
+
+  // Message-level signature from cloud agent (Ed25519 over canonical request payload)
+  MessageSignature request_signature = 30;
+}
+
+message PayFeeParams {
+  string proposal_id = 1;
+  string fee_type = 2;  // "dvp" or "allocate"
+}
+
+message ProposeDvpParams {
+  string proposal_id = 1;
+}
+
+message AcceptDvpParams {
+  string proposal_id = 1;
+  string dvp_proposal_cid = 2;
+}
+
+message AllocateParams {
+  string proposal_id = 1;
+  string dvp_cid = 2;
+}
+
+message TransferCcParams {
+  string receiver_party = 1;
+  string amount = 2;
+  optional string description = 3;
+  string command_id = 4;
+  optional string settlement_proposal_id = 5;
+}
+
+message RequestPreapprovalParams {
+  // party_id from JWT — no additional params needed
+}
+
+message RequestRecurringPrepaidParams {
+  string app_party = 1;
+  string amount = 2;
+  string locked_amount = 3;
+  uint32 lock_days = 4;
+  optional string description = 5;
+  optional string reference = 6;
+  string limit = 7;
+}
+
+message RequestRecurringPayasyougoParams {
+  string app_party = 1;
+  string amount = 2;
+  optional string description = 3;
+  optional string reference = 4;
+}
+
+message RequestUserServiceParams {
+  optional string reference_id = 1;
+  optional string party_name = 2;
+}
+
+// CIP-56 instrument transfer — fully qualified instrument required
+// Daml InstrumentId = { id: Text, admin: Party }
+message TransferCip56Params {
+  string instrument_id = 1;       // Token name, e.g. "USDC", "CBTC"
+  string instrument_admin = 2;    // Registrar party (InstrumentId.admin / instrument source)
+  string receiver_party = 3;      // Full Canton party ID of receiver
+  string amount = 4;              // Decimal string
+  optional string reference = 5;  // Optional transfer reference/description
+}
+
+// Accept incoming CIP-56 TransferOffer — registrar extracted from contract payload
+message AcceptCip56Params {
+  string contract_id = 1;      // TransferOffer contract ID to accept
+}
+
+// --- PrepareTransaction Response ---
+
+message PrepareTransactionResponse {
+  string transaction_id = 1;              // Server-generated session ID
+  string prepared_transaction_hash = 2;   // Base64 hash (DO NOT TRUST — recompute from prepared_transaction)
+  string command_id = 3;                  // Deterministic command ID used
+  TrafficEstimate traffic_estimate = 4;
+  bytes prepared_transaction = 5;         // Full Canton PreparedTransaction protobuf (for client verification)
+  string hashing_scheme_version = 6;      // "V2" or "V3" — needed for hash recomputation
+
+  // Message-level signature from dApp provider service (Ed25519 over canonical response payload)
+  MessageSignature response_signature = 30;
+
+  // Transaction lifecycle status (always PENDING after prepare)
+  TransactionStatus transaction_status = 40;
+}
+
+message TrafficEstimate {
+  uint64 request_bytes = 1;
+  uint64 response_bytes = 2;
+  uint64 total_bytes = 3;
+}
+
+// --- ExecuteTransaction ---
+
+message ExecuteTransactionRequest {
+  string transaction_id = 1;    // From PrepareTransactionResponse
+  string signature = 2;         // Base64-encoded Ed25519 signature of the hash
+
+  // Message-level signature from cloud agent (Ed25519 over canonical request payload)
+  MessageSignature request_signature = 30;
+}
+
+message ExecuteTransactionResponse {
+  bool success = 1;
+  string update_id = 2;
+  optional string contract_id = 3;
+  optional string error_message = 4;
+  TrafficEstimate traffic = 5;
+  optional string rewards_amount = 6;
+  optional uint64 rewards_round = 7;
+
+  // Message-level signature from dApp provider service (Ed25519 over canonical response payload)
+  MessageSignature response_signature = 30;
+
+  // Transaction lifecycle status (EXECUTED on success, FAILED on error)
+  TransactionStatus transaction_status = 40;
+  // Structured error (ProviderRpcError) — populated when success=false
+  optional ProviderError provider_error = 41;
+}
+
+// ============================================================================
+// DAppBridgeService — Reverse-tunnel between ledger-service and orderbook-rpc
+//
+// ledger-service initiates this stream TO orderbook-rpc (no port needed on
+// ledger-service machine). First upstream message must be BridgeAuth.
+// After auth succeeds, orderbook-rpc sends BridgeRequest messages and
+// ledger-service replies with BridgeResponse messages, correlated by request_id.
+// ============================================================================
+
+service DAppBridgeService {
+  // Bidirectional stream: ledger-service connects, authenticates, then
+  // receives requests and sends responses.
+  rpc OpenBridge(stream BridgeUpstream) returns (stream BridgeDownstream);
+}
+
+// --- Messages FROM ledger-service TO orderbook-rpc (upstream) ---
+
+message BridgeUpstream {
+  oneof msg {
+    BridgeAuth auth = 1;
+    BridgeResponse response = 2;
+    GetAgentConfigResponse agent_config = 3;  // sent after auth to provide agent config
+  }
+}
+
+message BridgeAuth {
+  string jwt = 1;  // Ed25519-signed JWT; verified by LEDGER_BRIDGE_PUBLIC_KEY
+}
+
+message BridgeResponse {
+  string request_id = 1;
+  bool stream_complete = 2;  // When true, this is the final message for a streaming request
+
+  oneof result {
+    GetActiveContractsResponse   get_active_contracts = 10;
+    GetBalancesResponse          get_balances = 11;
+    GetPreapprovalsResponse      get_preapprovals = 12;
+    GetDsoRatesResponse          get_dso_rates = 13;
+    GetSettlementContractsResponse get_settlement_contracts = 14;
+    PrepareTransactionResponse   prepare_transaction = 15;
+    ExecuteTransactionResponse   execute_transaction = 16;
+    GetServiceInfoResponse       get_service_info = 17;
+    GetUpdatesResponse           get_updates = 18;
+    GetLedgerEndResponse         get_ledger_end = 19;
+    BridgeError                  error = 20;
+  }
+}
+
+message BridgeError {
+  int32  code = 1;    // gRPC status code
+  string message = 2;
+}
+
+// --- Messages FROM orderbook-rpc TO ledger-service (downstream) ---
+
+message BridgeDownstream {
+  oneof msg {
+    BridgeAuthResult auth_result = 1;
+    BridgeRequest request = 2;
+  }
+}
+
+message BridgeAuthResult {
+  bool   success = 1;
+  string error_message = 2;
+}
+
+message BridgeRequest {
+  string request_id = 1;
+  string authorization = 2;  // caller's original "Bearer <jwt>" header, passed through
+
+  oneof payload {
+    GetActiveContractsRequest    get_active_contracts = 10;
+    GetBalancesRequest           get_balances = 11;
+    GetPreapprovalsRequest       get_preapprovals = 12;
+    GetDsoRatesRequest           get_dso_rates = 13;
+    GetSettlementContractsRequest get_settlement_contracts = 14;
+    PrepareTransactionRequest    prepare_transaction = 15;
+    ExecuteTransactionRequest    execute_transaction = 16;
+    GetServiceInfoRequest        get_service_info = 17;
+    GetUpdatesRequest            get_updates = 18;
+    GetLedgerEndRequest          get_ledger_end = 19;
+  }
+}

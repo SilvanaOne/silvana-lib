@@ -169,6 +169,18 @@ export {
   SettlementEventResultSchema,
   DvpStepStatusEnum,
   DvpStepStatusEnumSchema,
+  type RfqRequest,
+  RfqRequestSchema,
+  type RfqQuote,
+  RfqQuoteSchema,
+  type RfqReject,
+  RfqRejectSchema,
+  RfqDirection,
+  RfqDirectionSchema,
+  RfqRejectionReason,
+  RfqRejectionReasonSchema,
+  NextAction,
+  NextActionSchema,
   SettlementService,
 } from "./proto/silvana/settlement/v1/settlement_pb.js";
 
@@ -192,6 +204,8 @@ export class SettlementError extends Error {
 export interface SettlementClientConfig {
   /** Transport instance (create with @connectrpc/connect-node or @connectrpc/connect-web) */
   transport: Transport;
+  /** JWT token for authentication (passed via gRPC metadata header) */
+  token: string;
 }
 
 /**
@@ -199,6 +213,7 @@ export interface SettlementClientConfig {
  */
 export class SettlementClient {
   private client: ReturnType<typeof createClient<typeof SettlementService>>;
+  private authHeaders: HeadersInit;
 
   /**
    * Creates a new SettlementClient instance
@@ -206,6 +221,14 @@ export class SettlementClient {
    */
   constructor(config: SettlementClientConfig) {
     this.client = createClient(SettlementService, config.transport);
+    this.authHeaders = { authorization: `Bearer ${config.token}` };
+  }
+
+  /**
+   * Returns call options with authentication headers
+   */
+  private callOptions() {
+    return { headers: this.authHeaders };
   }
 
   /**
@@ -245,13 +268,12 @@ export class SettlementClient {
    * Get pending proposals for a party
    */
   async getPendingProposals(params: {
-    auth: CantonNodeAuth;
     partyId: string;
     limit?: number;
   }): Promise<GetPendingProposalsResponse> {
     return await this.wrapCall(async () => {
       const request = create(GetPendingProposalsRequestSchema, params);
-      return await this.client.getPendingProposals(request);
+      return await this.client.getPendingProposals(request, this.callOptions());
     }, 'getPendingProposals');
   }
 
@@ -259,12 +281,11 @@ export class SettlementClient {
    * Query settlement status
    */
   async getSettlementStatus(params: {
-    auth: CantonNodeAuth;
     settlementId: string;
   }): Promise<GetSettlementStatusResponse> {
     return await this.wrapCall(async () => {
       const request = create(GetSettlementStatusRequestSchema, params);
-      return await this.client.getSettlementStatus(request);
+      return await this.client.getSettlementStatus(request, this.callOptions());
     }, 'getSettlementStatus');
   }
 
@@ -272,12 +293,11 @@ export class SettlementClient {
    * Manual preconfirmation (if not using stream)
    */
   async submitPreconfirmation(params: {
-    auth: CantonNodeAuth;
     decision: PreconfirmationDecision;
   }): Promise<void> {
     return await this.wrapCall(async () => {
       const request = create(SubmitPreconfirmationRequestSchema, params);
-      await this.client.submitPreconfirmation(request);
+      await this.client.submitPreconfirmation(request, this.callOptions());
     }, 'submitPreconfirmation');
   }
 
@@ -286,9 +306,8 @@ export class SettlementClient {
    * Any party (buyer/seller/operator/system) can record events for DVP flow tracking
    */
   async recordSettlementEvent(params: {
-    auth: CantonNodeAuth;
     proposalId: string;
-    recordedBy: string;
+    recordedBy?: string;
     recordedByRole: RecordedByRole;
     eventType: SettlementEventType;
     submissionId?: string;
@@ -301,7 +320,7 @@ export class SettlementClient {
   }): Promise<RecordSettlementEventResponse> {
     return await this.wrapCall(async () => {
       const request = create(RecordSettlementEventRequestSchema, params);
-      return await this.client.recordSettlementEvent(request);
+      return await this.client.recordSettlementEvent(request, this.callOptions());
     }, 'recordSettlementEvent');
   }
 
@@ -309,7 +328,6 @@ export class SettlementClient {
    * Get settlement event history for a proposal
    */
   async getSettlementHistory(params: {
-    auth: CantonNodeAuth;
     proposalId: string;
     eventType?: SettlementEventType;
     result?: SettlementEventResult;
@@ -318,7 +336,7 @@ export class SettlementClient {
   }): Promise<GetSettlementHistoryResponse> {
     return await this.wrapCall(async () => {
       const request = create(GetSettlementHistoryRequestSchema, params);
-      return await this.client.getSettlementHistory(request);
+      return await this.client.getSettlementHistory(request, this.callOptions());
     }, 'getSettlementHistory');
   }
 
@@ -326,14 +344,13 @@ export class SettlementClient {
    * Update proposal status (operator only)
    */
   async updateProposalStatus(params: {
-    auth: CantonNodeAuth;
     proposalId: string;
     newStatus: UpdateProposalStatusRequest_NewStatus;
     errorMessage?: string;
   }): Promise<UpdateProposalStatusResponse> {
     return await this.wrapCall(async () => {
       const request = create(UpdateProposalStatusRequestSchema, params);
-      return await this.client.updateProposalStatus(request);
+      return await this.client.updateProposalStatus(request, this.callOptions());
     }, 'updateProposalStatus');
   }
 
@@ -341,15 +358,13 @@ export class SettlementClient {
    * Get a settlement proposal by ID
    */
   async getSettlementProposalById(params: {
-    auth: CantonNodeAuth;
     proposalId: string;
   }): Promise<GetSettlementProposalByIdResponse> {
     return await this.wrapCall(async () => {
       const request = create(GetSettlementProposalByIdRequestSchema, {
-        auth: { case: "cantonAuth", value: params.auth },
         proposalId: params.proposalId,
       });
-      return await this.client.getSettlementProposalById(request);
+      return await this.client.getSettlementProposalById(request, this.callOptions());
     }, 'getSettlementProposalById');
   }
 
@@ -357,13 +372,12 @@ export class SettlementClient {
    * Save a disclosed contract (buyer/seller saves during allocation)
    */
   async saveDisclosedContract(params: {
-    auth: CantonNodeAuth;
     proposalId: string;
     contract: DisclosedContractMessage;
   }): Promise<SaveDisclosedContractResponse> {
     return await this.wrapCall(async () => {
       const request = create(SaveDisclosedContractRequestSchema, params);
-      return await this.client.saveDisclosedContract(request);
+      return await this.client.saveDisclosedContract(request, this.callOptions());
     }, 'saveDisclosedContract');
   }
 
@@ -371,13 +385,12 @@ export class SettlementClient {
    * Get disclosed contracts (operator gets all, buyer/seller gets own)
    */
   async getDisclosedContracts(params: {
-    auth: CantonNodeAuth;
     proposalId: string;
     owner?: string;
   }): Promise<GetDisclosedContractsResponse> {
     return await this.wrapCall(async () => {
       const request = create(GetDisclosedContractsRequestSchema, params);
-      return await this.client.getDisclosedContracts(request);
+      return await this.client.getDisclosedContracts(request, this.callOptions());
     }, 'getDisclosedContracts');
   }
 
@@ -386,7 +399,6 @@ export class SettlementClient {
    * Called by settlement operator after successful Dvp_Settle execution
    */
   async recordSettlement(params: {
-    auth: CantonNodeAuth;
     proposalId: string;
     settledDvpCid: string;
     settlementUpdateId: string;
@@ -394,7 +406,7 @@ export class SettlementClient {
   }): Promise<RecordSettlementResponse> {
     return await this.wrapCall(async () => {
       const request = create(RecordSettlementRequestSchema, params);
-      return await this.client.recordSettlement(request);
+      return await this.client.recordSettlement(request, this.callOptions());
     }, 'recordSettlement');
   }
 
@@ -402,7 +414,6 @@ export class SettlementClient {
    * Record a transaction in history
    */
   async recordTransaction(params: {
-    auth: CantonNodeAuth;
     txType: TransactionType;
     senderParty: string;
     senderType: SenderType;
@@ -430,7 +441,7 @@ export class SettlementClient {
   }): Promise<RecordTransactionResponse> {
     return await this.wrapCall(async () => {
       const request = create(RecordTransactionRequestSchema, params);
-      return await this.client.recordTransaction(request);
+      return await this.client.recordTransaction(request, this.callOptions());
     }, 'recordTransaction');
   }
 
@@ -438,7 +449,6 @@ export class SettlementClient {
    * Get transaction history with optional filters
    */
   async getTransactionHistory(params: {
-    auth: CantonNodeAuth;
     senderParty?: string;
     txType?: TransactionType;
     settlementProposalId?: string;
@@ -448,7 +458,7 @@ export class SettlementClient {
   }): Promise<GetTransactionHistoryResponse> {
     return await this.wrapCall(async () => {
       const request = create(GetTransactionHistoryRequestSchema, params);
-      return await this.client.getTransactionHistory(request);
+      return await this.client.getTransactionHistory(request, this.callOptions());
     }, 'getTransactionHistory');
   }
 }

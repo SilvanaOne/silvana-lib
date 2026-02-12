@@ -1,6 +1,6 @@
 # @silvana-one/orderbook
 
-Silvana Orderbook Client for Node.js and Browser environments.
+TypeScript client library for the Silvana orderbook. Works in Node.js and Browser environments. Wraps 5 gRPC services via [Connect RPC](https://connectrpc.com/).
 
 ## Installation
 
@@ -9,11 +9,13 @@ npm install @silvana-one/orderbook
 ```
 
 For Node.js:
+
 ```bash
 npm install @connectrpc/connect-node
 ```
 
 For Browser:
+
 ```bash
 npm install @connectrpc/connect-web
 ```
@@ -24,10 +26,14 @@ npm install @connectrpc/connect-web
 
 ```typescript
 import { createGrpcTransport } from "@connectrpc/connect-node";
-import { OrderbookClient, OrderType, TimeInForce } from "@silvana-one/orderbook";
+import {
+  OrderbookClient,
+  OrderType,
+  TimeInForce,
+} from "@silvana-one/orderbook";
 
 const transport = createGrpcTransport({
-  baseUrl: "https://api.silvana.one",
+  baseUrl: "https://your-orderbook-server:port",
 });
 
 const client = new OrderbookClient({
@@ -53,10 +59,14 @@ const order = await client.submitOrder({
 
 ```typescript
 import { createGrpcWebTransport } from "@connectrpc/connect-web";
-import { OrderbookClient, OrderType, TimeInForce } from "@silvana-one/orderbook";
+import {
+  OrderbookClient,
+  OrderType,
+  TimeInForce,
+} from "@silvana-one/orderbook";
 
 const transport = createGrpcWebTransport({
-  baseUrl: "https://api.silvana.one",
+  baseUrl: "https://your-orderbook-server:port",
 });
 
 const client = new OrderbookClient({
@@ -72,7 +82,7 @@ const markets = await client.getMarkets();
 
 ### OrderbookClient
 
-Main client for trading operations.
+Trading operations, order management, market data, and RFQ. Requires JWT authentication.
 
 ```typescript
 import { OrderbookClient } from "@silvana-one/orderbook";
@@ -80,14 +90,17 @@ import { OrderbookClient } from "@silvana-one/orderbook";
 const client = new OrderbookClient({ transport, token });
 
 // Trading
-await client.getMarkets();
-await client.getOrders({ marketId: "BTC-USD" });
 await client.submitOrder({ ... });
 await client.cancelOrder({ orderId: 123n });
+await client.getOrders({ marketId: "BTC-USD" });
 
 // Market data
 await client.getOrderbookDepth({ marketId: "BTC-USD", depth: 10 });
 await client.getMarketData({ marketIds: ["BTC-USD"] });
+
+// RFQ
+const quotes = await client.requestQuotes({ marketId: "BTC-USD", direction: "buy", quantity: "0.5" });
+await client.acceptQuote({ rfqId: quotes.rfqId, quoteId: quotes.quotes[0].quoteId });
 
 // Streaming
 for await (const update of client.subscribeOrderbook({ marketId: "BTC-USD" })) {
@@ -95,9 +108,60 @@ for await (const update of client.subscribeOrderbook({ marketId: "BTC-USD" })) {
 }
 ```
 
+### SettlementClient
+
+DVP settlement orchestration and RFQ handling. Requires JWT authentication.
+
+```typescript
+import { SettlementClient } from "@silvana-one/orderbook";
+
+const client = new SettlementClient({ transport, token });
+
+await client.getPendingProposals({ partyId: "party-1" });
+await client.getSettlementStatus({ settlementId: "settlement-1" });
+
+// Bidirectional streaming for settlement flow and RFQ
+const stream = client.settlementStream(messages);
+```
+
+### LedgerClient
+
+Two-phase transaction signing, balance/contract queries, and cloud agent onboarding. JWT authentication for most RPCs; onboarding RPCs use message-level Ed25519 signing.
+
+```typescript
+import { LedgerClient } from "@silvana-one/orderbook";
+
+const client = new LedgerClient({ transport, token });
+
+// Queries
+await client.getBalances();
+await client.getDsoRates();
+await client.getServiceInfo();
+
+// Two-phase transaction
+const prepared = await client.prepareTransaction({ operation, params });
+// ... sign hash locally ...
+await client.executeTransaction({
+  transactionId: prepared.transactionId,
+  signature,
+});
+
+// Onboarding (no JWT needed)
+const unauthClient = new LedgerClient({ transport });
+await unauthClient.getAgentConfig();
+await unauthClient.registerAgent({ publicKey, requestSignature });
+
+// Streaming
+for await (const contract of client.getActiveContracts({
+  templateFilters: ["..."],
+})) {
+  console.log(contract);
+}
+```
+
 ### PricingClient
 
-Client for price data and market feeds.
+External price feeds (Binance, ByBit, CoinGecko). No authentication needed.
 
 ```typescript
 import { PricingClient } from "@silvana-one/orderbook";
@@ -105,7 +169,6 @@ import { PricingClient } from "@silvana-one/orderbook";
 const client = new PricingClient({ transport });
 
 await client.getPrice({ marketId: "BTC-USD" });
-await client.getPrices({ marketIds: ["BTC-USD", "ETH-USD"] });
 await client.getKlines({ marketId: "BTC-USD", interval: "1h", limit: 100 });
 
 // Streaming
@@ -114,58 +177,86 @@ for await (const update of client.streamPrices({ marketIds: ["BTC-USD"] })) {
 }
 ```
 
-### NewsClient
+## gRPC Services
 
-Client for news and market updates.
+The library wraps 5 gRPC services:
 
-```typescript
-import { NewsClient } from "@silvana-one/orderbook";
+| Service             | Client             | Auth                  | Streaming                                                                          |
+| ------------------- | ------------------ | --------------------- | ---------------------------------------------------------------------------------- |
+| OrderbookService    | `OrderbookClient`  | JWT                   | Server-streaming (`subscribeOrderbook`, `subscribeOrders`, `subscribeSettlements`) |
+| SettlementService   | `SettlementClient` | JWT                   | Bidirectional (`settlementStream`)                                                 |
+| DAppProviderService | `LedgerClient`     | JWT / Message signing | Server-streaming (`getActiveContracts`, `getUpdates`)                              |
+| PricingService      | `PricingClient`    | None                  | Server-streaming (`streamPrices`)                                                  |
 
-const client = new NewsClient({ transport });
+### Two-Phase Transaction Flow
 
-await client.getNews({ tokens: ["BTC", "ETH"], limit: 10 });
+All ledger-mutating operations use a two-phase signing protocol via `LedgerClient`:
 
-// Streaming
-for await (const news of client.streamNews({ tokens: ["BTC"] })) {
-  console.log(news);
-}
-```
+1. Call `prepareTransaction` with an operation type and parameters
+2. Server returns the full `prepared_transaction` bytes and a hash
+3. Verify the transaction matches the requested operation (correct template, parties, amounts)
+4. Sign the hash locally with Ed25519 private key
+5. Call `executeTransaction` with the signature
+6. Server submits the signed transaction to the Canton ledger
 
-### SettlementClient
+Operation types:
 
-Client for settlement operations (Canton node integration).
+| Operation                      | Description                        |
+| ------------------------------ | ---------------------------------- |
+| `TRANSFER_CC`                  | Send Canton Coin                   |
+| `TRANSFER_CIP56`               | Send CIP-56 token                  |
+| `ACCEPT_CIP56`                 | Accept incoming CIP-56 transfer    |
+| `PAY_DVP_FEE`                  | Pay DVP processing fee             |
+| `PROPOSE_DVP`                  | Create DVP proposal                |
+| `ACCEPT_DVP`                   | Accept DVP proposal                |
+| `PAY_ALLOC_FEE`                | Pay allocation processing fee      |
+| `ALLOCATE`                     | Allocate tokens to DVP             |
+| `REQUEST_PREAPPROVAL`          | Request TransferPreapproval        |
+| `REQUEST_RECURRING_PREPAID`    | Request prepaid subscription       |
+| `REQUEST_RECURRING_PAYASYOUGO` | Request pay-as-you-go subscription |
+| `REQUEST_USER_SERVICE`         | Request UserService (onboarding)   |
 
-```typescript
-import { SettlementClient } from "@silvana-one/orderbook";
+### Settlement Stream (Bidirectional)
 
-const client = new SettlementClient({ transport });
+`SettlementClient.settlementStream()` opens a long-lived bidirectional gRPC stream for RFQ handling and settlement lifecycle coordination.
 
-await client.getPendingProposals({ auth, partyId: "party-1" });
-await client.getSettlementStatus({ auth, settlementId: "settlement-1" });
-```
+**Client sends:** handshake, heartbeats, preconfirmation decisions, DVP lifecycle events, RFQ quotes/rejections
 
-## API Methods
+**Server sends:** handshake acknowledgement, heartbeats, settlement proposals, preconfirmation requests, RFQ requests
 
-### Order Management
-- `submitOrder()` - Submit a new order
-- `cancelOrder()` - Cancel an existing order
-- `getOrders()` - Get your orders
-- `getOrderHistory()` - Get historical orders
+### Key Query RPCs
 
-### Market Data
-- `getMarkets()` - Get available markets
-- `getInstruments()` - Get tradable instruments
-- `getOrderbookDepth()` - Get orderbook depth
-- `getMarketData()` - Get market statistics
+| Method                     | Client     | Returns                                                |
+| -------------------------- | ---------- | ------------------------------------------------------ |
+| `getBalances()`            | Ledger     | Token balances (total, locked, unlocked)               |
+| `getActiveContracts()`     | Ledger     | Stream of active contracts by template filter          |
+| `getUpdates()`             | Ledger     | Stream of ledger transactions from a given offset      |
+| `getPrice()`               | Pricing    | Bid, ask, last price for a market                      |
+| `getKlines()`              | Pricing    | OHLCV candlestick data (1m to 1w intervals)            |
+| `getOrders()`              | Orderbook  | Orders with status and type filters                    |
+| `getOrderbookDepth()`      | Orderbook  | Aggregated bid/offer price levels                      |
+| `getSettlementProposals()` | Orderbook  | Settlement proposals with status filter                |
+| `getSettlementStatus()`    | Settlement | Step-by-step DVP status with buyer/seller next actions |
+| `getMarkets()`             | Orderbook  | Available markets and their configuration              |
+| `getMarketData()`          | Orderbook  | Best bid/ask, last price, 24h volume                   |
+| `requestQuotes()`          | Orderbook  | RFQ quotes from connected liquidity providers          |
+| `acceptQuote()`            | Orderbook  | Accept an LP quote, creating a settlement proposal     |
 
-### Settlements
-- `getSettlementProposals()` - Get settlement proposals
-- `getSettlements()` - Get completed settlements
+### Server-Streaming Subscriptions
 
-### Streaming (Real-time)
-- `subscribeOrderbook()` - Stream orderbook updates
-- `subscribeOrders()` - Stream order updates
-- `subscribeSettlements()` - Stream settlement updates
+| Method                   | Client    | Payload                                                      |
+| ------------------------ | --------- | ------------------------------------------------------------ |
+| `getActiveContracts()`   | Ledger    | Active contracts matching template filter                    |
+| `getUpdates()`           | Ledger    | Ledger transaction stream from a given offset                |
+| `subscribeOrderbook()`   | Orderbook | Orderbook snapshots and deltas                               |
+| `subscribeOrders()`      | Orderbook | Order lifecycle events (created, filled, cancelled)          |
+| `subscribeSettlements()` | Orderbook | Settlement status change events                              |
+| `streamPrices()`         | Pricing   | Real-time price ticks with optional orderbook and trade data |
+
+### Authentication
+
+- **JWT** — Self-describing Ed25519 JWT (RFC 8037) with automatic refresh. Used for Orderbook, Pricing, and Settlement RPCs. The token embeds the Ed25519 public key; the server verifies it matches the registered party.
+- **Message signing** — Per-request Ed25519 signature on the canonical request payload, used for Ledger two-phase transactions. Server responses are also signed and should be verified using the ledger service public key.
 
 ## Types
 
@@ -181,6 +272,11 @@ import {
   SettlementStatus,
   Market,
   Instrument,
+  TransactionOperation,
+  TransactionStatus,
+  RfqAuditEventType,
+  RfqDirection,
+  RfqRejectionReason,
 } from "@silvana-one/orderbook";
 ```
 

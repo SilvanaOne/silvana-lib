@@ -59,21 +59,11 @@ enum MarketType {
 // Core Data Messages (matching SQL tables)
 // ============================================================================
 
-// JWT authentication token (for server-signed tokens using JWT_PRIVATE_KEY)
-message JWTAuth {
-  string token = 1; // JWT signed with server's Ed25519 private key (JWT_PRIVATE_KEY)
-}
-
-// External account authentication
-// JWT is signed by the external account's Ed25519 private key
-// The public_key is verified against the party_id fingerprint:
-//   fingerprint = SHA256(0x0000000C || public_key_bytes)
-//   party_id format: "identifier::1220{fingerprint}"
-message ExternalAuth {
-  string jwt = 1;              // JWT signed with external account's Ed25519 private key
-  string party_id = 2;         // Canton party ID of the external account
-  string public_key = 3;       // Ed25519 public key (hex) - verified against party_id fingerprint
-}
+// NOTE: Authentication is via gRPC metadata header: authorization: Bearer <token>
+// JWT is self-describing:
+// - Server-signed tokens: no 'jwk' header, verified with JWT_PUBLIC_KEY env var
+// - External account tokens: 'jwk' header with Ed25519 public key (RFC 8037),
+//   verified against 'sub' claim (party_id) fingerprint
 
 // Instrument message
 message Instrument {
@@ -140,7 +130,8 @@ message Order {
   google.protobuf.Timestamp updated_at = 21;
   optional google.protobuf.Timestamp cancelled_at = 22;
   optional string signature = 23;  // Base64-encoded Ed25519 signature for order authentication
-  int64 nonce = 24;  // Unique nonce per trader for replay protection
+  bytes signed_data = 24;  // Original signed order data (binary)
+  uint64 nonce = 25;  // Unique nonce per trader for replay protection
 }
 
 // Orderbook depth level (aggregated view without user details)
@@ -184,6 +175,9 @@ message SettlementProposal {
   optional google.protobuf.Timestamp settled_at = 17;
   optional google.protobuf.Timestamp cancelled_at = 18;
   optional google.protobuf.Timestamp failed_at = 19;
+
+  // Matched order IDs (always populated - links proposal to bid/offer orders)
+  OrderMatch order_match = 20;
 }
 
 // Order match message
@@ -239,13 +233,12 @@ message MarketData {
 
 // Get user's orders
 message GetOrdersRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional string market_id = 2;
   optional OrderStatus status = 3;
   optional OrderType order_type = 4;
   optional uint32 limit = 5;
   optional uint32 offset = 6;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
   // Liquidity provider filtering (returns orders from LP parties)
   optional uint32 liquidity_provider_active_seconds = 11;  // Only LPs active within N seconds (default 60)
   repeated string liquidity_provider_names = 12;           // Filter by specific LP names
@@ -260,10 +253,9 @@ message GetOrdersResponse {
 
 // Get orderbook depth (aggregated, no user details)
 message GetOrderbookDepthRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string market_id = 2;
   optional uint32 depth = 3; // Number of price levels (default 20)
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetOrderbookDepthResponse {
@@ -274,12 +266,11 @@ message GetOrderbookDepthResponse {
 
 // Get user's settlement proposals
 message GetSettlementProposalsRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional string market_id = 2;
   optional SettlementStatus status = 3;
   optional uint32 limit = 4;
   optional uint32 offset = 5;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetSettlementProposalsResponse {
@@ -291,9 +282,8 @@ message GetSettlementProposalsResponse {
 
 // Get a single settlement proposal by ID
 message GetSettlementProposalRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string proposal_id = 2;  // UUID v7
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetSettlementProposalResponse {
@@ -304,11 +294,10 @@ message GetSettlementProposalResponse {
 
 // Get available instruments (filtered by JWT permissions)
 message GetInstrumentsRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional string instrument_type = 2;
   optional uint32 limit = 3;
   optional uint32 offset = 4;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetInstrumentsResponse {
@@ -320,14 +309,13 @@ message GetInstrumentsResponse {
 
 // Get available markets (filtered by JWT permissions)
 message GetMarketsRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional MarketType market_type = 2;
   optional string base_instrument = 3;
   optional string quote_instrument = 4;
   optional bool active_only = 5;
   optional uint32 limit = 6;
   optional uint32 offset = 7;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetMarketsResponse {
@@ -339,13 +327,12 @@ message GetMarketsResponse {
 
 // Get user's order history
 message GetOrderHistoryRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional string market_id = 2;
   optional google.protobuf.Timestamp from_time = 3;
   optional google.protobuf.Timestamp to_time = 4;
   optional uint32 limit = 5;
   optional uint32 offset = 6;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetOrderHistoryResponse {
@@ -357,9 +344,8 @@ message GetOrderHistoryResponse {
 
 // Get market data (filtered by JWT permissions)
 message GetMarketDataRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   repeated string market_ids = 2; // Empty = all accessible markets
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetMarketDataResponse {
@@ -370,13 +356,12 @@ message GetMarketDataResponse {
 
 // Get user's settlements (completed)
 message GetSettlementsRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional string market_id = 2;
   optional google.protobuf.Timestamp from_time = 3;
   optional google.protobuf.Timestamp to_time = 4;
   optional uint32 limit = 5;
   optional uint32 offset = 6;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetSettlementsResponse {
@@ -388,10 +373,9 @@ message GetSettlementsResponse {
 
 // Subscribe to orderbook updates (streaming)
 message SubscribeOrderbookRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string market_id = 2;
   optional uint32 depth = 3; // Number of price levels
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 // Orderbook update event
@@ -411,9 +395,8 @@ message OrderbookUpdate {
 
 // Subscribe to user's order updates (streaming)
 message SubscribeOrdersRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional string market_id = 2;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 // Order update event
@@ -435,9 +418,8 @@ message OrderUpdate {
 
 // Subscribe to user's settlement updates (streaming)
 message SubscribeSettlementsRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional string market_id = 2;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 // Settlement update event (for streaming - simplified to status changes)
@@ -457,7 +439,7 @@ message SettlementUpdate {
 
 // Submit a new order
 message SubmitOrderRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string market_id = 2;
   OrderType order_type = 3;
   string price = 4;  // DECIMAL(38,10) as string
@@ -469,8 +451,8 @@ message SubmitOrderRequest {
   optional google.protobuf.Struct requirements = 10;
   optional google.protobuf.Struct metadata = 11;
   optional string signature = 12;  // Base64-encoded Ed25519 signature for order authentication
-  int64 nonce = 13;  // Unique nonce per trader for replay protection
-  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
+  bytes signed_data = 13;  // Original signed order data (binary)
+  uint64 nonce = 14;  // Unique nonce per trader for replay protection
 }
 
 message SubmitOrderResponse {
@@ -481,9 +463,8 @@ message SubmitOrderResponse {
 
 // Cancel an existing order
 message CancelOrderRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   uint64 order_id = 2;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message CancelOrderResponse {
@@ -498,10 +479,10 @@ message CancelOrderResponse {
 
 // Create a new party (operator, registry, or trader)
 message CreatePartyRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string party_id = 2;
   string party_name = 3;
-  string party_type = 4; // trader, operator, registry, issuer
+  string party_type = 4; // trader, operator, registry, issuer, validator
   optional string user_service_cid = 5; // UserService contract ID for traders
   optional string operator_config_cid = 6; // OperatorConfiguration contract ID for operators
   optional google.protobuf.Struct metadata = 7;
@@ -510,8 +491,8 @@ message CreatePartyRequest {
   optional string email = 10;                            // Party email address
   optional string public_key = 11;                       // Base58 public key
   optional string invite_code = 12;                      // Invite code used during registration
-  optional string source = 13;                           // Source: loop_wallet, form, supa_wallet, admin
-  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
+  optional string source = 13;                           // Source: loop_wallet, form, supa_wallet, admin, onboard, zoro_wallet
+  optional string encrypted_private_key = 14;            // AES-256-GCM encrypted private key
   // Liquidity provider fields (creates/links LP entry when party is created)
   optional string liquidity_provider_name = 16;        // LP name to create/link
   optional string liquidity_provider_description = 17; // LP description (for new LPs)
@@ -525,7 +506,7 @@ message CreatePartyResponse {
 
 // Update an existing party (admin operation)
 message UpdatePartyRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string party_id = 2;                            // Required - which party to update
   uint64 expected_version = 3;                    // Required - optimistic locking
   optional string party_name = 4;
@@ -539,7 +520,7 @@ message UpdatePartyRequest {
   optional string public_key = 12;                // Base58 public key
   optional string invite_code = 13;               // Invite code used during registration
   optional string source = 14;                    // Source: loop_wallet, form, supa_wallet, admin
-  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
+  optional string encrypted_private_key = 15;     // AES-256-GCM encrypted private key
 }
 
 message UpdatePartyResponse {
@@ -550,11 +531,10 @@ message UpdatePartyResponse {
 
 // Deactivate a party (soft delete - admin operation)
 message DeactivatePartyRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string party_id = 2;
   uint64 expected_version = 3;
   string change_reason = 4;                       // Required for deactivation
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message DeactivatePartyResponse {
@@ -565,11 +545,10 @@ message DeactivatePartyResponse {
 
 // Get party change history (audit trail)
 message GetPartyHistoryRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string party_id = 2;
   optional uint32 limit = 3;
   optional uint32 offset = 4;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 // Single entry in party history
@@ -593,9 +572,8 @@ message GetPartyHistoryResponse {
 
 // Get a single party by ID
 message GetPartyRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string party_id = 2;
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetPartyResponse {
@@ -606,12 +584,11 @@ message GetPartyResponse {
 
 // List parties with filters and pagination
 message GetPartiesRequest {
-  JWTAuth auth = 1;
-  optional string party_type = 2;           // Filter by type: trader, operator, registry, issuer
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  optional string party_type = 2;           // Filter by type: trader, operator, registry, issuer, validator
   optional bool active_only = 3;            // If true, only return active parties (default: all)
   optional uint32 limit = 4;                // Max results (default: 50, max: 1000)
   optional uint32 offset = 5;               // Pagination offset
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message GetPartiesResponse {
@@ -653,11 +630,10 @@ message LiquidityProvider {
 
 // Get liquidity providers list
 message GetLiquidityProvidersRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional uint32 active_seconds = 2;  // Only return LPs active within N seconds (default: all)
   optional uint32 limit = 3;           // Pagination
   optional uint32 offset = 4;
-  optional ExternalAuth external_auth = 10;
 }
 
 message GetLiquidityProvidersResponse {
@@ -676,19 +652,22 @@ message WaitingListEntry {
   uint64 id = 1;
   optional string party_id = 2;
   google.protobuf.Struct user_data = 3;
-  string source = 4;                    // loop_wallet, form, supa_wallet
+  string source = 4;                    // loop_wallet, form, supa_wallet, agent
   optional string email = 5;
   optional string public_key = 6;
-  bool is_onboarded = 7;
+  string onboarding_status = 7;         // requested, signature_required, topology_created, onboarded
   uint64 version = 8;
   optional google.protobuf.Struct metadata = 9;
   google.protobuf.Timestamp created_at = 10;
   google.protobuf.Timestamp updated_at = 11;
+  optional string multihash = 12;
+  optional string multihash_signature = 13;
+  optional string invite_code = 14;
 }
 
 // Add entry to waiting list (JWT auth with user 'onboard')
 message AddWaitingListEntryRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   google.protobuf.Struct user_data = 2;
   string source = 3;
   optional string email = 4;
@@ -738,9 +717,8 @@ message LatestCoefficients {
 
 // Get rounds data with latest coefficients
 message GetRoundsDataRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   optional uint32 limit = 2;  // Default: 10, max: 100
-  optional ExternalAuth external_auth = 10;
 }
 
 message GetRoundsDataResponse {
@@ -802,7 +780,7 @@ message UseInviteResponse {
 
 // Create a new instrument
 message CreateInstrumentRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string instrument_id = 2;
   string instrument_type = 3; // token, asset, commodity, native
   string name = 4;
@@ -812,7 +790,6 @@ message CreateInstrumentRequest {
   optional string registry = 8; // Canton registry party ID
   optional google.protobuf.Struct metadata = 9;
   string news_symbol = 10;  // Symbol for news API search (e.g., 'BTC' for WBTC)
-  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
 message CreateInstrumentResponse {
@@ -823,7 +800,7 @@ message CreateInstrumentResponse {
 
 // Create a new market
 message CreateMarketRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string market_id = 2;
   MarketType market_type = 3;
   optional string base_instrument = 4; // Optional for general markets
@@ -835,7 +812,6 @@ message CreateMarketRequest {
   string taker_fee = 10; // DECIMAL as string (e.g., "0.002" for 0.2%)
   optional google.protobuf.Struct metadata = 11;
   optional google.protobuf.Struct price_feeds = 12; // Price feed configurations
-  optional ExternalAuth external_auth = 15;  // Alternative auth for external accounts
 }
 
 message CreateMarketResponse {
@@ -846,16 +822,139 @@ message CreateMarketResponse {
 
 // Update price feeds for an existing market
 message UpdateMarketPriceFeedsRequest {
-  JWTAuth auth = 1;
+  // Auth via gRPC metadata: authorization: Bearer <token>
   string market_id = 2;
   google.protobuf.Struct price_feeds = 3; // New price feed configuration
-  optional ExternalAuth external_auth = 10;  // Alternative auth for external accounts
 }
 
 message UpdateMarketPriceFeedsResponse {
   bool success = 1;
   string message = 2;
   Market market = 3; // Updated market info
+}
+
+// ============================================================================
+// RFQ (Request-for-Quote) Messages
+// ============================================================================
+
+// Request quotes from connected liquidity providers
+message RequestQuotesRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  string market_id = 2;
+  string direction = 3;           // "buy" or "sell"
+  string quantity = 4;            // DECIMAL(38,10) as string — base instrument quantity
+  repeated string lp_names = 5;   // Optional: specific LPs to request from (empty = all connected)
+  optional uint32 timeout_secs = 6;  // How long to wait for LP responses (default: 10, max: 30)
+}
+
+message RequestQuotesResponse {
+  bool success = 1;
+  string message = 2;
+  string rfq_id = 3;              // UUIDv7 for this RFQ session
+  repeated RfqQuoteInfo quotes = 4;
+  repeated RfqRejectInfo rejections = 5;
+  uint32 lps_requested = 6;       // How many LP parties were contacted
+  uint32 lps_responded = 7;       // How many responded (quotes + rejections)
+}
+
+// Quote info returned to user
+message RfqQuoteInfo {
+  string quote_id = 1;
+  string lp_name = 2;
+  string price = 3;               // DECIMAL(38,10) as string — price per unit
+  string quantity = 4;            // DECIMAL(38,10) as string — base quantity
+  string quote_quantity = 5;      // DECIMAL(38,10) as string — total cost/proceeds in quote instrument
+  google.protobuf.Timestamp valid_until = 6;
+  optional uint32 allocate_before_secs = 7;   // LP's allocation deadline requirement (seconds from DVP creation)
+  optional uint32 settle_before_secs = 8;     // LP's settlement deadline requirement (seconds from DVP creation)
+}
+
+// Rejection info returned to user
+message RfqRejectInfo {
+  string lp_name = 1;
+  string reason = 2;              // Human-readable reason
+  optional string min_quantity = 3; // LP's min acceptable quantity (if rejected for amount)
+  optional string max_quantity = 4; // LP's max acceptable quantity (if rejected for amount)
+}
+
+// Accept a specific quote
+message AcceptQuoteRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  string rfq_id = 2;              // Original RFQ session ID
+  string quote_id = 3;            // Specific quote to accept
+}
+
+message AcceptQuoteResponse {
+  bool success = 1;
+  string message = 2;
+  optional string proposal_id = 3;  // Settlement proposal ID (if accepted)
+}
+
+// Get connected liquidity providers (replaces activity-based filter)
+message GetConnectedLiquidityProvidersRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  optional string market_id = 2;  // Future: filter by market support
+}
+
+message GetConnectedLiquidityProvidersResponse {
+  bool success = 1;
+  string message = 2;
+  repeated ConnectedLpInfo liquidity_providers = 3;
+}
+
+message ConnectedLpInfo {
+  string name = 1;
+  string description = 2;
+  uint32 connected_agents = 3;    // Number of connected party_ids for this LP
+}
+
+// ============================================================================
+// RFQ Audit Log Messages
+// ============================================================================
+
+enum RfqAuditEventType {
+  RFQ_AUDIT_EVENT_TYPE_UNSPECIFIED = 0;
+  RFQ_AUDIT_EVENT_TYPE_REQUEST = 1;
+  RFQ_AUDIT_EVENT_TYPE_QUOTE = 2;
+  RFQ_AUDIT_EVENT_TYPE_REJECT = 3;
+  RFQ_AUDIT_EVENT_TYPE_ACCEPT = 4;
+  RFQ_AUDIT_EVENT_TYPE_EXPIRE = 5;
+}
+
+message RfqAuditLogEntry {
+  uint64 id = 1;
+  string rfq_id = 2;
+  RfqAuditEventType event_type = 3;
+  string market_id = 4;
+  string direction = 5;
+  string requesting_party = 6;
+  optional string lp_name = 7;
+  optional string lp_party_id = 8;
+  optional string quantity = 9;
+  optional string price = 10;
+  optional string quote_quantity = 11;
+  optional string quote_id = 12;
+  optional string proposal_id = 13;
+  optional string error_message = 14;
+  google.protobuf.Timestamp created_at = 15;
+}
+
+message GetRfqAuditLogRequest {
+  // Auth via gRPC metadata — private access: only entries where
+  // requesting_party = caller OR lp_party_id = caller
+  optional string rfq_id = 1;
+  optional string market_id = 2;
+  optional RfqAuditEventType event_type = 3;
+  optional string lp_name = 4;
+  optional google.protobuf.Timestamp from_time = 5;
+  optional google.protobuf.Timestamp to_time = 6;
+  optional uint32 limit = 7;
+  optional uint32 offset = 8;
+}
+
+message GetRfqAuditLogResponse {
+  repeated RfqAuditLogEntry entries = 1;
+  uint32 total = 2;
 }
 
 // ============================================================================
@@ -884,6 +983,12 @@ service OrderbookService {
 
   // Liquidity provider operations
   rpc GetLiquidityProviders(GetLiquidityProvidersRequest) returns (GetLiquidityProvidersResponse);
+  rpc GetConnectedLiquidityProviders(GetConnectedLiquidityProvidersRequest) returns (GetConnectedLiquidityProvidersResponse);
+
+  // RFQ operations
+  rpc RequestQuotes(RequestQuotesRequest) returns (RequestQuotesResponse);
+  rpc AcceptQuote(AcceptQuoteRequest) returns (AcceptQuoteResponse);
+  rpc GetRfqAuditLog(GetRfqAuditLogRequest) returns (GetRfqAuditLogResponse);
 
   // Waiting list operations (JWT auth with user 'onboard')
   rpc AddWaitingListEntry(AddWaitingListEntryRequest) returns (AddWaitingListEntryResponse);
