@@ -169,6 +169,18 @@ export {
   SettlementEventResultSchema,
   DvpStepStatusEnum,
   DvpStepStatusEnumSchema,
+  type RfqRequest,
+  RfqRequestSchema,
+  type RfqQuote,
+  RfqQuoteSchema,
+  type RfqReject,
+  RfqRejectSchema,
+  RfqDirection,
+  RfqDirectionSchema,
+  RfqRejectionReason,
+  RfqRejectionReasonSchema,
+  NextAction,
+  NextActionSchema,
   SettlementService,
 } from "./proto/silvana/settlement/v1/settlement_pb.js";
 

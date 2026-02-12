@@ -61,6 +61,7 @@ enum TransactionType {
   TRANSACTION_TYPE_MERGE = 11;
   TRANSACTION_TYPE_UNLOCK = 12;
   TRANSACTION_TYPE_OTHER = 13;
+  TRANSACTION_TYPE_TRANSFER = 14;
 }
 
 // Sender type for transaction history
@@ -180,6 +181,28 @@ enum NextAction {
   NEXT_ACTION_PAY_ALLOC_FEE = 5;   // Pay allocation processing fee
   NEXT_ACTION_ALLOCATE = 6;        // Allocate tokens
   NEXT_ACTION_WAIT = 7;            // Waiting for counterparty/operator
+}
+
+// ============================================================================
+// RFQ (Request-for-Quote) Enumerations
+// ============================================================================
+
+// Direction the user wants to trade
+enum RfqDirection {
+  RFQ_DIRECTION_UNSPECIFIED = 0;
+  RFQ_DIRECTION_BUY = 1;   // User wants to buy base instrument
+  RFQ_DIRECTION_SELL = 2;  // User wants to sell base instrument
+}
+
+// RFQ rejection reason
+enum RfqRejectionReason {
+  RFQ_REJECTION_REASON_UNSPECIFIED = 0;
+  RFQ_REJECTION_REASON_MARKET_NOT_SUPPORTED = 1;
+  RFQ_REJECTION_REASON_AMOUNT_TOO_LARGE = 2;
+  RFQ_REJECTION_REASON_AMOUNT_TOO_SMALL = 3;
+  RFQ_REJECTION_REASON_INSUFFICIENT_INVENTORY = 4;
+  RFQ_REJECTION_REASON_MARKET_CONDITIONS = 5;
+  RFQ_REJECTION_REASON_TEMPORARILY_UNAVAILABLE = 6;
 }
 
 // Result of a settlement event
@@ -326,6 +349,7 @@ message SettlementHandshake {
   repeated UserServiceInfo user_services = 3; // UserService contracts for DVP
   string operator_party = 4; // Settlement operator party ID
   optional google.protobuf.Struct capabilities = 5; // Node capabilities
+  optional string liquidity_provider_name = 6; // If set, this agent is a liquidity provider
 }
 
 // Handshake acknowledgment from server
@@ -360,6 +384,50 @@ message LiquidityProviderPong {
   google.protobuf.Timestamp server_time = 4;
 }
 
+// ============================================================================
+// RFQ Messages (Request-for-Quote)
+// ============================================================================
+
+// RFQ request from server to LP agent (via stream) — anonymous: no requesting party
+message RfqRequest {
+  string rfq_id = 1;              // UUIDv7 — unique per RFQ session
+  string market_id = 2;
+  RfqDirection direction = 3;     // What the USER wants to do (buy/sell)
+  string quantity = 4;            // DECIMAL(38,10) as string — base instrument quantity
+  google.protobuf.Timestamp respond_by = 5;  // Server-enforced deadline for LP response
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// RFQ quote response from LP agent to server (via stream)
+message RfqQuote {
+  string rfq_id = 1;             // Must match RfqRequest.rfq_id
+  string quote_id = 2;           // UUIDv7 — unique per quote
+  string market_id = 3;
+  RfqDirection direction = 4;    // Echoes the request direction
+  string quantity = 5;           // DECIMAL(38,10) as string — base quantity being quoted
+  string price = 6;              // DECIMAL(38,10) as string — price per unit of base
+  string quote_quantity = 7;     // DECIMAL(38,10) as string — total quote instrument amount (price × quantity)
+  uint32 valid_for_secs = 8;     // How many seconds this quote is valid
+  google.protobuf.Timestamp valid_until = 9;  // Absolute expiry
+  string lp_party_id = 10;       // LP's Canton party ID (the counterparty for DVP)
+  string lp_name = 11;           // LP display name
+  google.protobuf.Timestamp quoted_at = 12;
+  optional uint32 allocate_before_secs = 13;  // Seconds from DVP creation for allocation deadline
+  optional uint32 settle_before_secs = 14;    // Seconds from DVP creation for settlement deadline
+}
+
+// RFQ rejection from LP agent to server (via stream)
+message RfqReject {
+  string rfq_id = 1;             // Must match RfqRequest.rfq_id
+  string lp_party_id = 2;        // LP's Canton party ID
+  string lp_name = 3;            // LP display name
+  RfqRejectionReason reason = 4;
+  optional string reason_detail = 5;  // Human-readable detail
+  google.protobuf.Timestamp rejected_at = 6;
+  optional string min_quantity = 7;   // LP's min acceptable quantity (set on AmountTooSmall/AmountTooLarge)
+  optional string max_quantity = 8;   // LP's max acceptable quantity (set on AmountTooSmall/AmountTooLarge)
+}
+
 // Stream message from server to Canton node
 message ServerToCantonMessage {
   string session_id = 1;
@@ -376,7 +444,8 @@ message ServerToCantonMessage {
     SettlementExecutionStatus settlement_status = 10;
     SettlementCommand command = 11;
     SettlementQuery query = 12;
-    LiquidityProviderPong lp_pong = 14;  // Pong acknowledgment for LP activity ping
+    LiquidityProviderPong lp_pong = 14;  // Pong acknowledgment for LP activity ping (deprecated)
+    RfqRequest rfq_request = 15;         // RFQ request to LP agent
   }
 
   google.protobuf.Timestamp sent_at = 13;
@@ -398,7 +467,9 @@ message CantonToServerMessage {
     SettlementResponse response = 10;
     ErrorReport error = 11;
     StatusUpdate status = 12;
-    LiquidityProviderPing lp_ping = 14;  // Ping from settlement agent for LP activity
+    LiquidityProviderPing lp_ping = 14;  // Ping from settlement agent (deprecated)
+    RfqQuote rfq_quote = 15;            // LP quote response
+    RfqReject rfq_reject = 16;          // LP rejection response
   }
 
   google.protobuf.Timestamp sent_at = 13;
@@ -787,6 +858,7 @@ message RecordTransactionRequest {
 
   // Financial data
   optional string amount = 12;  // DECIMAL(38,10) as string
+  optional string token = 27;   // instrument_id from instruments table
   optional string rewards_amount = 13;
   optional uint64 rewards_round = 14;
   optional uint64 traffic_request = 15;
@@ -843,6 +915,7 @@ message TransactionHistoryEntry {
   optional string contract_id = 10;
   optional string choice_name = 11;
   optional string amount = 12;
+  optional string token = 27;   // instrument_id from instruments table
   optional string rewards_amount = 13;
   optional uint64 rewards_round = 14;
   optional uint64 traffic_request = 15;

@@ -60,10 +60,25 @@ import {
   type GetInviteResponse,
   UseInviteRequestSchema,
   type UseInviteResponse,
+  RequestQuotesRequestSchema,
+  type RequestQuotesResponse,
+  AcceptQuoteRequestSchema,
+  type AcceptQuoteResponse,
+  GetConnectedLiquidityProvidersRequestSchema,
+  type GetConnectedLiquidityProvidersResponse,
+  GetRfqAuditLogRequestSchema,
+  type GetRfqAuditLogResponse,
+  GetLiquidityProvidersRequestSchema,
+  type GetLiquidityProvidersResponse,
+  GetRoundsDataRequestSchema,
+  type GetRoundsDataResponse,
+  type GetSettlementProposalResponse,
+  GetSettlementProposalRequestSchema,
+  RfqAuditEventType,
 } from "./proto/silvana/orderbook/v1/orderbook_pb.js";
 
 // Re-export commonly used enums for convenience
-export { OrderType, OrderStatus, TimeInForce, MarketType, SettlementStatus };
+export { OrderType, OrderStatus, TimeInForce, MarketType, SettlementStatus, RfqAuditEventType };
 
 /**
  * Converts a Date to a Timestamp message
@@ -542,5 +557,112 @@ export class OrderbookClient {
       const request = create(UseInviteRequestSchema, params);
       return await this.client.useInvite(request, this.callOptions());
     }, 'useInvite');
+  }
+
+  /**
+   * Get a single settlement proposal by ID
+   */
+  async getSettlementProposal(params: {
+    proposalId: string;
+  }): Promise<GetSettlementProposalResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetSettlementProposalRequestSchema, params);
+      return await this.client.getSettlementProposal(request, this.callOptions());
+    }, 'getSettlementProposal');
+  }
+
+  /**
+   * Get liquidity providers
+   */
+  async getLiquidityProviders(params?: {
+    activeSeconds?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<GetLiquidityProvidersResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetLiquidityProvidersRequestSchema, params ?? {});
+      return await this.client.getLiquidityProviders(request, this.callOptions());
+    }, 'getLiquidityProviders');
+  }
+
+  /**
+   * Get connected liquidity providers
+   */
+  async getConnectedLiquidityProviders(params?: {
+    marketId?: string;
+  }): Promise<GetConnectedLiquidityProvidersResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetConnectedLiquidityProvidersRequestSchema, params ?? {});
+      return await this.client.getConnectedLiquidityProviders(request, this.callOptions());
+    }, 'getConnectedLiquidityProviders');
+  }
+
+  /**
+   * Request quotes from liquidity providers (RFQ)
+   */
+  async requestQuotes(params: {
+    marketId: string;
+    direction: string;
+    quantity: string;
+    lpNames?: string[];
+    timeoutSecs?: number;
+  }): Promise<RequestQuotesResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(RequestQuotesRequestSchema, params);
+      return await this.client.requestQuotes(request, this.callOptions());
+    }, 'requestQuotes');
+  }
+
+  /**
+   * Accept a quote from an LP (RFQ)
+   */
+  async acceptQuote(params: {
+    rfqId: string;
+    quoteId: string;
+  }): Promise<AcceptQuoteResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(AcceptQuoteRequestSchema, params);
+      return await this.client.acceptQuote(request, this.callOptions());
+    }, 'acceptQuote');
+  }
+
+  /**
+   * Get RFQ audit log
+   */
+  async getRfqAuditLog(params?: {
+    rfqId?: string;
+    marketId?: string;
+    eventType?: RfqAuditEventType;
+    lpName?: string;
+    fromTime?: Date;
+    toTime?: Date;
+    limit?: number;
+    offset?: number;
+  }): Promise<GetRfqAuditLogResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetRfqAuditLogRequestSchema, {
+        rfqId: params?.rfqId,
+        marketId: params?.marketId,
+        eventType: params?.eventType,
+        lpName: params?.lpName,
+        fromTime: params?.fromTime ? dateToTimestamp(params.fromTime) : undefined,
+        toTime: params?.toTime ? dateToTimestamp(params.toTime) : undefined,
+        limit: params?.limit,
+        offset: params?.offset,
+      });
+      return await this.client.getRfqAuditLog(request, this.callOptions());
+    }, 'getRfqAuditLog');
+  }
+
+  /**
+   * Get rounds data (Canton mining rounds)
+   */
+  async getRoundsData(params?: {
+    limit?: number;
+  }): Promise<GetRoundsDataResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetRoundsDataRequestSchema, params ?? {});
+      return await this.client.getRoundsData(request, this.callOptions());
+    }, 'getRoundsData');
   }
 }

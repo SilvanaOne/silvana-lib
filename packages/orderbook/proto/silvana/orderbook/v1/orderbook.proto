@@ -175,6 +175,9 @@ message SettlementProposal {
   optional google.protobuf.Timestamp settled_at = 17;
   optional google.protobuf.Timestamp cancelled_at = 18;
   optional google.protobuf.Timestamp failed_at = 19;
+
+  // Matched order IDs (always populated - links proposal to bid/offer orders)
+  OrderMatch order_match = 20;
 }
 
 // Order match message
@@ -649,14 +652,17 @@ message WaitingListEntry {
   uint64 id = 1;
   optional string party_id = 2;
   google.protobuf.Struct user_data = 3;
-  string source = 4;                    // loop_wallet, form, supa_wallet
+  string source = 4;                    // loop_wallet, form, supa_wallet, agent
   optional string email = 5;
   optional string public_key = 6;
-  bool is_onboarded = 7;
+  string onboarding_status = 7;         // requested, signature_required, topology_created, onboarded
   uint64 version = 8;
   optional google.protobuf.Struct metadata = 9;
   google.protobuf.Timestamp created_at = 10;
   google.protobuf.Timestamp updated_at = 11;
+  optional string multihash = 12;
+  optional string multihash_signature = 13;
+  optional string invite_code = 14;
 }
 
 // Add entry to waiting list (JWT auth with user 'onboard')
@@ -828,6 +834,130 @@ message UpdateMarketPriceFeedsResponse {
 }
 
 // ============================================================================
+// RFQ (Request-for-Quote) Messages
+// ============================================================================
+
+// Request quotes from connected liquidity providers
+message RequestQuotesRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  string market_id = 2;
+  string direction = 3;           // "buy" or "sell"
+  string quantity = 4;            // DECIMAL(38,10) as string — base instrument quantity
+  repeated string lp_names = 5;   // Optional: specific LPs to request from (empty = all connected)
+  optional uint32 timeout_secs = 6;  // How long to wait for LP responses (default: 10, max: 30)
+}
+
+message RequestQuotesResponse {
+  bool success = 1;
+  string message = 2;
+  string rfq_id = 3;              // UUIDv7 for this RFQ session
+  repeated RfqQuoteInfo quotes = 4;
+  repeated RfqRejectInfo rejections = 5;
+  uint32 lps_requested = 6;       // How many LP parties were contacted
+  uint32 lps_responded = 7;       // How many responded (quotes + rejections)
+}
+
+// Quote info returned to user
+message RfqQuoteInfo {
+  string quote_id = 1;
+  string lp_name = 2;
+  string price = 3;               // DECIMAL(38,10) as string — price per unit
+  string quantity = 4;            // DECIMAL(38,10) as string — base quantity
+  string quote_quantity = 5;      // DECIMAL(38,10) as string — total cost/proceeds in quote instrument
+  google.protobuf.Timestamp valid_until = 6;
+  optional uint32 allocate_before_secs = 7;   // LP's allocation deadline requirement (seconds from DVP creation)
+  optional uint32 settle_before_secs = 8;     // LP's settlement deadline requirement (seconds from DVP creation)
+}
+
+// Rejection info returned to user
+message RfqRejectInfo {
+  string lp_name = 1;
+  string reason = 2;              // Human-readable reason
+  optional string min_quantity = 3; // LP's min acceptable quantity (if rejected for amount)
+  optional string max_quantity = 4; // LP's max acceptable quantity (if rejected for amount)
+}
+
+// Accept a specific quote
+message AcceptQuoteRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  string rfq_id = 2;              // Original RFQ session ID
+  string quote_id = 3;            // Specific quote to accept
+}
+
+message AcceptQuoteResponse {
+  bool success = 1;
+  string message = 2;
+  optional string proposal_id = 3;  // Settlement proposal ID (if accepted)
+}
+
+// Get connected liquidity providers (replaces activity-based filter)
+message GetConnectedLiquidityProvidersRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  optional string market_id = 2;  // Future: filter by market support
+}
+
+message GetConnectedLiquidityProvidersResponse {
+  bool success = 1;
+  string message = 2;
+  repeated ConnectedLpInfo liquidity_providers = 3;
+}
+
+message ConnectedLpInfo {
+  string name = 1;
+  string description = 2;
+  uint32 connected_agents = 3;    // Number of connected party_ids for this LP
+}
+
+// ============================================================================
+// RFQ Audit Log Messages
+// ============================================================================
+
+enum RfqAuditEventType {
+  RFQ_AUDIT_EVENT_TYPE_UNSPECIFIED = 0;
+  RFQ_AUDIT_EVENT_TYPE_REQUEST = 1;
+  RFQ_AUDIT_EVENT_TYPE_QUOTE = 2;
+  RFQ_AUDIT_EVENT_TYPE_REJECT = 3;
+  RFQ_AUDIT_EVENT_TYPE_ACCEPT = 4;
+  RFQ_AUDIT_EVENT_TYPE_EXPIRE = 5;
+}
+
+message RfqAuditLogEntry {
+  uint64 id = 1;
+  string rfq_id = 2;
+  RfqAuditEventType event_type = 3;
+  string market_id = 4;
+  string direction = 5;
+  string requesting_party = 6;
+  optional string lp_name = 7;
+  optional string lp_party_id = 8;
+  optional string quantity = 9;
+  optional string price = 10;
+  optional string quote_quantity = 11;
+  optional string quote_id = 12;
+  optional string proposal_id = 13;
+  optional string error_message = 14;
+  google.protobuf.Timestamp created_at = 15;
+}
+
+message GetRfqAuditLogRequest {
+  // Auth via gRPC metadata — private access: only entries where
+  // requesting_party = caller OR lp_party_id = caller
+  optional string rfq_id = 1;
+  optional string market_id = 2;
+  optional RfqAuditEventType event_type = 3;
+  optional string lp_name = 4;
+  optional google.protobuf.Timestamp from_time = 5;
+  optional google.protobuf.Timestamp to_time = 6;
+  optional uint32 limit = 7;
+  optional uint32 offset = 8;
+}
+
+message GetRfqAuditLogResponse {
+  repeated RfqAuditLogEntry entries = 1;
+  uint32 total = 2;
+}
+
+// ============================================================================
 // Service Definition
 // ============================================================================
 
@@ -853,6 +983,12 @@ service OrderbookService {
 
   // Liquidity provider operations
   rpc GetLiquidityProviders(GetLiquidityProvidersRequest) returns (GetLiquidityProvidersResponse);
+  rpc GetConnectedLiquidityProviders(GetConnectedLiquidityProvidersRequest) returns (GetConnectedLiquidityProvidersResponse);
+
+  // RFQ operations
+  rpc RequestQuotes(RequestQuotesRequest) returns (RequestQuotesResponse);
+  rpc AcceptQuote(AcceptQuoteRequest) returns (AcceptQuoteResponse);
+  rpc GetRfqAuditLog(GetRfqAuditLogRequest) returns (GetRfqAuditLogResponse);
 
   // Waiting list operations (JWT auth with user 'onboard')
   rpc AddWaitingListEntry(AddWaitingListEntryRequest) returns (AddWaitingListEntryResponse);

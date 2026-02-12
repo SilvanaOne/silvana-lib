@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/orderbook",
   "description": "Silvana Orderbook Client",
-  "version": "1.1.31",
+  "version": "1.1.32",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
@@ -62,11 +62,12 @@
   },
   "repository": "SilvanaOne/silvana-lib.git",
   "scripts": {
-    "proto:orderbook": "rm -rf src/proto/silvana/orderbook && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/orderbook proto/silvana && buf generate --template buf.gen.orderbook.yaml",
-    "proto:pricing": "rm -rf src/proto/silvana/pricing && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/pricing proto/silvana && buf generate --template buf.gen.pricing.yaml",
-    "proto:news": "rm -rf src/proto/silvana/news && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/news proto/silvana && buf generate --template buf.gen.news.yaml",
-    "proto:settlement": "rm -rf src/proto/silvana/settlement && mkdir -p proto/silvana && cp -R ../../../canton-agent/proto/silvana/settlement proto/silvana && buf generate --template buf.gen.settlement.yaml",
-    "proto": "npm run proto:orderbook && npm run proto:pricing && npm run proto:news && npm run proto:settlement",
+    "proto:orderbook": "rm -rf src/proto/silvana/orderbook && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/orderbook proto/silvana && buf generate --template buf.gen.orderbook.yaml",
+    "proto:pricing": "rm -rf src/proto/silvana/pricing && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/pricing proto/silvana && buf generate --template buf.gen.pricing.yaml",
+    "proto:news": "rm -rf src/proto/silvana/news && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/news proto/silvana && buf generate --template buf.gen.news.yaml",
+    "proto:settlement": "rm -rf src/proto/silvana/settlement && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/settlement proto/silvana && buf generate --template buf.gen.settlement.yaml",
+    "proto:ledger": "rm -rf src/proto/silvana/ledger && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/ledger proto/silvana && buf generate --template buf.gen.ledger.yaml",
+    "proto": "npm run proto:orderbook && npm run proto:pricing && npm run proto:news && npm run proto:settlement && npm run proto:ledger",
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
     "release": "npm publish --access public",
     "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test"
