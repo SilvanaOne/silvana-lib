@@ -426,6 +426,7 @@ export class SettlementClient {
     contractId?: string;
     choiceName?: string;
     amount?: string;
+    token?: string;
     rewardsAmount?: string;
     rewardsRound?: bigint;
     trafficRequest?: bigint;

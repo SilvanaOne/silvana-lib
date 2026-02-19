@@ -360,6 +360,20 @@ export class OrderbookClient {
   }
 
   /**
+   * Stream RFQ quotes progressively (quotes arrive as each LP responds)
+   */
+  streamRequestQuotes(params: {
+    marketId: string;
+    direction: string;
+    quantity: string;
+    lpNames?: string[];
+    timeoutSecs?: number;
+  }) {
+    const request = create(RequestQuotesRequestSchema, params);
+    return this.client.streamRequestQuotes(request, this.callOptions());
+  }
+
+  /**
    * Create a new party (admin operation)
    */
   async createParty(params: {
