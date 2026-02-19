@@ -616,6 +616,7 @@ message Party {
   optional string public_key = 14;                 // Base58 public key
   optional string invite_code = 15;                // Invite code used during registration
   string source = 16;                              // Source: loop_wallet, form, supa_wallet, admin
+  optional string participant = 17;               // Participant ID hosting this party (PAR::name::fingerprint)
 }
 
 // Liquidity provider information
@@ -958,6 +959,30 @@ message GetRfqAuditLogResponse {
 }
 
 // ============================================================================
+// RFQ Streaming Messages (progressive quote delivery)
+// ============================================================================
+
+// Event streamed from StreamRequestQuotes
+message RfqStreamEvent {
+  oneof event {
+    RfqStreamInitiated initiated = 1;
+    RfqQuoteInfo quote = 2;
+    RfqRejectInfo rejection = 3;
+    RfqStreamDone done = 4;
+  }
+}
+
+message RfqStreamInitiated {
+  string rfq_id = 1;
+  uint32 lps_requested = 2;
+}
+
+message RfqStreamDone {
+  uint32 lps_requested = 1;
+  uint32 lps_responded = 2;
+}
+
+// ============================================================================
 // Service Definition
 // ============================================================================
 
@@ -1013,4 +1038,7 @@ service OrderbookService {
   rpc SubscribeOrderbook(SubscribeOrderbookRequest) returns (stream OrderbookUpdate);
   rpc SubscribeOrders(SubscribeOrdersRequest) returns (stream OrderUpdate);
   rpc SubscribeSettlements(SubscribeSettlementsRequest) returns (stream SettlementUpdate);
+
+  // RFQ streaming (progressive quote delivery — quotes arrive as each LP responds)
+  rpc StreamRequestQuotes(RequestQuotesRequest) returns (stream RfqStreamEvent);
 }

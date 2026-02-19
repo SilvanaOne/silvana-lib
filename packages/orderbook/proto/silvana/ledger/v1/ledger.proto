@@ -361,6 +361,7 @@ message MessageSignature {
 // Error Model (ProviderRpcError)
 //
 // Standardized error codes based on EIP-1193 and EIP-1474.
+// Mapped to numeric codes for interoperability.
 // ============================================================================
 
 enum ProviderErrorCode {
