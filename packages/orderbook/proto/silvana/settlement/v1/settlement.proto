@@ -160,6 +160,16 @@ enum SettlementEventType {
 
   // Timeout (for expired proposals)
   SETTLEMENT_EVENT_TYPE_TIMEOUT = 45;
+
+  // Prepared events (recorded before wallet call, contains full commands for debugging)
+  SETTLEMENT_EVENT_TYPE_DVP_PROCESSING_FEE_BUYER_PREPARED = 46;
+  SETTLEMENT_EVENT_TYPE_DVP_PROCESSING_FEE_SELLER_PREPARED = 47;
+  SETTLEMENT_EVENT_TYPE_DVP_REQUEST_PREPARED = 48;
+  SETTLEMENT_EVENT_TYPE_DVP_ACCEPT_PREPARED = 49;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_BUYER_PREPARED = 50;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_SELLER_PREPARED = 51;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_BUYER_PREPARED = 52;
+  SETTLEMENT_EVENT_TYPE_ALLOCATION_SELLER_PREPARED = 53;
 }
 
 // Role of the party recording the event
@@ -761,6 +771,10 @@ message GetSettlementStatusResponse {
   // Server-computed next actions for each party
   NextAction buyer_next_action = 24;
   NextAction seller_next_action = 25;
+
+  // Retry count: absent = first attempt, 1 = 1st retry, 2 = 2nd retry, etc.
+  optional uint32 buyer_next_action_retry = 26;
+  optional uint32 seller_next_action_retry = 27;
 }
 
 message SubmitPreconfirmationRequest {
