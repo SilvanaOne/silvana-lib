@@ -75,10 +75,11 @@ import {
   type GetSettlementProposalResponse,
   GetSettlementProposalRequestSchema,
   RfqAuditEventType,
+  IssuanceForecast,
 } from "./proto/silvana/orderbook/v1/orderbook_pb.js";
 
 // Re-export commonly used enums for convenience
-export { OrderType, OrderStatus, TimeInForce, MarketType, SettlementStatus, RfqAuditEventType };
+export { OrderType, OrderStatus, TimeInForce, MarketType, SettlementStatus, RfqAuditEventType, IssuanceForecast };
 
 /**
  * Converts a Date to a Timestamp message

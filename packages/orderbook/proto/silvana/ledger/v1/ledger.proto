@@ -45,6 +45,9 @@ service DAppProviderService {
   // Get provider service info
   rpc GetServiceInfo(GetServiceInfoRequest) returns (GetServiceInfoResponse);
 
+  // Get unlocked amulet contracts with amounts (lightweight ACS query for payment scheduling)
+  rpc GetAmulets(GetAmuletsRequest) returns (GetAmuletsResponse);
+
   // === Onboarding RPCs (Ed25519 message signing, no JWT required) ===
 
   // Get agent configuration template (unauthenticated)
@@ -241,6 +244,19 @@ message GetSettlementContractsResponse {
   repeated DiscoveredContract contracts = 1;
 }
 
+// --- GetAmulets ---
+
+message GetAmuletsRequest {}
+
+message AmuletInfo {
+  string contract_id = 1;
+  string amount = 2;  // Decimal string from amount.initialAmount
+}
+
+message GetAmuletsResponse {
+  repeated AmuletInfo amulets = 1;
+}
+
 // --- GetServiceInfo ---
 
 message GetServiceInfoRequest {}
@@ -430,6 +446,9 @@ enum TransactionOperation {
   // CIP-56 token transfers
   TRANSACTION_OPERATION_TRANSFER_CIP56 = 11;
   TRANSACTION_OPERATION_ACCEPT_CIP56 = 12;
+
+  // CC split (MergeSplit)
+  TRANSACTION_OPERATION_SPLIT_CC = 13;
 }
 
 // --- PrepareTransaction ---
@@ -449,6 +468,7 @@ message PrepareTransactionRequest {
     RequestUserServiceParams request_user_service = 18;
     TransferCip56Params transfer_cip56 = 19;
     AcceptCip56Params accept_cip56 = 20;
+    SplitCcParams split_cc = 21;
   }
 
   // Message-level signature from cloud agent (Ed25519 over canonical request payload)
@@ -458,6 +478,7 @@ message PrepareTransactionRequest {
 message PayFeeParams {
   string proposal_id = 1;
   string fee_type = 2;  // "dvp" or "allocate"
+  repeated string amulet_cids = 3;  // Pre-selected amulet contract IDs (empty = server selects)
 }
 
 message ProposeDvpParams {
@@ -472,6 +493,7 @@ message AcceptDvpParams {
 message AllocateParams {
   string proposal_id = 1;
   string dvp_cid = 2;
+  repeated string amulet_cids = 3;  // Pre-selected amulet contract IDs (empty = server selects)
 }
 
 message TransferCcParams {
@@ -480,6 +502,7 @@ message TransferCcParams {
   optional string description = 3;
   string command_id = 4;
   optional string settlement_proposal_id = 5;
+  repeated string amulet_cids = 6;  // Pre-selected amulet contract IDs (empty = server selects)
 }
 
 message RequestPreapprovalParams {
@@ -523,6 +546,12 @@ message AcceptCip56Params {
   string contract_id = 1;      // TransferOffer contract ID to accept
 }
 
+// Split CC into multiple amulets via AmuletRules_Transfer (MergeSplit)
+message SplitCcParams {
+  repeated string output_amounts = 1; // Amount for each output amulet (decimal strings)
+  repeated string amulet_cids = 2;    // Input amulet contract IDs
+}
+
 // --- PrepareTransaction Response ---
 
 message PrepareTransactionResponse {
@@ -556,6 +585,12 @@ message ExecuteTransactionRequest {
   MessageSignature request_signature = 30;
 }
 
+message CreatedContractInfo {
+  string contract_id = 1;
+  string template_id = 2;
+  string amount = 3;  // For amulets: initialAmount; empty for non-amulet contracts
+}
+
 message ExecuteTransactionResponse {
   bool success = 1;
   string update_id = 2;
@@ -572,6 +607,9 @@ message ExecuteTransactionResponse {
   TransactionStatus transaction_status = 40;
   // Structured error (ProviderRpcError) — populated when success=false
   optional ProviderError provider_error = 41;
+
+  // All contracts created by this transaction (for tracking new amulets from change/split)
+  repeated CreatedContractInfo created_contracts = 42;
 }
 
 // ============================================================================
@@ -619,6 +657,7 @@ message BridgeResponse {
     GetUpdatesResponse           get_updates = 18;
     GetLedgerEndResponse         get_ledger_end = 19;
     BridgeError                  error = 20;
+    GetAmuletsResponse           get_amulets = 21;
   }
 }
 
@@ -656,5 +695,6 @@ message BridgeRequest {
     GetServiceInfoRequest        get_service_info = 17;
     GetUpdatesRequest            get_updates = 18;
     GetLedgerEndRequest          get_ledger_end = 19;
+    GetAmuletsRequest            get_amulets = 20;
   }
 }
