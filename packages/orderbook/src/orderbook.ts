@@ -76,6 +76,8 @@ import {
   GetSettlementProposalRequestSchema,
   RfqAuditEventType,
   IssuanceForecast,
+  EstimateSettlementFeesRequestSchema,
+  type EstimateSettlementFeesResponse,
 } from "./proto/silvana/orderbook/v1/orderbook_pb.js";
 
 // Re-export commonly used enums for convenience
@@ -639,6 +641,20 @@ export class OrderbookClient {
       const request = create(AcceptQuoteRequestSchema, params);
       return await this.client.acceptQuote(request, this.callOptions());
     }, 'acceptQuote');
+  }
+
+  /**
+   * Estimate settlement fees for a trade (before creating proposal)
+   */
+  async estimateSettlementFees(params: {
+    marketId: string;
+    baseQuantity: string;
+    price: string;
+  }): Promise<EstimateSettlementFeesResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(EstimateSettlementFeesRequestSchema, params);
+      return await this.client.estimateSettlementFees(request, this.callOptions());
+    }, 'estimateSettlementFees');
   }
 
   /**

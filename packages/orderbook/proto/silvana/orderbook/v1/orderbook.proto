@@ -897,6 +897,11 @@ message RfqQuoteInfo {
   google.protobuf.Timestamp valid_until = 6;
   optional uint32 allocate_before_secs = 7;   // LP's allocation deadline requirement (seconds from DVP creation)
   optional uint32 settle_before_secs = 8;     // LP's settlement deadline requirement (seconds from DVP creation)
+
+  // Estimated settlement fees (per party, may change between quote and actual settlement)
+  string estimated_dvp_fee = 9;             // DECIMAL as string — estimated DVP processing fee
+  string estimated_allocation_fee = 10;     // DECIMAL as string — estimated allocation processing fee
+  string estimated_total_fee = 11;          // DECIMAL as string — estimated dvp + allocation
 }
 
 // Rejection info returned to user
@@ -1011,6 +1016,21 @@ message RfqStreamDone {
   uint32 lps_responded = 2;
 }
 
+// Estimate settlement fees for a trade (before creating proposal)
+message EstimateSettlementFeesRequest {
+  string market_id = 1;
+  string base_quantity = 2;               // DECIMAL as string
+  string price = 3;                       // DECIMAL as string
+}
+
+message EstimateSettlementFeesResponse {
+  bool success = 1;
+  string message = 2;
+  string estimated_dvp_fee = 3;           // DECIMAL as string
+  string estimated_allocation_fee = 4;    // DECIMAL as string
+  string estimated_total_fee = 5;         // DECIMAL as string — dvp + allocation (per party)
+}
+
 // ============================================================================
 // Service Definition
 // ============================================================================
@@ -1026,6 +1046,7 @@ service OrderbookService {
   rpc GetOrderHistory(GetOrderHistoryRequest) returns (GetOrderHistoryResponse);
   rpc GetMarketData(GetMarketDataRequest) returns (GetMarketDataResponse);
   rpc GetSettlements(GetSettlementsRequest) returns (GetSettlementsResponse);
+  rpc EstimateSettlementFees(EstimateSettlementFeesRequest) returns (EstimateSettlementFeesResponse);
 
   // Order management operations
   rpc SubmitOrder(SubmitOrderRequest) returns (SubmitOrderResponse);
