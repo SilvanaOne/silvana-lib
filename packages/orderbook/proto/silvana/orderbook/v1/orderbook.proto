@@ -728,6 +728,35 @@ message GetRoundsDataResponse {
   repeated Round rounds = 3;           // Last N rounds ordered by round_number DESC
   LatestCoefficients latest = 4;       // Latest non-NULL values for each coefficient
   uint32 total_rounds = 5;             // Total rounds in database
+  PredictionData prediction = 6;       // AR model prediction for next 10 rounds
+}
+
+// Issuance forecast interpretation based on predicted coefficient
+enum IssuanceForecast {
+  ISSUANCE_FORECAST_UNSPECIFIED = 0;
+  ISSUANCE_FORECAST_LOW = 1;           // Below PREDICTION_ISSUANCE_LOW threshold
+  ISSUANCE_FORECAST_MEDIUM = 2;        // Between LOW and HIGH thresholds
+  ISSUANCE_FORECAST_HIGH = 3;          // Above PREDICTION_ISSUANCE_HIGH threshold
+}
+
+// A single coefficient prediction for a future round
+message CoefficientPrediction {
+  uint64 round_number = 1;
+  string predicted_coefficient = 2;     // DECIMAL(38,10) as string
+  string confidence_lower = 3;          // 80% CI lower bound
+  string confidence_upper = 4;          // 80% CI upper bound
+  uint32 steps_ahead = 5;              // 1 = next round, 10 = furthest
+}
+
+// Prediction data from AR(5) model
+message PredictionData {
+  repeated CoefficientPrediction predictions = 1;  // Predictions for next 10 rounds
+  IssuanceForecast forecast = 2;                    // Interpretation for ~30min ahead (steps_ahead=3)
+  optional string forecast_coefficient = 3;         // The predicted coefficient used for forecast
+  optional uint64 forecast_round = 4;               // The round the forecast applies to
+  repeated double ar_coefficients = 5;              // AR model coefficients [a0..a5]
+  optional string residual_std = 6;                 // Model residual standard deviation
+  optional uint64 prediction_round = 7;             // Last known round used for prediction
 }
 
 // ============================================================================
@@ -868,6 +897,11 @@ message RfqQuoteInfo {
   google.protobuf.Timestamp valid_until = 6;
   optional uint32 allocate_before_secs = 7;   // LP's allocation deadline requirement (seconds from DVP creation)
   optional uint32 settle_before_secs = 8;     // LP's settlement deadline requirement (seconds from DVP creation)
+
+  // Estimated settlement fees (per party, may change between quote and actual settlement)
+  string estimated_dvp_fee = 9;             // DECIMAL as string — estimated DVP processing fee
+  string estimated_allocation_fee = 10;     // DECIMAL as string — estimated allocation processing fee
+  string estimated_total_fee = 11;          // DECIMAL as string — estimated dvp + allocation
 }
 
 // Rejection info returned to user
@@ -982,6 +1016,21 @@ message RfqStreamDone {
   uint32 lps_responded = 2;
 }
 
+// Estimate settlement fees for a trade (before creating proposal)
+message EstimateSettlementFeesRequest {
+  string market_id = 1;
+  string base_quantity = 2;               // DECIMAL as string
+  string price = 3;                       // DECIMAL as string
+}
+
+message EstimateSettlementFeesResponse {
+  bool success = 1;
+  string message = 2;
+  string estimated_dvp_fee = 3;           // DECIMAL as string
+  string estimated_allocation_fee = 4;    // DECIMAL as string
+  string estimated_total_fee = 5;         // DECIMAL as string — dvp + allocation (per party)
+}
+
 // ============================================================================
 // Service Definition
 // ============================================================================
@@ -997,6 +1046,7 @@ service OrderbookService {
   rpc GetOrderHistory(GetOrderHistoryRequest) returns (GetOrderHistoryResponse);
   rpc GetMarketData(GetMarketDataRequest) returns (GetMarketDataResponse);
   rpc GetSettlements(GetSettlementsRequest) returns (GetSettlementsResponse);
+  rpc EstimateSettlementFees(EstimateSettlementFeesRequest) returns (EstimateSettlementFeesResponse);
 
   // Order management operations
   rpc SubmitOrder(SubmitOrderRequest) returns (SubmitOrderResponse);
