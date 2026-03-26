@@ -78,6 +78,8 @@ import {
   IssuanceForecast,
   EstimateSettlementFeesRequestSchema,
   type EstimateSettlementFeesResponse,
+  GetUserSettlementStatsRequestSchema,
+  type GetUserSettlementStatsResponse,
 } from "./proto/silvana/orderbook/v1/orderbook_pb.js";
 
 // Re-export commonly used enums for convenience
@@ -695,5 +697,17 @@ export class OrderbookClient {
       const request = create(GetRoundsDataRequestSchema, params ?? {});
       return await this.client.getRoundsData(request, this.callOptions());
     }, 'getRoundsData');
+  }
+
+  /**
+   * Get user settlement stats for a specific round (returns caller's own data only)
+   */
+  async getUserSettlementStats(params: {
+    roundNumber: number;
+  }): Promise<GetUserSettlementStatsResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetUserSettlementStatsRequestSchema, params);
+      return await this.client.getUserSettlementStats(request, this.callOptions());
+    }, 'getUserSettlementStats');
   }
 }

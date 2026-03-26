@@ -1032,6 +1032,21 @@ message EstimateSettlementFeesResponse {
 }
 
 // ============================================================================
+// User Settlement Stats
+// ============================================================================
+
+message GetUserSettlementStatsRequest {
+  uint32 round_number = 1;
+}
+
+message GetUserSettlementStatsResponse {
+  uint32 round_number = 1;
+  string party_id = 2;
+  uint32 dvp_settle_count = 3;
+  string fee_reimb_cc = 4;       // DECIMAL as string
+}
+
+// ============================================================================
 // Service Definition
 // ============================================================================
 
@@ -1074,6 +1089,9 @@ service OrderbookService {
 
   // Rounds operations
   rpc GetRoundsData(GetRoundsDataRequest) returns (GetRoundsDataResponse);
+
+  // User settlement stats (JWT-authenticated, returns data for caller's party only)
+  rpc GetUserSettlementStats(GetUserSettlementStatsRequest) returns (GetUserSettlementStatsResponse);
 
   // Admin operations (require operator authentication)
   rpc CreateParty(CreatePartyRequest) returns (CreatePartyResponse);
