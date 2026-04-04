@@ -170,6 +170,9 @@ enum SettlementEventType {
   SETTLEMENT_EVENT_TYPE_ALLOCATION_PROCESSING_FEE_SELLER_PREPARED = 51;
   SETTLEMENT_EVENT_TYPE_ALLOCATION_BUYER_PREPARED = 52;
   SETTLEMENT_EVENT_TYPE_ALLOCATION_SELLER_PREPARED = 53;
+
+  // Party-initiated cancellation (buyer or seller cancels at any stage)
+  SETTLEMENT_EVENT_TYPE_PARTY_CANCELLED = 54;
 }
 
 // Role of the party recording the event
@@ -186,8 +189,8 @@ enum NextAction {
   NEXT_ACTION_NONE = 0;            // No action needed (terminal state or all done)
   NEXT_ACTION_PRECONFIRM = 1;      // Confirm the settlement
   NEXT_ACTION_PAY_DVP_FEE = 2;     // Pay DVP processing fee
-  NEXT_ACTION_CREATE_DVP = 3;      // Buyer: create DVP proposal
-  NEXT_ACTION_ACCEPT_DVP = 4;      // Seller: accept DVP proposal
+  NEXT_ACTION_CREATE_DVP = 3;      // Proposer: create DVP proposal (buyer for orderbook, LP for RFQ)
+  NEXT_ACTION_ACCEPT_DVP = 4;      // Acceptor: accept DVP proposal
   NEXT_ACTION_PAY_ALLOC_FEE = 5;   // Pay allocation processing fee
   NEXT_ACTION_ALLOCATE = 6;        // Allocate tokens
   NEXT_ACTION_WAIT = 7;            // Waiting for counterparty/operator
@@ -654,6 +657,9 @@ service SettlementService {
 
   // Get settlement proposal by ID (for external parties to fetch proposal details)
   rpc GetSettlementProposalById(GetSettlementProposalByIdRequest) returns (GetSettlementProposalByIdResponse);
+
+  // Cancel a settlement (buyer or seller can cancel before settlement execution)
+  rpc CancelSettlement(CancelSettlementRequest) returns (CancelSettlementResponse);
 }
 
 // ============================================================================
@@ -1032,6 +1038,19 @@ message UpdateProposalStatusRequest {
 }
 
 message UpdateProposalStatusResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Cancel a settlement (any party: buyer/seller/agent)
+message CancelSettlementRequest {
+  // Auth via gRPC metadata (JWT) or CantonNodeAuth
+  optional CantonNodeAuth auth = 1;
+  string proposal_id = 2;  // UUID v7
+  string reason = 3;       // Cancellation reason
+}
+
+message CancelSettlementResponse {
   bool success = 1;
   string message = 2;
 }

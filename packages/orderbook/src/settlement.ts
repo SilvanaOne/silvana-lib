@@ -16,6 +16,7 @@ import {
   type GetSettlementHistoryResponse,
   type UpdateProposalStatusResponse,
   type GetSettlementProposalByIdResponse,
+  type CancelSettlementResponse,
   type DisclosedContractMessage,
   type CantonNodeAuth,
   type PreconfirmationDecision,
@@ -32,6 +33,7 @@ import {
   GetSettlementHistoryRequestSchema,
   UpdateProposalStatusRequestSchema,
   GetSettlementProposalByIdRequestSchema,
+  CancelSettlementRequestSchema,
   TransactionType,
   SenderType,
   TransactionResult,
@@ -147,6 +149,10 @@ export {
   GetSettlementProposalByIdRequestSchema,
   type GetSettlementProposalByIdResponse,
   GetSettlementProposalByIdResponseSchema,
+  type CancelSettlementRequest,
+  CancelSettlementRequestSchema,
+  type CancelSettlementResponse,
+  CancelSettlementResponseSchema,
   type DvpStepStatus,
   DvpStepStatusSchema,
   SettlementStage,
@@ -352,6 +358,19 @@ export class SettlementClient {
       const request = create(UpdateProposalStatusRequestSchema, params);
       return await this.client.updateProposalStatus(request, this.callOptions());
     }, 'updateProposalStatus');
+  }
+
+  /**
+   * Cancel a settlement (buyer or seller can cancel before settlement execution)
+   */
+  async cancelSettlement(params: {
+    proposalId: string;
+    reason: string;
+  }): Promise<CancelSettlementResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(CancelSettlementRequestSchema, params);
+      return await this.client.cancelSettlement(request, this.callOptions());
+    }, 'cancelSettlement');
   }
 
   /**
