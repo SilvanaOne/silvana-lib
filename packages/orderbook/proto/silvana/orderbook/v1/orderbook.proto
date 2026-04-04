@@ -695,7 +695,7 @@ message Round {
   optional string traffic_cost_usd_per_mb = 5;                     // DECIMAL(38,10) as string
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
-}
+  }
 
 // Latest coefficient values (may come from different rounds)
 message LatestCoefficients {

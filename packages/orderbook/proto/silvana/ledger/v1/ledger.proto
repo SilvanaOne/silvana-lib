@@ -449,6 +449,9 @@ enum TransactionOperation {
 
   // CC split (MergeSplit)
   TRANSACTION_OPERATION_SPLIT_CC = 13;
+
+  // MultiCall (atomic batch of operations via Execute_MultiCall DAR choice)
+  TRANSACTION_OPERATION_EXECUTE_MULTICALL = 14;
 }
 
 // --- PrepareTransaction ---
@@ -469,6 +472,7 @@ message PrepareTransactionRequest {
     TransferCip56Params transfer_cip56 = 19;
     AcceptCip56Params accept_cip56 = 20;
     SplitCcParams split_cc = 21;
+    ExecuteMultiCallParams execute_multicall = 22;
   }
 
   // Message-level signature from cloud agent (Ed25519 over canonical request payload)
@@ -550,6 +554,180 @@ message AcceptCip56Params {
 message SplitCcParams {
   repeated string output_amounts = 1; // Amount for each output amulet (decimal strings)
   repeated string amulet_cids = 2;    // Input amulet contract IDs
+}
+
+// Execute_MultiCall — atomic batch of operations via MultiCall DAR nonconsuming choice.
+// Operations are executed sequentially within a single Canton transaction.
+// Amulet and holdings pools are threaded through operations (change from one feeds the next).
+message ExecuteMultiCallParams {
+  repeated MultiCallOp operations = 1;  // Ordered list of operations to execute
+  repeated string amulet_cids = 2;      // Input amulet pool (for CC operations)
+  repeated string holding_cids = 3;     // Input holdings pool (for CIP-56 operations)
+}
+
+// A single operation within an Execute_MultiCall batch.
+// Mirrors all 16 Daml MultiCallOp variants from multicall-v0 DAR.
+message MultiCallOp {
+  oneof op {
+    // CC operations
+    McBatchPay batch_pay = 1;
+    McSplitAmulet split_amulet = 2;
+    McCreateTransferOffer create_transfer_offer = 11;
+    McUnlockExpiredAmulet unlock_expired_amulet = 12;
+
+    // DVP operations
+    McProposeDvp propose_dvp = 3;
+    McAcceptDvp accept_dvp = 4;
+    McAllocate allocate = 5;
+    McAllocateCC allocate_cc = 6;
+    McAcceptDvpAndAllocate accept_dvp_and_allocate = 7;
+    McAcceptDvpAndAllocateCC accept_dvp_and_allocate_cc = 8;
+
+    // CIP-56 operations
+    McTransfer transfer = 9;
+    McAcceptTransferInstruction accept_transfer_instruction = 14;
+    McWithdrawAllocation withdraw_allocation = 15;
+
+    // Preapproval / onboarding
+    McCreateTransferPreapproval create_transfer_preapproval = 10;
+    McCreateTransferPreapprovalProposal create_transfer_preapproval_proposal = 13;
+    McCreateUserServiceRequest create_user_service_request = 16;
+  }
+}
+
+// ── CC operations ──────────────────────────────────────────────────────
+
+// Batch payment to multiple recipients (using TransferPreapprovals)
+message McBatchPay {
+  repeated McPaymentTarget targets = 1;
+}
+
+message McPaymentTarget {
+  string receiver_party = 1;       // Receiver party ID (server resolves preapproval CID)
+  string amount = 2;               // Decimal string amount in CC
+  optional string description = 3; // Optional payment description
+}
+
+// Split amulets into equal parts (Daml: Op_SplitAmulet)
+// Server injects amuletRulesCid, openMiningRoundCid, expectedDso from scan API context.
+message McSplitAmulet {
+  string amount = 1;   // Decimal amount per output amulet
+  uint32 count = 2;    // Number of output amulets
+}
+
+// Create a CC transfer offer (Daml: Op_CreateTransferOffer)
+// Server injects offerDso from scan API context.
+message McCreateTransferOffer {
+  string receiver = 1;          // Receiver party ID
+  string amount = 2;            // Decimal string amount in CC
+  string description = 3;       // Transfer description
+  string expires_at = 4;        // ISO8601 expiry timestamp
+  string tracking_id = 5;       // Client-provided tracking ID
+}
+
+// Unlock an expired locked amulet (Daml: Op_UnlockExpiredAmulet)
+// Server injects openRoundCid from scan API context.
+message McUnlockExpiredAmulet {
+  string locked_amulet_cid = 1;
+}
+
+// ── DVP operations ─────────────────────────────────────────────────────
+
+// Propose a DVP settlement (buyer creates DvpProposal)
+message McProposeDvp {
+  string proposal_id = 1;  // Settlement proposal ID (server looks up terms)
+}
+
+// Accept an existing DvpProposal (seller)
+message McAcceptDvp {
+  string proposal_id = 1;
+  string dvp_proposal_cid = 2;
+}
+
+// Allocate non-CC tokens (CIP-56 holdings) against a Dvp contract
+message McAllocate {
+  string proposal_id = 1;
+  string dvp_cid = 2;
+}
+
+// Allocate CC (amulets) against a Dvp contract
+message McAllocateCC {
+  string proposal_id = 1;
+  string dvp_cid = 2;
+}
+
+// Accept DvpProposal + allocate non-CC tokens in a single operation (compose mode)
+message McAcceptDvpAndAllocate {
+  string proposal_id = 1;
+  string dvp_proposal_cid = 2;
+}
+
+// Accept DvpProposal + allocate CC in a single operation (compose mode)
+message McAcceptDvpAndAllocateCC {
+  string proposal_id = 1;
+  string dvp_proposal_cid = 2;
+}
+
+// ── CIP-56 operations ──────────────────────────────────────────────────
+
+// CIP-56 token transfer (Daml: Op_Transfer)
+// Agent provides transfer_factory_cid, expected_admin, and full Transfer details.
+// Server injects ExtraArgs (amulet-rules, open-round context) unless extra_args_json is provided.
+message McTransfer {
+  string transfer_factory_cid = 1;     // Agent-provided (e.g., ExternalPartyAmuletRules CID)
+  string expected_admin = 2;           // Agent-provided (e.g., DSO party)
+  McTransferDetails transfer = 3;      // Typed CIP-56 Transfer object
+  optional string extra_args_json = 4; // Optional: if empty, server builds default amulet ExtraArgs
+}
+
+// CIP-56 Transfer object fields (matches Daml Splice.Api.Token.TransferInstructionV1.Transfer)
+message McTransferDetails {
+  string sender = 1;              // Sender party ID
+  string receiver = 2;            // Receiver party ID
+  string amount = 3;              // Decimal string
+  string instrument_admin = 4;    // InstrumentId.admin
+  string instrument_id = 5;       // InstrumentId.id
+  string requested_at = 6;        // ISO8601 timestamp
+  string execute_before = 7;      // ISO8601 timestamp
+  map<string, string> meta = 8;   // Metadata.values (e.g., {"splice.lfdecentralizedtrust.org/reason": "ref"})
+}
+
+// Accept a CIP-56 transfer instruction (Daml: Op_AcceptTransferInstruction)
+// Server injects ExtraArgs unless extra_args_json is provided.
+message McAcceptTransferInstruction {
+  string transfer_instruction_cid = 1;
+  optional string extra_args_json = 2; // Optional: server builds default if empty
+}
+
+// Withdraw a CIP-56 allocation (Daml: Op_WithdrawAllocation)
+// Server injects ExtraArgs unless extra_args_json is provided.
+message McWithdrawAllocation {
+  string allocation_cid = 1;
+  optional string extra_args_json = 2; // Optional: server builds default if empty
+}
+
+// ── Preapproval / onboarding ───────────────────────────────────────────
+
+// Create a TransferPreapproval (Daml: Op_CreateTransferPreapproval)
+message McCreateTransferPreapproval {
+  string operator = 1;
+  string instrument_admin = 2;
+  repeated McInstrumentAllowance instrument_allowances = 3;
+}
+
+message McInstrumentAllowance {
+  string id = 1;  // Instrument identifier
+}
+
+// Create a TransferPreapproval proposal (Daml: Op_CreateTransferPreapprovalProposal)
+// Server injects proposalExpectedDso from scan API context.
+message McCreateTransferPreapprovalProposal {
+  string provider = 1;
+}
+
+// Create a UserService request (Daml: Op_CreateUserServiceRequest)
+message McCreateUserServiceRequest {
+  string operator = 1;
 }
 
 // --- PrepareTransaction Response ---
