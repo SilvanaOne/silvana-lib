@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// CIP-56 TransferPreapproval queries and operations.
+//
+// Creates Utility.Registry.App.V0.Model.TransferPreapproval:TransferPreapproval
+// contracts via CreateCommand. Empty instrument_allowances = all instruments
+// of the admin are preapproved.
+// ============================================================================
+
+// --- InstrumentAllowance ---
+
+message InstrumentAllowance {
+  string id = 1;  // Instrument identifier (e.g., "USDC")
+}
+
+// --- GetPreapprovals ---
+
+message GetPreapprovalsRequest {
+  // party_id from JWT
+}
+
+message PreapprovalInfo {
+  string contract_id = 1;
+  string operator = 2;
+  string receiver = 3;
+  string instrument_admin = 4;
+  repeated InstrumentAllowance instrument_allowances = 5;
+}
+
+message GetPreapprovalsResponse {
+  repeated PreapprovalInfo preapprovals = 1;
+}
+
+// --- RequestPreapproval (transaction operation) ---
+
+message RequestPreapprovalParams {
+  string instrument_admin = 1;                          // Required: admin party (DSO for CC, registrar for tokens)
+  repeated InstrumentAllowance instrument_allowances = 2; // Empty = all instruments of this admin
+}

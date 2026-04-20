@@ -2,49 +2,76 @@ import { createClient, ConnectError } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
 
-// Export all types and schemas from the generated protobuf file
-export * from "./proto/silvana/ledger/v1/ledger_pb.js";
+// Re-export all generated types from the split ledger proto tree.
+// All 14 files share the silvana.ledger.v1 package — no name collisions among them.
+export * from "./proto/silvana/ledger/v1/common_pb.js";
+export * from "./proto/silvana/ledger/v1/queries_pb.js";
+export * from "./proto/silvana/ledger/v1/service_pb.js";
+export * from "./proto/silvana/ledger/v1/bridge_pb.js";
+export * from "./proto/silvana/ledger/v1/transactions_pb.js";
+export * from "./proto/silvana/ledger/v1/transfer_pb.js";
+export * from "./proto/silvana/ledger/v1/preapproval_pb.js";
+export * from "./proto/silvana/ledger/v1/dvp_pb.js";
+export * from "./proto/silvana/ledger/v1/cip56_pb.js";
+export * from "./proto/silvana/ledger/v1/onboarding_pb.js";
+export * from "./proto/silvana/ledger/v1/recurring_pb.js";
+export * from "./proto/silvana/ledger/v1/multicall_pb.js";
+export * from "./proto/silvana/ledger/v1/lock_pb.js";
+export * from "./proto/silvana/ledger/v1/faucet_pb.js";
 
+import { DAppProviderService } from "./proto/silvana/ledger/v1/service_pb.js";
 import {
-  DAppProviderService,
-  type GetActiveContractsResponse,
-  type GetUpdatesResponse,
+  TransactionOperation,
+  TransactionStatus,
+  ProviderErrorCode,
+} from "./proto/silvana/ledger/v1/common_pb.js";
+import {
   type GetLedgerEndResponse,
   type GetBalancesResponse,
-  type GetPreapprovalsResponse,
   type GetDsoRatesResponse,
-  type GetSettlementContractsResponse,
   type GetServiceInfoResponse,
-  type GetAgentConfigResponse,
-  type RegisterAgentResponse,
-  type GetOnboardingStatusResponse,
-  type SubmitOnboardingSignatureResponse,
-  type PrepareTransactionResponse,
-  type ExecuteTransactionResponse,
-  type RegisterAgentRequest,
-  type GetOnboardingStatusRequest,
-  type SubmitOnboardingSignatureRequest,
-  type PrepareTransactionRequest,
-  type ExecuteTransactionRequest,
   GetActiveContractsRequestSchema,
   GetUpdatesRequestSchema,
   GetLedgerEndRequestSchema,
   GetBalancesRequestSchema,
-  GetPreapprovalsRequestSchema,
   GetDsoRatesRequestSchema,
-  GetSettlementContractsRequestSchema,
   GetServiceInfoRequestSchema,
+} from "./proto/silvana/ledger/v1/queries_pb.js";
+import {
+  type GetPreapprovalsResponse,
+  GetPreapprovalsRequestSchema,
+} from "./proto/silvana/ledger/v1/preapproval_pb.js";
+import {
+  type GetSettlementContractsResponse,
+  GetSettlementContractsRequestSchema,
+} from "./proto/silvana/ledger/v1/dvp_pb.js";
+import {
+  OnboardingStatus,
+  type GetAgentConfigResponse,
+  type RegisterAgentRequest,
+  type RegisterAgentResponse,
+  type GetOnboardingStatusRequest,
+  type GetOnboardingStatusResponse,
+  type SubmitOnboardingSignatureRequest,
+  type SubmitOnboardingSignatureResponse,
   GetAgentConfigRequestSchema,
   RegisterAgentRequestSchema,
   GetOnboardingStatusRequestSchema,
   SubmitOnboardingSignatureRequestSchema,
+} from "./proto/silvana/ledger/v1/onboarding_pb.js";
+import {
+  type PrepareTransactionRequest,
+  type PrepareTransactionResponse,
+  type ExecuteTransactionRequest,
+  type ExecuteTransactionResponse,
   PrepareTransactionRequestSchema,
   ExecuteTransactionRequestSchema,
-  TransactionOperation,
-  TransactionStatus,
-  OnboardingStatus,
-  ProviderErrorCode,
-} from "./proto/silvana/ledger/v1/ledger_pb.js";
+} from "./proto/silvana/ledger/v1/transactions_pb.js";
+import {
+  type FaucetRequest,
+  type FaucetResponse,
+  FaucetRequestSchema,
+} from "./proto/silvana/ledger/v1/faucet_pb.js";
 
 // Re-export commonly used enums for convenience
 export { TransactionOperation, TransactionStatus, OnboardingStatus, ProviderErrorCode };
@@ -263,5 +290,18 @@ export class LedgerClient {
       const request = create(ExecuteTransactionRequestSchema, params);
       return await this.client.executeTransaction(request, this.callOptions());
     }, 'executeTransaction');
+  }
+
+  // === Faucet RPC ===
+
+  /**
+   * Request tokens from the faucet (CC or CIP-56).
+   * Pass dry_run=true to validate ticket and see approved amount without executing transfer.
+   */
+  async requestFaucet(params: FaucetRequest): Promise<FaucetResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(FaucetRequestSchema, params);
+      return await this.client.requestFaucet(request, this.callOptions());
+    }, 'requestFaucet');
   }
 }

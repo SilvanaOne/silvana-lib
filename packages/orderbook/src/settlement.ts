@@ -44,9 +44,8 @@ import {
 } from "./proto/silvana/settlement/v1/settlement_pb.js";
 
 // Export all types and schemas from the generated protobuf file
-// Exclude ExternalAuth and ExternalAuthSchema as they conflict with orderbook exports
 export {
-  file_proto_silvana_settlement_v1_settlement,
+  file_silvana_settlement_v1_settlement,
   type CantonNodeAuth,
   CantonNodeAuthSchema,
   type SettlementInstrument,

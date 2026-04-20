@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+import "silvana/ledger/v1/queries.proto";
+import "silvana/ledger/v1/transactions.proto";
+import "silvana/ledger/v1/onboarding.proto";
+import "silvana/ledger/v1/preapproval.proto";  // GetPreapprovalsRequest/Response
+import "silvana/ledger/v1/dvp.proto";          // GetSettlementContractsRequest/Response
+import "silvana/ledger/v1/faucet.proto";       // FaucetRequest/FaucetResponse
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// DAppProviderService
+//
+// Proxied ledger operations for cloud agents with two-phase transaction flow.
+// Authentication: JWT in gRPC metadata header "authorization: Bearer <token>"
+// JWT must be self-describing EdDSA with embedded JWK (RFC 8037).
+// Server verifies public key fingerprint matches party_id.
+//
+// NOTE: This service definition is intentionally monolithic — protobuf cannot
+// conditionally include or exclude individual RPCs from a service. Per-RPC
+// access control is implemented at runtime in orderbook-ledger-service via
+// the InterfaceGroup gating layer (see crates/orderbook-ledger-service/src/
+// interface_gate.rs and the [ledger_interfaces] section of configuration.toml).
+// Disabled RPCs return UNIMPLEMENTED.
+// ============================================================================
+
+service DAppProviderService {
+  // === Streaming Query RPCs ===
+
+  // Stream active contracts for the authenticated party (one per message)
+  rpc GetActiveContracts(GetActiveContractsRequest) returns (stream GetActiveContractsResponse);
+
+  // Stream ledger updates from a given offset (for tx confirmation checks)
+  rpc GetUpdates(GetUpdatesRequest) returns (stream GetUpdatesResponse);
+
+  // === Unary Query RPCs (no signing needed, single call) ===
+
+  // Get current ledger end offset (for use with GetUpdates)
+  rpc GetLedgerEnd(GetLedgerEndRequest) returns (GetLedgerEndResponse);
+
+  // Get token balances (CIP-56 holdings + Canton Coin)
+  rpc GetBalances(GetBalancesRequest) returns (GetBalancesResponse);
+
+  // Fetch TransferPreapproval contracts
+  rpc GetPreapprovals(GetPreapprovalsRequest) returns (GetPreapprovalsResponse);
+
+  // Get DSO rates (CC/USD rate, current round)
+  rpc GetDsoRates(GetDsoRatesRequest) returns (GetDsoRatesResponse);
+
+  // Discover on-chain DvpProposal/Dvp contracts for active settlements
+  rpc GetSettlementContracts(GetSettlementContractsRequest) returns (GetSettlementContractsResponse);
+
+  // Get provider service info
+  rpc GetServiceInfo(GetServiceInfoRequest) returns (GetServiceInfoResponse);
+
+  // Get unlocked amulet contracts with amounts (lightweight ACS query for payment scheduling)
+  rpc GetAmulets(GetAmuletsRequest) returns (GetAmuletsResponse);
+
+  // === Onboarding RPCs (Ed25519 message signing, no JWT required) ===
+
+  // Get agent configuration template (unauthenticated)
+  rpc GetAgentConfig(GetAgentConfigRequest) returns (GetAgentConfigResponse);
+
+  // Register agent on waiting list (signed by agent's Ed25519 key)
+  rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
+
+  // Poll onboarding status (signed by agent's Ed25519 key)
+  rpc GetOnboardingStatus(GetOnboardingStatusRequest) returns (GetOnboardingStatusResponse);
+
+  // Submit multihash signature (signed by agent's Ed25519 key)
+  rpc SubmitOnboardingSignature(SubmitOnboardingSignatureRequest) returns (SubmitOnboardingSignatureResponse);
+
+  // === Two-Phase Transaction RPCs ===
+
+  // Phase 1: Prepare transaction (server builds tx, returns hash to sign)
+  rpc PrepareTransaction(PrepareTransactionRequest) returns (PrepareTransactionResponse);
+
+  // Phase 2: Execute signed transaction
+  rpc ExecuteTransaction(ExecuteTransactionRequest) returns (ExecuteTransactionResponse);
+
+  // === Faucet RPC (server-side submission, no two-phase signing needed) ===
+
+  // Request tokens from the faucet (CC or CIP-56)
+  rpc RequestFaucet(FaucetRequest) returns (FaucetResponse);
+}

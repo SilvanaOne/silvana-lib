@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Lock operations: LockHoldings on LockService, and LockController choices
+// (ProcessLockUnlockRequests, ResizeLock, Terminate).
+// ============================================================================
+
+// Voting allocation for lock context
+message VotingAllocation {
+  string context = 1;   // UUID identifying the allocation target
+  string amount = 2;    // Decimal amount allocated
+}
+
+// Voting request (lock or unlock direction)
+message VotingRequest {
+  string context = 1;   // UUID identifying the allocation target
+  string amount = 2;    // Decimal amount to lock/unlock
+  string direction = 3; // "VoteLock" or "VoteUnlock"
+}
+
+// --- LockHoldings on LockService ---
+
+message LockHoldingsParams {
+  string lock_service_cid = 1;          // LockService contract ID
+  string lock_service_template_id = 2;  // LockService template ID
+  string lock_service_blob = 3;         // LockService created_event_blob (for disclosure)
+  string amount = 4;                    // Amount to lock
+  string instrument_id = 5;            // Instrument token ID (e.g., "HECTO")
+  string context = 6;                   // Lock context (UUIDv7; server generates if empty)
+  repeated VotingAllocation allocations = 7;
+  // Fee payment (optional)
+  repeated string fee_party_ids = 10;
+  repeated string fee_amounts = 11;
+  repeated string amulet_cids = 12;     // Amulets for fee payment
+}
+
+// --- ProcessLockUnlockRequests on LockController ---
+
+message ProcessLockUnlockRequestsParams {
+  string lock_controller_cid = 1;
+  string lock_controller_template_id = 2;
+  repeated VotingRequest requests = 3;
+  // Fee payment (optional)
+  repeated string fee_party_ids = 10;
+  repeated string fee_amounts = 11;
+  repeated string amulet_cids = 12;
+}
+
+// --- ResizeLock on LockController ---
+
+message ResizeLockParams {
+  string lock_controller_cid = 1;
+  string lock_controller_template_id = 2;
+  string new_amount = 3;
+  repeated VotingRequest requests = 4;
+  string instrument_id = 5;            // Instrument token ID (for querying additional holdings)
+  // Fee payment (optional)
+  repeated string fee_party_ids = 10;
+  repeated string fee_amounts = 11;
+  repeated string amulet_cids = 12;
+}
+
+// --- Terminate on LockController ---
+
+message TerminateLockParams {
+  string lock_controller_cid = 1;
+  string lock_controller_template_id = 2;
+  // Fee payment (optional)
+  repeated string fee_party_ids = 10;
+  repeated string fee_amounts = 11;
+  repeated string amulet_cids = 12;
+}

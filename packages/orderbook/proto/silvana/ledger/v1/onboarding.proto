@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+import "silvana/ledger/v1/common.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Onboarding Messages
+//
+// Cloud agent self-service onboarding flow. RPCs use Ed25519 message-level
+// signing (same MessageSignature scheme as two-phase transactions) to prove
+// the caller owns the private key matching the public_key in the request.
+// No JWT required — identity is the Ed25519 public key.
+// ============================================================================
+
+// Onboarding status progression for cloud agent waiting list
+enum OnboardingStatus {
+  ONBOARDING_STATUS_UNSPECIFIED = 0;
+  ONBOARDING_STATUS_REQUESTED = 1;            // Agent registered, waiting for backend
+  ONBOARDING_STATUS_SIGNATURE_REQUIRED = 2;   // Backend created multihash; agent must sign
+  ONBOARDING_STATUS_TOPOLOGY_CREATED = 3;     // Backend created topology tx; agent can complete onboarding
+  ONBOARDING_STATUS_ONBOARDED = 4;            // Agent completed ledger onboarding
+}
+
+// --- GetAgentConfig (unauthenticated — returns env template for new agents) ---
+
+message GetAgentConfigRequest {}
+
+message GetAgentConfigResponse {
+  string env = 1;          // Full .env.agent content (raw text, all KEY=VALUE pairs)
+  string agent_toml = 2;   // Full agent.toml content (raw text, if available)
+}
+
+// --- RegisterAgent (signed — proves key ownership before insert) ---
+
+message RegisterAgentRequest {
+  string public_key = 1;                       // Base58 Ed25519 public key (agent identity)
+  optional string invite_code = 2;
+  optional string email = 3;
+  optional string agent_name = 4;
+
+  // Ed25519 message-level signature proving ownership of public_key
+  MessageSignature request_signature = 30;
+}
+
+message RegisterAgentResponse {
+  bool success = 1;
+  string message = 2;
+  uint64 waiting_list_id = 3;
+  OnboardingStatus status = 4;
+}
+
+// --- GetOnboardingStatus (signed — proves key ownership before read) ---
+
+message GetOnboardingStatusRequest {
+  string public_key = 1;                       // Base58 Ed25519 public key
+
+  // Ed25519 message-level signature proving ownership of public_key
+  MessageSignature request_signature = 30;
+}
+
+message GetOnboardingStatusResponse {
+  OnboardingStatus status = 1;
+  optional string party_id = 2;               // Set when status >= TOPOLOGY_CREATED
+  optional string multihash = 3;              // Base64 multihash (set when SIGNATURE_REQUIRED)
+  optional string error_message = 4;
+  uint64 waiting_list_id = 5;
+}
+
+// --- SubmitOnboardingSignature (signed — proves key ownership + multihash signature) ---
+
+message SubmitOnboardingSignatureRequest {
+  string public_key = 1;                       // Base58 Ed25519 public key
+  string multihash_signature = 2;              // Base64 Ed25519 signature of the multihash
+
+  // Ed25519 message-level signature proving ownership of public_key
+  MessageSignature request_signature = 30;
+}
+
+message SubmitOnboardingSignatureResponse {
+  bool success = 1;
+  string message = 2;
+  OnboardingStatus status = 3;                // Updated status after submission
+}

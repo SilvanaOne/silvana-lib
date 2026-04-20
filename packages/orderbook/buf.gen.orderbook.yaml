@@ -3,5 +3,5 @@ version: v2
 plugins:
   # Generate TypeScript client for orderbook
   - remote: buf.build/bufbuild/es
-    out: src
-    opt: target=ts,js_import_style=module
+    out: src/proto
+    opt: target=ts,js_import_style=module,import_extension=.js

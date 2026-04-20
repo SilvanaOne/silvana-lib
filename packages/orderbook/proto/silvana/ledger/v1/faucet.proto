@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+import "silvana/ledger/v1/common.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Faucet: distribute CC or CIP-56 tokens to requesters.
+//
+// Single endpoint for all token types. CC is treated as CIP-56 with
+// token_name="Amulet" and token_admin=DSO party.
+//
+// Supports dry_run to check ticket validity and approved amount without
+// executing the transfer.
+// ============================================================================
+
+message FaucetRequest {
+  string token_name = 1;       // "Amulet" (CC), "USDC", "HECTO", etc.
+  string token_admin = 2;      // DSO party for CC, registrar party for CIP-56
+  string ticket = 3;           // Validation ticket (devnet: any string; mainnet: base64 x402 X-PAYMENT)
+  string amount = 4;           // Requested amount (empty = use default from configuration.toml)
+  bool dry_run = 5;            // If true, validate ticket and return approval info without executing
+
+  // Message-level signature from cloud agent (Ed25519 over canonical request payload)
+  MessageSignature request_signature = 30;
+}
+
+message FaucetResponse {
+  bool success = 1;
+  string update_id = 2;        // Canton update ID (empty if dry_run=true)
+  optional string error_message = 3;
+  string amount_approved = 4;  // Amount that would be / was sent
+  string token_name = 5;       // Confirmed token name
+  string token_admin = 6;      // Confirmed admin party
+  bool is_dry_run = 7;         // Echo back dry_run flag
+
+  // Message-level signature from dApp provider service
+  MessageSignature response_signature = 30;
+}
