@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// DVP (delivery-vs-payment) settlement queries and operations.
+// ============================================================================
+
+// --- GetSettlementContracts ---
+
+message GetSettlementContractsRequest {
+  repeated string settlement_ids = 1;  // proposal/settlement IDs to search for
+}
+
+message DiscoveredContract {
+  string settlement_id = 1;
+  string contract_id = 2;
+  string contract_type = 3;  // "DvpProposal" or "Dvp"
+}
+
+message GetSettlementContractsResponse {
+  repeated DiscoveredContract contracts = 1;
+}
+
+// --- DVP transaction params (used inside PrepareTransactionRequest.params oneof) ---
+
+message PayFeeParams {
+  string proposal_id = 1;
+  string fee_type = 2;  // "dvp" or "allocate"
+  repeated string amulet_cids = 3;  // Pre-selected amulet contract IDs (empty = server selects)
+}
+
+message ProposeDvpParams {
+  string proposal_id = 1;
+}
+
+message AcceptDvpParams {
+  string proposal_id = 1;
+  string dvp_proposal_cid = 2;
+}
+
+message AllocateParams {
+  string proposal_id = 1;
+  string dvp_cid = 2;
+  repeated string amulet_cids = 3;  // Pre-selected amulet contract IDs (empty = server selects)
+}

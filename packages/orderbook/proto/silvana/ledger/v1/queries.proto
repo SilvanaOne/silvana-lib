@@ -1,0 +1,206 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+import "google/protobuf/struct.proto";
+import "silvana/ledger/v1/common.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Core query messages — always available regardless of feature gating.
+//
+// These types describe the unary and streaming query operations that any
+// ledger client needs: active contracts, ledger updates, balances, DSO rates,
+// service info, and amulet inventory. None of these depend on transaction
+// param types from other domains.
+// ============================================================================
+
+// --- GetActiveContracts (server-streaming) ---
+
+message GetActiveContractsRequest {
+  repeated string template_filters = 1;  // Optional template ID filters (empty = all)
+}
+
+message ActiveContractInfo {
+  string contract_id = 1;
+  string template_id = 2;
+  string entity_name = 3;
+  google.protobuf.Struct create_arguments = 4;
+  string created_event_blob = 5;
+  string synchronizer_id = 6;
+
+  string network_id = 10;  // CAIP-2 network identifier (e.g. "canton:global-domain")
+}
+
+message GetActiveContractsResponse {
+  ActiveContractInfo contract = 1;  // One contract per streamed message
+}
+
+// --- GetUpdates (server-streaming) ---
+
+message GetUpdatesRequest {
+  int64 begin_exclusive = 1;            // Start offset (exclusive)
+  optional int64 end_inclusive = 2;     // End offset (inclusive); if unset, streams to current ledger end
+  repeated string template_filters = 3; // Optional template ID filters
+}
+
+message GetUpdatesResponse {
+  oneof update {
+    LedgerTransaction transaction = 1;
+    LedgerOffsetCheckpoint offset_checkpoint = 2;
+  }
+}
+
+message LedgerTransaction {
+  string update_id = 1;
+  string command_id = 2;
+  int64 offset = 3;
+  string synchronizer_id = 4;
+  repeated LedgerEvent events = 5;
+}
+
+message LedgerEvent {
+  oneof event {
+    LedgerCreatedEvent created = 1;
+    LedgerExercisedEvent exercised = 2;
+    LedgerArchivedEvent archived = 3;
+  }
+}
+
+message LedgerCreatedEvent {
+  string contract_id = 1;
+  string template_id = 2;
+  google.protobuf.Struct create_arguments = 3;
+}
+
+message LedgerExercisedEvent {
+  string contract_id = 1;
+  string template_id = 2;
+  string choice = 3;
+  bool consuming = 4;
+}
+
+message LedgerArchivedEvent {
+  string contract_id = 1;
+  string template_id = 2;
+}
+
+message LedgerOffsetCheckpoint {
+  int64 offset = 1;
+}
+
+// --- GetLedgerEnd ---
+
+message GetLedgerEndRequest {
+  // party_id from JWT
+}
+
+message GetLedgerEndResponse {
+  int64 offset = 1;
+}
+
+// --- GetBalances ---
+
+message GetBalancesRequest {
+  // party_id from JWT
+}
+
+message TokenBalance {
+  string instrument_id = 1;
+  string instrument_admin = 2;
+  string total_amount = 3;
+  string locked_amount = 4;
+  string unlocked_amount = 5;
+  bool is_canton_coin = 6;
+}
+
+message GetBalancesResponse {
+  repeated TokenBalance balances = 1;
+}
+
+// --- GetPrepaidTrafficBalance ---
+//
+// Off-chain prepaid traffic balance + credit ceiling for the authenticated
+// party. Used by clients to drive auto-topup logic. Returns zeros for parties
+// with no balance row and no LP credit configured (i.e. never funded, no
+// credit) — never errors on missing data.
+
+message GetPrepaidTrafficBalanceRequest {
+  // party_id from JWT
+}
+
+message GetPrepaidTrafficBalanceResponse {
+  string balance_cc = 1;        // signed decimal string; may be negative when on credit
+  string credit_limit_cc = 2;   // non-negative; 0 = no credit
+  string available_cc = 3;      // balance_cc + credit_limit_cc (convenience)
+  string total_credited_cc = 4; // lifetime credits
+  string total_debited_cc = 5;  // lifetime debits
+}
+
+// --- GetDsoRates ---
+
+message GetDsoRatesRequest {}
+
+message OpenMiningRound {
+  uint64 round_number = 1;
+  string amulet_price = 2;
+  string opens_at = 3;
+  string target_closes_at = 4;
+  string issuing_for = 5;           // RelTime (microseconds)
+  string tick_duration = 6;          // RelTime (microseconds)
+  string transfer_config_usd = 7;   // JSON-encoded TransferConfig
+  string issuance_config = 8;       // JSON-encoded IssuanceConfig
+}
+
+message IssuingMiningRound {
+  uint64 round_number = 1;
+  string issuance_per_featured_app_reward_coupon = 2;
+  string issuance_per_unfeatured_app_reward_coupon = 3;
+  string issuance_per_validator_reward_coupon = 4;
+  string issuance_per_sv_reward_coupon = 5;
+  string opens_at = 6;
+  string target_closes_at = 7;
+  optional string opt_issuance_per_validator_faucet_coupon = 8;
+}
+
+message GetDsoRatesResponse {
+  string cc_usd_rate = 1;
+  string amulet_price = 2;
+  uint64 current_round = 3;
+  string dso_party_id = 4;
+  string featured_app_issuance = 5;
+  repeated OpenMiningRound open_mining_rounds = 6;
+  repeated IssuingMiningRound issuing_mining_rounds = 7;
+}
+
+// --- GetAmulets ---
+
+message GetAmuletsRequest {}
+
+message AmuletInfo {
+  string contract_id = 1;
+  string amount = 2;  // Decimal string from amount.initialAmount
+}
+
+message GetAmuletsResponse {
+  repeated AmuletInfo amulets = 1;
+}
+
+// --- GetServiceInfo ---
+//
+// TransactionOperation is defined in common.proto so that both queries
+// (GetServiceInfo.supported_operations) and transactions.proto can
+// reference it without a cyclic import.
+
+message GetServiceInfoRequest {}
+
+message GetServiceInfoResponse {
+  string provider_id = 1;                              // Service identifier
+  string version = 2;                                  // API version (e.g. "1.0.0")
+  string provider_type = 3;                            // "remote"
+  repeated TransactionOperation supported_operations = 4;
+  string network_id = 5;                               // CAIP-2 (e.g. "canton:global-domain")
+  string synchronizer_id = 6;
+  uint64 session_ttl_secs = 7;
+}

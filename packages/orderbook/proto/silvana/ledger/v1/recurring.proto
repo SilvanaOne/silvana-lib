@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Recurring payment operations and user service request.
+// ============================================================================
+
+message RequestRecurringPrepaidParams {
+  string app_party = 1;
+  string amount = 2;
+  string locked_amount = 3;
+  uint32 lock_days = 4;
+  optional string description = 5;
+  optional string reference = 6;
+  string limit = 7;
+}
+
+message RequestRecurringPayasyougoParams {
+  string app_party = 1;
+  string amount = 2;
+  optional string description = 3;
+  optional string reference = 4;
+}
+
+message RequestUserServiceParams {
+  optional string reference_id = 1;
+  optional string party_name = 2;
+}

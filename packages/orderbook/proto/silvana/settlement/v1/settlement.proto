@@ -194,6 +194,7 @@ enum NextAction {
   NEXT_ACTION_PAY_ALLOC_FEE = 5;   // Pay allocation processing fee
   NEXT_ACTION_ALLOCATE = 6;        // Allocate tokens
   NEXT_ACTION_WAIT = 7;            // Waiting for counterparty/operator
+  NEXT_ACTION_MULTICALL_ACCEPT = 8; // Acceptor: fees + accept DVP + allocate in single multicall tx
 }
 
 // ============================================================================
@@ -680,6 +681,7 @@ message GetPendingProposalsResponse {
 message GetSettlementStatusRequest {
   CantonNodeAuth auth = 1;
   string settlement_id = 2;
+  bool supports_multicall = 3;  // Frontend signals multicall capability
 }
 
 // Status of a single step in the DVP flow

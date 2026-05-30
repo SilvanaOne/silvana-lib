@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+import "silvana/ledger/v1/common.proto";
+import "silvana/ledger/v1/transfer.proto";
+import "silvana/ledger/v1/preapproval.proto";
+import "silvana/ledger/v1/dvp.proto";
+import "silvana/ledger/v1/cip56.proto";
+import "silvana/ledger/v1/recurring.proto";
+import "silvana/ledger/v1/multicall.proto";
+import "silvana/ledger/v1/lock.proto";
+import "silvana/ledger/v1/fees.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Two-Phase Transaction Messages.
+//
+// PrepareTransaction → client signs hash → ExecuteTransaction.
+//
+// PrepareTransactionRequest is intentionally a single envelope around a
+// `oneof params` covering all interface domains. The runtime gating layer
+// in orderbook-ledger-service rejects operations whose interface group is
+// not enabled in the deployment config — see
+// crates/orderbook-ledger-service/src/interface_gate.rs.
+// ============================================================================
+
+// --- PrepareTransaction ---
+
+message PrepareTransactionRequest {
+  TransactionOperation operation = 1;
+
+  oneof params {
+    PayFeeParams pay_fee = 10;
+    ProposeDvpParams propose_dvp = 11;
+    AcceptDvpParams accept_dvp = 12;
+    AllocateParams allocate = 13;
+    TransferCcParams transfer_cc = 14;
+    RequestPreapprovalParams request_preapproval = 15;
+    RequestRecurringPrepaidParams request_recurring_prepaid = 16;
+    RequestRecurringPayasyougoParams request_recurring_payasyougo = 17;
+    RequestUserServiceParams request_user_service = 18;
+    TransferCip56Params transfer_cip56 = 19;
+    AcceptCip56Params accept_cip56 = 20;
+    SplitCcParams split_cc = 21;
+    ExecuteMultiCallParams execute_multicall = 22;
+    LockHoldingsParams lock_holdings = 23;
+    ProcessLockUnlockRequestsParams process_lock_unlock_requests = 24;
+    ResizeLockParams resize_lock = 25;
+    TerminateLockParams terminate_lock = 26;
+    PrepayTrafficParams prepay_traffic = 27;
+  }
+
+  // Message-level signature from cloud agent (Ed25519 over canonical request payload)
+  MessageSignature request_signature = 30;
+}
+
+// --- PrepareTransaction Response ---
+
+message PrepareTransactionResponse {
+  string transaction_id = 1;              // Server-generated session ID
+  string prepared_transaction_hash = 2;   // Base64 hash (DO NOT TRUST — recompute from prepared_transaction)
+  string command_id = 3;                  // Deterministic command ID used
+  TrafficEstimate traffic_estimate = 4;
+  bytes prepared_transaction = 5;         // Full Canton PreparedTransaction protobuf (for client verification)
+  string hashing_scheme_version = 6;      // "V2" or "V3" — needed for hash recomputation
+
+  // Server-issued fee schedule for this op. Debited off-chain from the
+  // sender's prepaid traffic balance after Canton execute succeeds.
+  repeated Fee fees = 7;
+  // Canonical JSON of `fees` — verbatim what `fees_signature` covers.
+  // The cloud-agent must echo this string back in ExecuteTransactionRequest.
+  string fees_json = 8;
+
+  // Message-level signature from dApp provider service over the existing
+  // canonical (transaction_id, hash, command_id, prepared_transaction,
+  // hashing_scheme_version). MUST NOT cover fees_json — that has its own
+  // signature so the Canton-prepared payload signature stays untouched.
+  MessageSignature response_signature = 30;
+  // Separate Ed25519 signature from the dApp provider service over
+  // canonical_fees_authorization(fees_json). Out-of-band from the Canton
+  // payload signature to preserve Canton verifiability.
+  MessageSignature fees_signature = 31;
+
+  // Transaction lifecycle status (always PENDING after prepare)
+  TransactionStatus transaction_status = 40;
+}
+
+// --- ExecuteTransaction ---
+
+message ExecuteTransactionRequest {
+  string transaction_id = 1;    // From PrepareTransactionResponse
+  string signature = 2;         // Base64-encoded Ed25519 signature of the hash (Canton multihash; UNTOUCHED)
+
+  // Echoed verbatim from PrepareTransactionResponse.fees_json so the server
+  // can verify the cloud-agent authorized this exact fee schedule.
+  string fees_json = 3;
+
+  // Message-level signature from cloud agent over the existing canonical
+  // (transaction_id, signature). MUST NOT cover fees_json.
+  MessageSignature request_signature = 30;
+  // Separate Ed25519 signature from cloud-agent over
+  // canonical_fees_authorization(fees_json). Authorizes the off-chain debit
+  // of the fees from the sender's prepaid traffic balance.
+  MessageSignature fees_authorization = 31;
+}
+
+message ExecuteTransactionResponse {
+  bool success = 1;
+  string update_id = 2;
+  optional string contract_id = 3;
+  optional string error_message = 4;
+  TrafficEstimate traffic = 5;
+  optional string rewards_amount = 6;
+  optional uint64 rewards_round = 7;
+
+  // Message-level signature from dApp provider service (Ed25519 over canonical response payload)
+  MessageSignature response_signature = 30;
+
+  // Transaction lifecycle status (EXECUTED on success, FAILED on error)
+  TransactionStatus transaction_status = 40;
+  // Structured error (ProviderRpcError) — populated when success=false
+  optional ProviderError provider_error = 41;
+
+  // All contracts created by this transaction (for tracking new amulets from change/split)
+  repeated CreatedContractInfo created_contracts = 42;
+}

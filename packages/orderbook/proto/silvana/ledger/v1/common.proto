@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Common types shared across all ledger interface domains.
+//
+// This file is the foundation -- it has no imports and is imported by every
+// other ledger proto file. It contains message-level signing, error model,
+// transaction lifecycle status, and traffic estimation types.
+// ============================================================================
+
+// ============================================================================
+// Message-Level Signing
+//
+// Ed25519 signature over SHA-256(canonical_payload) for message integrity.
+// Cloud agent signs requests; dApp provider service signs responses.
+// ============================================================================
+
+message MessageSignature {
+  string signature = 1;       // Base64 Ed25519 signature of SHA-256(canonical_payload)
+  string public_key = 2;      // Base64url Ed25519 public key (32 bytes)
+  string signing_scheme = 3;  // "ed25519-sha256-v1"
+}
+
+// ============================================================================
+// Error Model (ProviderRpcError)
+//
+// Standardized error codes based on EIP-1193 and EIP-1474.
+// Mapped to numeric codes for interoperability.
+// ============================================================================
+
+enum ProviderErrorCode {
+  PROVIDER_ERROR_UNSPECIFIED = 0;
+  PROVIDER_ERROR_USER_REJECTED = 1;        // 4001 — User rejected the request
+  PROVIDER_ERROR_UNAUTHORIZED = 2;          // 4100 — Method/account not authorized
+  PROVIDER_ERROR_UNSUPPORTED_METHOD = 3;    // 4200 — Provider doesn't support method
+  PROVIDER_ERROR_DISCONNECTED = 4;          // 4900 — Provider disconnected
+  PROVIDER_ERROR_INVALID_PARAMS = 5;        // -32602 — Invalid method parameters
+  PROVIDER_ERROR_INTERNAL = 6;              // -32603 — Internal error
+  PROVIDER_ERROR_TRANSACTION_REJECTED = 7;  // -32003 — Transaction creation failed
+  PROVIDER_ERROR_RESOURCE_NOT_FOUND = 8;    // -32001 — Requested resource not found
+  PROVIDER_ERROR_RESOURCE_UNAVAILABLE = 9;  // -32002 — Requested resource unavailable
+  PROVIDER_ERROR_LIMIT_EXCEEDED = 10;       // -32005 — Request exceeds limit
+}
+
+message ProviderError {
+  ProviderErrorCode code = 1;
+  string message = 2;
+  optional string data = 3;  // Optional JSON detail
+}
+
+// ============================================================================
+// Transaction Lifecycle
+//
+// Status progression: pending → signed → executed → completed | failed
+// ============================================================================
+
+enum TransactionStatus {
+  TRANSACTION_STATUS_UNSPECIFIED = 0;
+  TRANSACTION_STATUS_PENDING = 1;     // Prepared, awaiting signature
+  TRANSACTION_STATUS_SIGNED = 2;      // Signed by client
+  TRANSACTION_STATUS_EXECUTED = 3;    // Submitted to Canton
+  TRANSACTION_STATUS_COMPLETED = 4;   // Confirmed on-ledger
+  TRANSACTION_STATUS_FAILED = 5;      // Failed
+}
+
+// ============================================================================
+// Traffic Estimation
+// ============================================================================
+
+message TrafficEstimate {
+  uint64 request_bytes = 1;
+  uint64 response_bytes = 2;
+  uint64 total_bytes = 3;
+}
+
+// ============================================================================
+// Created Contract Info (for tracking contracts created by a transaction)
+// ============================================================================
+
+message CreatedContractInfo {
+  string contract_id = 1;
+  string template_id = 2;
+  string amount = 3;  // For amulets: initialAmount; empty for non-amulet contracts
+}
+
+// ============================================================================
+// Transaction Operation enum
+//
+// Defined here (foundation) because it's referenced by both queries
+// (GetServiceInfo.supported_operations) and transactions
+// (PrepareTransactionRequest.operation), so we'd otherwise have a cyclic
+// import between queries.proto and transactions.proto.
+//
+// Predefined set of allowed operations (cloud agent cannot send arbitrary txs).
+// ============================================================================
+
+enum TransactionOperation {
+  TRANSACTION_OPERATION_UNSPECIFIED = 0;
+
+  // Settlement steps
+  TRANSACTION_OPERATION_PAY_DVP_FEE = 1;
+  TRANSACTION_OPERATION_PROPOSE_DVP = 2;
+  TRANSACTION_OPERATION_ACCEPT_DVP = 3;
+  TRANSACTION_OPERATION_PAY_ALLOC_FEE = 4;
+  TRANSACTION_OPERATION_ALLOCATE = 5;
+
+  // Transfers
+  TRANSACTION_OPERATION_TRANSFER_CC = 6;
+
+  // Preapproval
+  TRANSACTION_OPERATION_REQUEST_PREAPPROVAL = 7;
+
+  // Recurring payments
+  TRANSACTION_OPERATION_REQUEST_RECURRING_PREPAID = 8;
+  TRANSACTION_OPERATION_REQUEST_RECURRING_PAYASYOUGO = 9;
+
+  // User service
+  TRANSACTION_OPERATION_REQUEST_USER_SERVICE = 10;
+
+  // CIP-56 token transfers
+  TRANSACTION_OPERATION_TRANSFER_CIP56 = 11;
+  TRANSACTION_OPERATION_ACCEPT_CIP56 = 12;
+
+  // CC split (MergeSplit)
+  TRANSACTION_OPERATION_SPLIT_CC = 13;
+
+  // MultiCall (atomic batch of operations via Execute_MultiCall DAR choice)
+  TRANSACTION_OPERATION_EXECUTE_MULTICALL = 14;
+
+  // Lock operations (LockService / LockController choices)
+  TRANSACTION_OPERATION_LOCK_HOLDINGS = 15;
+  TRANSACTION_OPERATION_PROCESS_LOCK_UNLOCK_REQUESTS = 16;
+  TRANSACTION_OPERATION_RESIZE_LOCK = 17;
+  TRANSACTION_OPERATION_TERMINATE_LOCK = 18;
+
+  // Prepay traffic — top up CC balance held by PARTY_PREPAID_TRAFFIC
+  TRANSACTION_OPERATION_PREPAY_TRAFFIC = 19;
+}

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// CIP-56 utility token transfer operations.
+// ============================================================================
+
+// CIP-56 instrument transfer — fully qualified instrument required
+// Daml InstrumentId = { id: Text, admin: Party }
+message TransferCip56Params {
+  string instrument_id = 1;       // Token name, e.g. "USDC", "CBTC"
+  string instrument_admin = 2;    // Registrar party (InstrumentId.admin / instrument source)
+  string receiver_party = 3;      // Full Canton party ID of receiver
+  string amount = 4;              // Decimal string
+  optional string reference = 5;  // Optional transfer reference/description
+}
+
+// Accept incoming CIP-56 TransferOffer — registrar extracted from contract payload
+message AcceptCip56Params {
+  string contract_id = 1;      // TransferOffer contract ID to accept
+}

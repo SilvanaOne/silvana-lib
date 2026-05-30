@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+import "silvana/ledger/v1/queries.proto";
+import "silvana/ledger/v1/transactions.proto";
+import "silvana/ledger/v1/onboarding.proto";
+import "silvana/ledger/v1/preapproval.proto";  // GetPreapprovalsRequest/Response
+import "silvana/ledger/v1/dvp.proto";          // GetSettlementContractsRequest/Response
+import "silvana/ledger/v1/faucet.proto";       // FaucetRequest/FaucetResponse
+import "silvana/ledger/v1/pay_fee.proto";      // PreparePayFee/ExecutePayFee request/response
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// DAppBridgeService — Reverse-tunnel between ledger-service and orderbook-rpc
+//
+// ledger-service initiates this stream TO orderbook-rpc (no port needed on
+// ledger-service machine). First upstream message must be BridgeAuth.
+// After auth succeeds, orderbook-rpc sends BridgeRequest messages and
+// ledger-service replies with BridgeResponse messages, correlated by request_id.
+// ============================================================================
+
+service DAppBridgeService {
+  // Bidirectional stream: ledger-service connects, authenticates, then
+  // receives requests and sends responses.
+  rpc OpenBridge(stream BridgeUpstream) returns (stream BridgeDownstream);
+}
+
+// --- Messages FROM ledger-service TO orderbook-rpc (upstream) ---
+
+message BridgeUpstream {
+  oneof msg {
+    BridgeAuth auth = 1;
+    BridgeResponse response = 2;
+    GetAgentConfigResponse agent_config = 3;  // sent after auth to provide agent config
+  }
+}
+
+message BridgeAuth {
+  string jwt = 1;  // Ed25519-signed JWT; verified by LEDGER_BRIDGE_PUBLIC_KEY
+}
+
+message BridgeResponse {
+  string request_id = 1;
+  bool stream_complete = 2;  // When true, this is the final message for a streaming request
+
+  oneof result {
+    GetActiveContractsResponse   get_active_contracts = 10;
+    GetBalancesResponse          get_balances = 11;
+    GetPreapprovalsResponse      get_preapprovals = 12;
+    GetDsoRatesResponse          get_dso_rates = 13;
+    GetSettlementContractsResponse get_settlement_contracts = 14;
+    PrepareTransactionResponse   prepare_transaction = 15;
+    ExecuteTransactionResponse   execute_transaction = 16;
+    GetServiceInfoResponse       get_service_info = 17;
+    GetUpdatesResponse           get_updates = 18;
+    GetLedgerEndResponse         get_ledger_end = 19;
+    BridgeError                  error = 20;
+    GetAmuletsResponse           get_amulets = 21;
+    FaucetResponse               request_faucet = 22;
+    RegisterAgentResponse        register_agent = 23;
+    GetOnboardingStatusResponse  get_onboarding_status = 24;
+    SubmitOnboardingSignatureResponse submit_onboarding_signature = 25;
+    ListFaucetInstrumentsResponse list_faucet_instruments = 26;
+    PreparePayFeeResponse        prepare_pay_fee = 27;
+    ExecutePayFeeResponse        execute_pay_fee = 28;
+    GetPrepaidTrafficBalanceResponse get_prepaid_traffic_balance = 29;
+  }
+}
+
+message BridgeError {
+  int32  code = 1;    // gRPC status code
+  string message = 2;
+}
+
+// --- Messages FROM orderbook-rpc TO ledger-service (downstream) ---
+
+message BridgeDownstream {
+  oneof msg {
+    BridgeAuthResult auth_result = 1;
+    BridgeRequest request = 2;
+  }
+}
+
+message BridgeAuthResult {
+  bool   success = 1;
+  string error_message = 2;
+}
+
+message BridgeRequest {
+  string request_id = 1;
+  string authorization = 2;  // caller's original "Bearer <jwt>" header, passed through
+
+  oneof payload {
+    GetActiveContractsRequest    get_active_contracts = 10;
+    GetBalancesRequest           get_balances = 11;
+    GetPreapprovalsRequest       get_preapprovals = 12;
+    GetDsoRatesRequest           get_dso_rates = 13;
+    GetSettlementContractsRequest get_settlement_contracts = 14;
+    PrepareTransactionRequest    prepare_transaction = 15;
+    ExecuteTransactionRequest    execute_transaction = 16;
+    GetServiceInfoRequest        get_service_info = 17;
+    GetUpdatesRequest            get_updates = 18;
+    GetLedgerEndRequest          get_ledger_end = 19;
+    GetAmuletsRequest            get_amulets = 20;
+    FaucetRequest                request_faucet = 21;
+    RegisterAgentRequest         register_agent = 22;
+    GetOnboardingStatusRequest   get_onboarding_status = 23;
+    SubmitOnboardingSignatureRequest submit_onboarding_signature = 24;
+    ListFaucetInstrumentsRequest list_faucet_instruments = 25;
+    PreparePayFeeRequest         prepare_pay_fee = 26;
+    ExecutePayFeeRequest         execute_pay_fee = 27;
+    GetPrepaidTrafficBalanceRequest get_prepaid_traffic_balance = 28;
+  }
+}

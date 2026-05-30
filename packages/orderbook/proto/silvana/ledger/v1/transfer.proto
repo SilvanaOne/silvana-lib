@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Canton Coin (CC) transfer operations.
+//
+// Param messages used inside PrepareTransactionRequest.params (oneof).
+// ============================================================================
+
+// Transfer Canton Coin to a receiver. If the receiver has a TransferPreapproval,
+// the transfer settles atomically. Otherwise it creates a TransferOffer.
+message TransferCcParams {
+  string receiver_party = 1;
+  string amount = 2;
+  optional string description = 3;
+  string command_id = 4;
+  optional string settlement_proposal_id = 5;
+  repeated string amulet_cids = 6;  // Pre-selected amulet contract IDs (empty = server selects)
+}
+
+// Split CC into multiple amulets via AmuletRules_Transfer (MergeSplit)
+message SplitCcParams {
+  repeated string output_amounts = 1; // Amount for each output amulet (decimal strings)
+  repeated string amulet_cids = 2;    // Input amulet contract IDs
+}
+
+// Prepay traffic: transfer CC to PARTY_PREPAID_TRAFFIC (server-resolved) so
+// the agent can later debit the prepaid balance for tx sends, subscriptions,
+// AI agent costs, agent / participant / traffic fees, etc.
+//
+// Recipient is fixed server-side from the PARTY_PREPAID_TRAFFIC env, so it
+// is not a client-supplied field. Distinct from the Canton sequencer
+// traffic-fee party (PARTY_TRAFFIC_FEE) used by the cloud-agent's on-chain
+// payment queue.
+message PrepayTrafficParams {
+  string amount = 1;                  // CC amount to prepay (decimal string)
+  optional string description = 2;
+  string command_id = 3;
+  repeated string amulet_cids = 4;    // Pre-selected amulet contract IDs (empty = server selects)
+}

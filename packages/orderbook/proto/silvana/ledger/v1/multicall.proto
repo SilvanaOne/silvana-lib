@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Execute_MultiCall — atomic batch of operations via MultiCall DAR (v1).
+// Operations are executed sequentially within a single Canton transaction.
+// Holdings pool is threaded through operations (change from one feeds the next).
+//
+// All CC operations use CIP-56 interfaces (Amulet implements Holding).
+// CC is treated as instrumentId = { admin: DSO, id: "Amulet" }.
+// ============================================================================
+
+message ExecuteMultiCallParams {
+  repeated MultiCallOp operations = 1;  // Ordered list of operations to execute
+  repeated string holding_cids = 2;     // Unified input holdings pool (amulets + CIP-56 holdings)
+}
+
+// A single operation within an Execute_MultiCall batch.
+// Mirrors 10 Daml MultiCallOp variants from multicall-v1 DAR.
+message MultiCallOp {
+  oneof op {
+    McBatchTransfer batch_transfer = 1;
+    McTransfer transfer = 2;
+    McAcceptTransferInstruction accept_transfer_instruction = 3;
+    McAllocate allocate = 4;
+    McWithdrawAllocation withdraw_allocation = 5;
+    McProposeDvp propose_dvp = 6;
+    McAcceptDvp accept_dvp = 7;
+    McAcceptDvpAndAllocate accept_dvp_and_allocate = 8;
+    McCreateTransferPreapproval create_transfer_preapproval = 9;
+    McCreateUserServiceRequest create_user_service_request = 10;
+    McBatchPay batch_pay = 11;  // CC batch payment via multicall-v0 (AppRewards path)
+  }
+}
+
+// ── CIP-56 transfer operations ────────────────────────────────────────
+
+// Batch transfer to multiple recipients via chained TransferFactory_Transfer calls.
+// Uses multicall-v1 with CIP-56 TransferFactory_Transfer.
+message McBatchTransfer {
+  string transfer_factory_cid = 1;
+  string expected_admin = 2;
+  string instrument_admin = 3;
+  string instrument_id = 4;
+  string requested_at = 5;
+  string execute_before = 6;
+  optional string extra_args_json = 7;
+  repeated McTransferTarget targets = 8;
+}
+
+message McTransferTarget {
+  string receiver = 1;
+  string amount = 2;
+  optional string description = 3;
+}
+
+// Single CIP-56 token transfer (Daml: Op_Transfer)
+message McTransfer {
+  string transfer_factory_cid = 1;
+  string expected_admin = 2;
+  McTransferDetails transfer = 3;
+  optional string extra_args_json = 4;
+}
+
+// CIP-56 Transfer object fields
+message McTransferDetails {
+  string sender = 1;
+  string receiver = 2;
+  string amount = 3;
+  string instrument_admin = 4;
+  string instrument_id = 5;
+  string requested_at = 6;
+  string execute_before = 7;
+  map<string, string> meta = 8;
+}
+
+// Accept a CIP-56 transfer instruction (Daml: Op_AcceptTransferInstruction)
+message McAcceptTransferInstruction {
+  string transfer_instruction_cid = 1;
+  optional string extra_args_json = 2;
+}
+
+// ── CIP-56 allocation operations ──────────────────────────────────────
+
+// Allocate tokens against a Dvp contract (Daml: Op_Allocate)
+// Works for both CC (instrumentId = { admin: DSO, id: "Amulet" }) and non-CC tokens.
+message McAllocate {
+  string proposal_id = 1;
+  string dvp_cid = 2;
+}
+
+// Withdraw a CIP-56 allocation (Daml: Op_WithdrawAllocation)
+message McWithdrawAllocation {
+  string allocation_cid = 1;
+  optional string extra_args_json = 2;
+}
+
+// ── DVP operations ────────────────────────────────────────────────────
+
+// Propose a DVP settlement (buyer creates DvpProposal)
+message McProposeDvp {
+  string proposal_id = 1;
+}
+
+// Accept an existing DvpProposal (seller)
+message McAcceptDvp {
+  string proposal_id = 1;
+  string dvp_proposal_cid = 2;
+}
+
+// Accept DvpProposal + allocate in a single operation (compose mode)
+message McAcceptDvpAndAllocate {
+  string proposal_id = 1;
+  string dvp_proposal_cid = 2;
+}
+
+// ── Preapproval / onboarding ──────────────────────────────────────────
+
+// Create a TransferPreapproval (Daml: Op_CreateTransferPreapproval)
+message McCreateTransferPreapproval {
+  string operator = 1;
+  string instrument_admin = 2;
+  repeated McInstrumentAllowance instrument_allowances = 3;
+}
+
+message McInstrumentAllowance {
+  string id = 1;
+}
+
+// Create a UserService request (Daml: Op_CreateUserServiceRequest)
+message McCreateUserServiceRequest {
+  string operator = 1;
+}
+
+// ── Batch payment via multicall-v0 (AppRewards path) ─────────────────
+
+// Batch CC payment via multicall-v0 Op_BatchPay (TransferPreapproval_Send).
+// Uses splice-amulet 0.1.16 which creates AppRewardCoupon directly.
+// Server resolves preapprovalCid, amuletRulesCid, openMiningRoundCid,
+// featuredAppRightCid from Scan API / MultiCallContext.
+message McBatchPay {
+  repeated McPaymentTarget targets = 1;
+}
+
+message McPaymentTarget {
+  string receiver = 1;
+  string amount = 2;
+  optional string description = 3;
+}
