@@ -10,6 +10,7 @@ import "silvana/ledger/v1/cip56.proto";
 import "silvana/ledger/v1/recurring.proto";
 import "silvana/ledger/v1/multicall.proto";
 import "silvana/ledger/v1/lock.proto";
+import "silvana/ledger/v1/fees.proto";
 
 option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
 
@@ -48,6 +49,7 @@ message PrepareTransactionRequest {
     ProcessLockUnlockRequestsParams process_lock_unlock_requests = 24;
     ResizeLockParams resize_lock = 25;
     TerminateLockParams terminate_lock = 26;
+    PrepayTrafficParams prepay_traffic = 27;
   }
 
   // Message-level signature from cloud agent (Ed25519 over canonical request payload)
@@ -64,8 +66,22 @@ message PrepareTransactionResponse {
   bytes prepared_transaction = 5;         // Full Canton PreparedTransaction protobuf (for client verification)
   string hashing_scheme_version = 6;      // "V2" or "V3" — needed for hash recomputation
 
-  // Message-level signature from dApp provider service (Ed25519 over canonical response payload)
+  // Server-issued fee schedule for this op. Debited off-chain from the
+  // sender's prepaid traffic balance after Canton execute succeeds.
+  repeated Fee fees = 7;
+  // Canonical JSON of `fees` — verbatim what `fees_signature` covers.
+  // The cloud-agent must echo this string back in ExecuteTransactionRequest.
+  string fees_json = 8;
+
+  // Message-level signature from dApp provider service over the existing
+  // canonical (transaction_id, hash, command_id, prepared_transaction,
+  // hashing_scheme_version). MUST NOT cover fees_json — that has its own
+  // signature so the Canton-prepared payload signature stays untouched.
   MessageSignature response_signature = 30;
+  // Separate Ed25519 signature from the dApp provider service over
+  // canonical_fees_authorization(fees_json). Out-of-band from the Canton
+  // payload signature to preserve Canton verifiability.
+  MessageSignature fees_signature = 31;
 
   // Transaction lifecycle status (always PENDING after prepare)
   TransactionStatus transaction_status = 40;
@@ -75,10 +91,19 @@ message PrepareTransactionResponse {
 
 message ExecuteTransactionRequest {
   string transaction_id = 1;    // From PrepareTransactionResponse
-  string signature = 2;         // Base64-encoded Ed25519 signature of the hash
+  string signature = 2;         // Base64-encoded Ed25519 signature of the hash (Canton multihash; UNTOUCHED)
 
-  // Message-level signature from cloud agent (Ed25519 over canonical request payload)
+  // Echoed verbatim from PrepareTransactionResponse.fees_json so the server
+  // can verify the cloud-agent authorized this exact fee schedule.
+  string fees_json = 3;
+
+  // Message-level signature from cloud agent over the existing canonical
+  // (transaction_id, signature). MUST NOT cover fees_json.
   MessageSignature request_signature = 30;
+  // Separate Ed25519 signature from cloud-agent over
+  // canonical_fees_authorization(fees_json). Authorizes the off-chain debit
+  // of the fees from the sender's prepaid traffic balance.
+  MessageSignature fees_authorization = 31;
 }
 
 message ExecuteTransactionResponse {

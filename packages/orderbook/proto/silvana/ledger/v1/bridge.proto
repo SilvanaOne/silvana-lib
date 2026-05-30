@@ -8,6 +8,7 @@ import "silvana/ledger/v1/onboarding.proto";
 import "silvana/ledger/v1/preapproval.proto";  // GetPreapprovalsRequest/Response
 import "silvana/ledger/v1/dvp.proto";          // GetSettlementContractsRequest/Response
 import "silvana/ledger/v1/faucet.proto";       // FaucetRequest/FaucetResponse
+import "silvana/ledger/v1/pay_fee.proto";      // PreparePayFee/ExecutePayFee request/response
 
 option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
 
@@ -58,6 +59,13 @@ message BridgeResponse {
     BridgeError                  error = 20;
     GetAmuletsResponse           get_amulets = 21;
     FaucetResponse               request_faucet = 22;
+    RegisterAgentResponse        register_agent = 23;
+    GetOnboardingStatusResponse  get_onboarding_status = 24;
+    SubmitOnboardingSignatureResponse submit_onboarding_signature = 25;
+    ListFaucetInstrumentsResponse list_faucet_instruments = 26;
+    PreparePayFeeResponse        prepare_pay_fee = 27;
+    ExecutePayFeeResponse        execute_pay_fee = 28;
+    GetPrepaidTrafficBalanceResponse get_prepaid_traffic_balance = 29;
   }
 }
 
@@ -97,5 +105,12 @@ message BridgeRequest {
     GetLedgerEndRequest          get_ledger_end = 19;
     GetAmuletsRequest            get_amulets = 20;
     FaucetRequest                request_faucet = 21;
+    RegisterAgentRequest         register_agent = 22;
+    GetOnboardingStatusRequest   get_onboarding_status = 23;
+    SubmitOnboardingSignatureRequest submit_onboarding_signature = 24;
+    ListFaucetInstrumentsRequest list_faucet_instruments = 25;
+    PreparePayFeeRequest         prepare_pay_fee = 26;
+    ExecutePayFeeRequest         execute_pay_fee = 27;
+    GetPrepaidTrafficBalanceRequest get_prepaid_traffic_balance = 28;
   }
 }

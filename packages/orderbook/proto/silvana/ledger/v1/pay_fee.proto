@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+import "silvana/ledger/v1/common.proto";
+import "silvana/ledger/v1/fees.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// PreparePayFee / ExecutePayFee — off-chain processing-fee payment.
+//
+// Replaces the on-chain CC transfer that previously paid DVP and allocation
+// processing fees. The cloud-agent calls this RPC pair separately at each
+// settlement step:
+//   - At NextAction::PayDvpFee:  fee_type = "dvp"
+//   - At NextAction::PayAllocFee: fee_type = "allocate"
+//
+// The two are independent — if the counterparty never allocates, the
+// cloud-agent stays at NextAction::Allocate and never calls the
+// "allocate" PayFee. fee_type is a free-form string (NOT enum) so future
+// processing-fee categories require no proto migration.
+//
+// Two-signature model (mirrors PrepareTransactionResponse / ExecuteTransactionRequest):
+//   - response_signature / request_signature: covers the full canonical
+//     payload (proposal_id, fee_type, fees_json).
+//   - fees_signature / fees_authorization: separate Ed25519 over
+//     canonical_fees_authorization(fees_json) only. Out-of-band so any
+//     future Canton-payload signature stays untouched.
+// ============================================================================
+
+message PreparePayFeeRequest {
+  string proposal_id = 1;
+  string fee_type = 2;                          // "dvp" or "allocate"
+  MessageSignature request_signature = 30;      // covers (proposal_id, fee_type)
+}
+
+message PreparePayFeeResponse {
+  string proposal_id = 1;
+  string fee_type = 2;
+  Fee fee = 3;                                  // exactly one fee entry
+  string fees_json = 4;                         // canonical JSON of [fee]; what fees_signature covers
+  string session_id = 5;                        // server-issued single-use UUIDv7; cloud-agent
+                                                // echoes verbatim in ExecutePayFeeRequest. The
+                                                // server's SessionStore atomically consumes it
+                                                // on execute, preventing replay.
+  MessageSignature response_signature = 30;     // covers (proposal_id, fee_type, fees_json, session_id)
+  MessageSignature fees_signature = 31;         // covers canonical_pay_fee_authorization(party,
+                                                // session_id, proposal_id, fee_type, fees_json)
+}
+
+message ExecutePayFeeRequest {
+  string proposal_id = 1;
+  string fee_type = 2;
+  string fees_json = 3;                         // echoed verbatim from prepare
+  string session_id = 4;                        // echoed verbatim from prepare; server's
+                                                // SessionStore.take_pay_fee consumes it.
+  MessageSignature request_signature = 30;      // covers (proposal_id, fee_type, fees_json, session_id)
+  MessageSignature fees_authorization = 31;     // covers canonical_pay_fee_authorization(party,
+                                                // session_id, proposal_id, fee_type, fees_json)
+}
+
+message ExecutePayFeeResponse {
+  bool success = 1;
+  optional string error_message = 2;
+  MessageSignature response_signature = 30;
+}

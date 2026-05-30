@@ -132,6 +132,9 @@ message Order {
   optional string signature = 23;  // Base64-encoded Ed25519 signature for order authentication
   bytes signed_data = 24;  // Original signed order data (binary)
   uint64 nonce = 25;  // Unique nonce per trader for replay protection
+  // Liquidity-provider matching constraints (RFQ-like behavior for terminal orders)
+  bool only_liquidity_providers = 26;           // If true, only match counterparties that are currently-connected LPs (server default: true)
+  optional string liquidity_provider_name = 27; // If set (with only_liquidity_providers), restrict to parties of this LP name (null = any connected LP)
 }
 
 // Orderbook depth level (aggregated view without user details)
@@ -178,6 +181,10 @@ message SettlementProposal {
 
   // Matched order IDs (always populated - links proposal to bid/offer orders)
   OrderMatch order_match = 20;
+
+  // Who creates the DvpProposal: the LP if one party is an LP, else the
+  // more-recently-active user. Null/empty ⇒ buyer proposes (backward compat).
+  optional string dvp_proposer_party = 21;
 }
 
 // Order match message
@@ -453,6 +460,9 @@ message SubmitOrderRequest {
   optional string signature = 12;  // Base64-encoded Ed25519 signature for order authentication
   bytes signed_data = 13;  // Original signed order data (binary)
   uint64 nonce = 14;  // Unique nonce per trader for replay protection
+  // Liquidity-provider matching constraints. Unset only_liquidity_providers ⇒ server defaults to true.
+  optional bool only_liquidity_providers = 15;
+  optional string liquidity_provider_name = 16;
 }
 
 message SubmitOrderResponse {

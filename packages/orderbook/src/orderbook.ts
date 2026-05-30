@@ -303,6 +303,8 @@ export class OrderbookClient {
     metadata?: any;
     signature?: string;  // Base64-encoded Ed25519 signature for order authentication
     nonce?: bigint;      // Unique nonce per trader for replay protection
+    onlyLiquidityProviders?: boolean;  // If true (default server-side), only match connected LP counterparties
+    liquidityProviderName?: string;    // If set, restrict matching to parties of this LP name
   }): Promise<SubmitOrderResponse> {
     return await this.wrapCall(async () => {
       const request = create(SubmitOrderRequestSchema, {
@@ -318,6 +320,8 @@ export class OrderbookClient {
         metadata: params.metadata,
         signature: params.signature,
         nonce: params.nonce,
+        onlyLiquidityProviders: params.onlyLiquidityProviders,
+        liquidityProviderName: params.liquidityProviderName,
       });
       return await this.client.submitOrder(request, this.callOptions());
     }, 'submitOrder');

@@ -119,6 +119,25 @@ message GetBalancesResponse {
   repeated TokenBalance balances = 1;
 }
 
+// --- GetPrepaidTrafficBalance ---
+//
+// Off-chain prepaid traffic balance + credit ceiling for the authenticated
+// party. Used by clients to drive auto-topup logic. Returns zeros for parties
+// with no balance row and no LP credit configured (i.e. never funded, no
+// credit) — never errors on missing data.
+
+message GetPrepaidTrafficBalanceRequest {
+  // party_id from JWT
+}
+
+message GetPrepaidTrafficBalanceResponse {
+  string balance_cc = 1;        // signed decimal string; may be negative when on credit
+  string credit_limit_cc = 2;   // non-negative; 0 = no credit
+  string available_cc = 3;      // balance_cc + credit_limit_cc (convenience)
+  string total_credited_cc = 4; // lifetime credits
+  string total_debited_cc = 5;  // lifetime debits
+}
+
 // --- GetDsoRates ---
 
 message GetDsoRatesRequest {}

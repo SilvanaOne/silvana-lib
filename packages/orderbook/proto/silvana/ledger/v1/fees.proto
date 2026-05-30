@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// Server-issued fee schedule for a transaction.
+//
+// Debited off-chain from the sender's prepaid traffic balance after Canton
+// execute succeeds. `entry_type` is intentionally a free-form string (NOT
+// enum) so new categories can be added without a proto / DB migration —
+// today's set: "agent", "participant", "signature", "traffic",
+// "dvp_processing", "allocation_processing"; future: "ai_agent", etc.
+// ============================================================================
+
+message Fee {
+  string entry_type = 1;     // free-form category
+  string description = 2;    // human-readable
+  string amount_cc = 3;      // decimal string
+}

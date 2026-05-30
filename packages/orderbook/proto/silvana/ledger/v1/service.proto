@@ -8,6 +8,7 @@ import "silvana/ledger/v1/onboarding.proto";
 import "silvana/ledger/v1/preapproval.proto";  // GetPreapprovalsRequest/Response
 import "silvana/ledger/v1/dvp.proto";          // GetSettlementContractsRequest/Response
 import "silvana/ledger/v1/faucet.proto";       // FaucetRequest/FaucetResponse
+import "silvana/ledger/v1/pay_fee.proto";      // PreparePayFee/ExecutePayFee request/response
 
 option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
 
@@ -43,6 +44,10 @@ service DAppProviderService {
 
   // Get token balances (CIP-56 holdings + Canton Coin)
   rpc GetBalances(GetBalancesRequest) returns (GetBalancesResponse);
+
+  // Get off-chain prepaid traffic balance + credit limit for the auth'd party.
+  rpc GetPrepaidTrafficBalance(GetPrepaidTrafficBalanceRequest)
+      returns (GetPrepaidTrafficBalanceResponse);
 
   // Fetch TransferPreapproval contracts
   rpc GetPreapprovals(GetPreapprovalsRequest) returns (GetPreapprovalsResponse);
@@ -85,4 +90,20 @@ service DAppProviderService {
 
   // Request tokens from the faucet (CC or CIP-56)
   rpc RequestFaucet(FaucetRequest) returns (FaucetResponse);
+
+  // List instruments supported by the faucet (drives both faucet calls and
+  // CIP-56 preapproval creation on the agent side).
+  rpc ListFaucetInstruments(ListFaucetInstrumentsRequest) returns (ListFaucetInstrumentsResponse);
+
+  // === Off-chain processing-fee payment (replaces on-chain CC transfers
+  //     for DVP and allocation processing fees) ===
+
+  // Phase 1: server looks up proposal + computes one processing fee in CC,
+  // returns a signed schedule.
+  rpc PreparePayFee(PreparePayFeeRequest) returns (PreparePayFeeResponse);
+
+  // Phase 2: cloud-agent echoes the schedule with its authorization
+  // signature; ledger re-computes, verifies, debits off-chain via
+  // PrepaidTrafficStore::record_fee_debits.
+  rpc ExecutePayFee(ExecutePayFeeRequest) returns (ExecutePayFeeResponse);
 }

@@ -39,3 +39,24 @@ message FaucetResponse {
   // Message-level signature from dApp provider service
   MessageSignature response_signature = 30;
 }
+
+// ----------------------------------------------------------------------------
+// ListFaucetInstruments — discovery RPC for cloud agents.
+//
+// Drives both faucet calls and CIP-56 TransferPreapproval creation on the
+// agent side. The list is sourced from the ledger-service configuration
+// ([[faucet_token]] in configuration.toml).
+// ----------------------------------------------------------------------------
+
+message FaucetInstrument {
+  string token_name = 1;          // e.g. "Amulet" (CC), "USDC"
+  string registry = 2;            // instrument admin / registrar party (DSO for CC)
+  string operator = 3;            // Required. Featured-app party for CC (PREAPPROVAL_FEATURED_APP); utility operator for CIP-56.
+  string default_amount = 4;      // default faucet amount, for display
+}
+
+message ListFaucetInstrumentsRequest {}
+
+message ListFaucetInstrumentsResponse {
+  repeated FaucetInstrument instruments = 1;
+}
