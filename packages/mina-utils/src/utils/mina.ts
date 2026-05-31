@@ -18,6 +18,7 @@ import {
   Field,
   Lightnet,
   CircuitString,
+  NetworkId,
 } from "o1js";
 import {
   networks,
@@ -78,6 +79,7 @@ async function initBlockchain(params: {
   proofsEnabled?: boolean;
   customMinaNodeUrl?: string;
   customMinaArchiveNodeUrl?: string;
+  networkId?: NetworkId;
 }): Promise<MinaNetworkInstance> {
   const {
     chain,
@@ -85,13 +87,14 @@ async function initBlockchain(params: {
     proofsEnabled = true,
     customMinaNodeUrl = undefined,
     customMinaArchiveNodeUrl = undefined,
+    networkId = undefined,
   } = params;
   if (currentNetwork !== undefined) {
     if (currentNetwork?.network.chainId === chain) {
       return currentNetwork;
     } else {
       throw new Error(
-        `Network is already initialized to different chain ${currentNetwork.network.chainId}, cannot initialize to ${chain}`
+        `Network is already initialized to different chain ${currentNetwork.network.chainId}, cannot initialize to ${chain}`,
       );
     }
   }
@@ -134,7 +137,7 @@ async function initBlockchain(params: {
     mina,
     archive,
     lightnetAccountManager: network.accountManager,
-    networkId: chain === "mina:mainnet" ? "mainnet" : "testnet",
+    networkId: networkId ?? (chain === "mina:mainnet" ? "mainnet" : "testnet"),
     bypassTransactionLimits:
       chain === "zeko:testnet" || chain === "zeko:alphanet",
   });
