@@ -106,7 +106,7 @@ const MesaTestnet: MinaNetwork = {
   explorerAccountUrl: "https://o1-labs.github.io/mina-explorer/#/account/",
   explorerTransactionUrl: "https://o1-labs.github.io/mina-explorer/#/tx/",
   explorerTokenUrl: "https://o1-labs.github.io/mina-explorer/#/account/",
-  launchpadUrl: "https://mesa.minatokens.com",
+  launchpadUrl: "https://testnet.minatokens.com",
   chainId: "mina:testnet",
   name: "Mesa Testnet",
 };

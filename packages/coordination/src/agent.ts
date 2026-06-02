@@ -11,6 +11,7 @@ type AgentChain =
   | "ethereum:hoodi"
   | "mina:mainnet"
   | "mina:devnet"
+  | "mina:testnet"
   | "zeko:testnet"
   | "zeko:alphanet"
   | "sui:mainnet"

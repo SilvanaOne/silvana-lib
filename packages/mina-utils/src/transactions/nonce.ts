@@ -92,7 +92,8 @@ export async function getAccountNonce(params: {
   const canUseBlockBerry =
     blockBerryApiKey !== undefined &&
     (chain === "mina:devnet" || chain === "mina:mainnet");
-  if (chain === "zeko:testnet") {
+  if (chain === "zeko:testnet" || chain === "mina:testnet") {
+    // BlockBerry has no mesa/testnet endpoint, so read the nonce directly from the node.
     const publicKey = PublicKey.fromBase58(account);
     await fetchMinaAccount({ publicKey });
     const nonce = Number(Mina.getAccount(publicKey).nonce.toBigint());

@@ -54,6 +54,7 @@ class UpgradeAuthorityDatabase extends IndexedMerkleMap(
 const ChainId = {
   "mina:mainnet": fieldFromString("mina:mainnet"),
   "mina:devnet": fieldFromString("mina:devnet"),
+  "mina:testnet": fieldFromString("mina:testnet"),
   "zeko:mainnet": fieldFromString("zeko:mainnet"),
   "zeko:devnet": fieldFromString("zeko:devnet"),
 };

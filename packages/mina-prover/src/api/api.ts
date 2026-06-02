@@ -64,6 +64,8 @@ export class zkCloudWorkerClient {
         ? ZKCLOUDWORKER_API + "devnet"
         : chain === "zeko:testnet"
         ? ZKCLOUDWORKER_API + "zeko"
+        : chain === "mina:testnet"
+        ? ZKCLOUDWORKER_API + "testnet"
         : chain === "mina:mainnet"
         ? ZKCLOUDWORKER_API + "mainnet"
         : undefined;
@@ -566,7 +568,7 @@ export class zkCloudWorkerClient {
     } else {
       if (this.endpoint === undefined)
         throw new Error(
-          "zkCloudWorker supports only mainnet, devnet and zeko chains in the cloud."
+          "zkCloudWorker supports only mainnet, devnet, testnet and zeko chains in the cloud."
         );
       const apiData = {
         auth: ZKCLOUDWORKER_AUTH,
