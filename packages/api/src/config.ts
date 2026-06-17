@@ -6,7 +6,7 @@ export function config({
   throwOnError,
 }: {
   apiKey: string;
-  chain?: "mina:mainnet" | "mina:devnet" | "zeko:testnet";
+  chain?: "mina:mainnet" | "mina:devnet" | "mina:testnet" | "zeko:testnet";
   throwOnError?: boolean;
 }) {
   client.setConfig({
@@ -17,8 +17,10 @@ export function config({
       chain === "zeko:testnet"
         ? "https://zekotokens.com/api/v1/"
         : chain === "mina:devnet"
-        ? "https://devnet.minatokens.com/api/v1/"
-        : "https://minatokens.com/api/v1/",
+          ? "https://devnet.minatokens.com/api/v1/"
+          : chain === "mina:testnet"
+            ? "https://testnet.minatokens.com/api/v1/"
+            : "https://minatokens.com/api/v1/",
     throwOnError: throwOnError ?? true,
   });
 }

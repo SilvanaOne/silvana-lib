@@ -5,15 +5,21 @@ import { NftTransaction, JobResult } from "@silvana-one/api";
 
 export class NftAPI {
   readonly client: zkCloudWorkerClient;
+  readonly developer: string;
+  readonly repo: string;
 
   constructor(params: {
     jwt: string;
     zkcloudworker?: (cloud: Cloud) => Promise<zkCloudWorker>;
     chain: CanonicalBlockchain;
+    developer?: string;
+    repo?: string;
   }) {
-    const { jwt, zkcloudworker, chain } = params;
+    const { jwt, zkcloudworker, chain, developer, repo } = params;
     if (jwt === undefined) throw new Error("jwt is undefined");
 
+    this.developer = developer ?? "DFST";
+    this.repo = repo ?? "nft-agent";
     this.client = new zkCloudWorkerClient({
       jwt,
       chain,
@@ -38,8 +44,8 @@ export class NftAPI {
     const { txType } = request;
 
     const answer = await this.client.execute({
-      developer: "DFST",
-      repo: "nft-agent",
+      developer: this.developer,
+      repo: this.repo,
       transactions,
       task: "prove",
       args: JSON.stringify({

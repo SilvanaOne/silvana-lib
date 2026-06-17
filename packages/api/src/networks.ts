@@ -8,6 +8,7 @@ export {
   ZekoAlphaNet,
   Lightnet,
   Local,
+  MesaTestnet,
 };
 
 type CanonicalBlockchain =
@@ -15,6 +16,7 @@ type CanonicalBlockchain =
   | "mina:lightnet"
   | "mina:devnet"
   | "mina:mainnet"
+  | "mina:testnet"
   | "zeko:testnet"
   | "zeko:alphanet";
 
@@ -98,6 +100,17 @@ const Mainnet: MinaNetwork = {
   name: "Mainnet",
 };
 
+const MesaTestnet: MinaNetwork = {
+  mina: ["https://plain-1-graphql.mesa-mut.minaprotocol.com/graphql"],
+  archive: ["https://archive-node-api.mesa-mut.minaprotocol.com/"],
+  explorerAccountUrl: "https://o1-labs.github.io/mina-explorer/#/account/",
+  explorerTransactionUrl: "https://o1-labs.github.io/mina-explorer/#/tx/",
+  explorerTokenUrl: "https://o1-labs.github.io/mina-explorer/#/account/",
+  launchpadUrl: "https://testnet.minatokens.com",
+  chainId: "mina:testnet",
+  name: "Mesa Testnet",
+};
+
 const Local: MinaNetwork = {
   mina: [],
   archive: [],
@@ -159,6 +172,7 @@ const networks: MinaNetwork[] = [
   Zeko,
   ZekoAlphaNet,
   Lightnet,
+  MesaTestnet,
 ];
 
 /*

@@ -5,15 +5,21 @@ import { TokenTransaction, JobResult } from "@silvana-one/api";
 
 export class TokenAPI {
   readonly client: zkCloudWorkerClient;
+  readonly developer: string;
+  readonly repo: string;
 
   constructor(params: {
     jwt: string;
     zkcloudworker?: (cloud: Cloud) => Promise<zkCloudWorker>;
     chain: CanonicalBlockchain;
+    developer?: string;
+    repo?: string;
   }) {
-    const { jwt, zkcloudworker, chain } = params;
+    const { jwt, zkcloudworker, chain, developer, repo } = params;
     if (jwt === undefined) throw new Error("jwt is undefined");
 
+    this.developer = developer ?? "DFST";
+    this.repo = repo ?? "token-agent";
     this.client = new zkCloudWorkerClient({
       jwt,
       chain,
@@ -39,8 +45,8 @@ export class TokenAPI {
     const { txType } = request;
 
     const answer = await this.client.execute({
-      developer: "DFST",
-      repo: "token-agent",
+      developer: this.developer,
+      repo: this.repo,
       transactions,
       task: "prove",
       args: JSON.stringify({ tokenAddress: params[0].request.tokenAddress }),

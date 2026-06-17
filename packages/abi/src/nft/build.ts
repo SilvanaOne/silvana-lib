@@ -75,7 +75,7 @@ export async function buildNftCollectionLaunchTransaction(params: {
   const {
     url = chain === "mina:mainnet"
       ? "https://minanft.io"
-      : `https://${chain}.minanft.io`,
+      : `https://${chain.split(":")[1]}.minanft.io`,
     symbol = "NFT",
     memo,
     nonce,
