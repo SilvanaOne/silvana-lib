@@ -74,6 +74,10 @@ import {
   type GetRoundsDataResponse,
   type GetSettlementProposalResponse,
   GetSettlementProposalRequestSchema,
+  GetOrderSettlementProposalsRequestSchema,
+  type GetOrderSettlementProposalsResponse,
+  CheckCohortMembershipRequestSchema,
+  type CheckCohortMembershipResponse,
   RfqAuditEventType,
   IssuanceForecast,
   EstimateSettlementFeesRequestSchema,
@@ -188,6 +192,7 @@ export class OrderbookClient {
   async getOrderbookDepth(params: {
     marketId: string;
     depth?: number;
+    onlyLiquidityProviders?: boolean;  // If true, only include orders placed by registered LP parties
   }): Promise<GetOrderbookDepthResponse> {
     const request = create(GetOrderbookDepthRequestSchema, params);
     return await this.client.getOrderbookDepth(request, this.callOptions());
@@ -595,6 +600,18 @@ export class OrderbookClient {
   }
 
   /**
+   * Get all settlement proposals for a specific order (caller must own the order)
+   */
+  async getOrderSettlementProposals(params: {
+    orderId: bigint;
+  }): Promise<GetOrderSettlementProposalsResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(GetOrderSettlementProposalsRequestSchema, params);
+      return await this.client.getOrderSettlementProposals(request, this.callOptions());
+    }, 'getOrderSettlementProposals');
+  }
+
+  /**
    * Get liquidity providers
    */
   async getLiquidityProviders(params?: {
@@ -618,6 +635,18 @@ export class OrderbookClient {
       const request = create(GetConnectedLiquidityProvidersRequestSchema, params ?? {});
       return await this.client.getConnectedLiquidityProviders(request, this.callOptions());
     }, 'getConnectedLiquidityProviders');
+  }
+
+  /**
+   * Check whether the calling party belongs to a named cohort
+   */
+  async checkCohortMembership(params: {
+    cohort: string;
+  }): Promise<CheckCohortMembershipResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(CheckCohortMembershipRequestSchema, params);
+      return await this.client.checkCohortMembership(request, this.callOptions());
+    }, 'checkCohortMembership');
   }
 
   /**

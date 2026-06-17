@@ -185,6 +185,9 @@ message SettlementProposal {
   // Who creates the DvpProposal: the LP if one party is an LP, else the
   // more-recently-active user. Null/empty ⇒ buyer proposes (backward compat).
   optional string dvp_proposer_party = 21;
+
+  // Where the proposal originated: 'orderbook' (matching engine) or 'rfq'.
+  string origin = 22;
 }
 
 // Order match message
@@ -263,6 +266,7 @@ message GetOrderbookDepthRequest {
   // Auth via gRPC metadata: authorization: Bearer <token>
   string market_id = 2;
   optional uint32 depth = 3; // Number of price levels (default 20)
+  optional bool only_liquidity_providers = 4; // If true, only include orders placed by registered LP parties
 }
 
 message GetOrderbookDepthResponse {
@@ -297,6 +301,31 @@ message GetSettlementProposalResponse {
   bool success = 1;
   string message = 2;
   optional SettlementProposal proposal = 3;
+}
+
+// Get all settlement proposals for a specific order (caller must own the order)
+message GetOrderSettlementProposalsRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  uint64 order_id = 2; // server-assigned numeric order id (BIGINT UNSIGNED)
+}
+
+message GetOrderSettlementProposalsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated SettlementProposal proposals = 3;
+}
+
+// Check whether the calling party belongs to a named cohort
+message CheckCohortMembershipRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  string cohort = 2; // cohort name to test the caller's membership in
+}
+
+message CheckCohortMembershipResponse {
+  bool success = 1;
+  string message = 2;
+  bool is_member = 3; // true if the caller's party is in the cohort
+  string cohort = 4;  // echoed for clarity
 }
 
 // Get available instruments (filtered by JWT permissions)
@@ -1066,6 +1095,7 @@ service OrderbookService {
   rpc GetOrderbookDepth(GetOrderbookDepthRequest) returns (GetOrderbookDepthResponse);
   rpc GetSettlementProposals(GetSettlementProposalsRequest) returns (GetSettlementProposalsResponse);
   rpc GetSettlementProposal(GetSettlementProposalRequest) returns (GetSettlementProposalResponse);
+  rpc GetOrderSettlementProposals(GetOrderSettlementProposalsRequest) returns (GetOrderSettlementProposalsResponse);
   rpc GetInstruments(GetInstrumentsRequest) returns (GetInstrumentsResponse);
   rpc GetMarkets(GetMarketsRequest) returns (GetMarketsResponse);
   rpc GetOrderHistory(GetOrderHistoryRequest) returns (GetOrderHistoryResponse);
@@ -1084,6 +1114,9 @@ service OrderbookService {
   // Liquidity provider operations
   rpc GetLiquidityProviders(GetLiquidityProvidersRequest) returns (GetLiquidityProvidersResponse);
   rpc GetConnectedLiquidityProviders(GetConnectedLiquidityProvidersRequest) returns (GetConnectedLiquidityProvidersResponse);
+
+  // Cohort membership (returns whether the calling party is in a named cohort)
+  rpc CheckCohortMembership(CheckCohortMembershipRequest) returns (CheckCohortMembershipResponse);
 
   // RFQ operations
   rpc RequestQuotes(RequestQuotesRequest) returns (RequestQuotesResponse);
