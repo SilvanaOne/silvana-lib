@@ -1,0 +1,356 @@
+syntax = "proto3";
+
+package silvana.rfqv2.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;rfqv2";
+
+// ============================================================================
+// RFQ V2 (AtomicDVP) — parallel stack complementing RFQ v1.
+//
+// This package is deliberately SELF-CONTAINED: it imports nothing from other
+// silvana packages so that RFQ V2 can evolve (including breaking changes
+// while in testing) without ever touching the v1 protos that order-book and
+// silvana-lib vendor. See atomic-dvp/plans/rfq-v2-integration-design.md §3.
+// ============================================================================
+
+// ============================================================================
+// Envelope messages (single definition — used by both the user-facing service
+// and the LP stream; mirrors the reference QuoteEnvelope
+// "silvana.atomic-dvp.envelope.v1")
+// ============================================================================
+
+// {contractId, templateId, createdEventBlob, synchronizerId} — the canonical
+// 4-key disclosed-contract shape.
+message AtomicDisclosedContract {
+  string contract_id = 1;
+  string template_id = 2;
+  string created_event_blob = 3;  // base64
+  string synchronizer_id = 4;
+}
+
+// An ACS contract the client must inspect (venue, ticket): disclosure fields
+// plus the create-arguments payload for H14 canonical reconstruction.
+// payload_json is VERBATIM JSON text (never Struct — decimal/int64 safety).
+message AtomicAcsContract {
+  string contract_id = 1;
+  string template_id = 2;
+  string created_event_blob = 3;  // base64
+  string payload_json = 4;        // create-arguments JSON, verbatim text
+}
+
+// One SIGNED LP-required fee — the DAML `FeeSpec` economic triple
+// (atomic-dvp fees-design §3.1) as it rides `Quote.lpFees` and the v4
+// canonical fee block. `amount` MUST be in the canonical DAML-show decimal
+// form (trailing fractional zeros stripped, integral values as `X.0`) so that
+// wire equality, the rpc's rule-8 string check, and the on-ledger rendering
+// are byte-identical (design §14 D17).
+message AtomicFeeSpec {
+  string receiver = 1;          // full party id (the orderbook fee party)
+  string instrument_admin = 2;  // fee InstrumentId.admin (DSO for CC)
+  string instrument_id = 3;     // fee InstrumentId.id ("Amulet" for CC)
+  string amount = 4;            // canonical-decimal string, > 0
+}
+
+// The 9 DAML Quote fields (atomic-dvp-v2 AtomicDVP.Quote record: 8 + lpFees).
+// Amounts are canonical-decimal strings (DAML `show @Decimal` rendering);
+// times are epoch microseconds; side is the DAML constructor name. lp_fees
+// maps 1:1 to `Quote.lpFees`: empty = None (message v3), non-empty = Some
+// (message v4 with the signed fee block).
+message AtomicQuote {
+  string quote_id = 1;             // UUIDv7 == canonical line 13 quote_nonce
+  string ticket_id = 2;            // "" = ticketless (canonical line 16 ALWAYS present)
+  string user = 3;                 // full party id — canonical line 9
+  string side = 4;                 // "Buy" | "Sell" (user buys/sells base)
+  string base_amount = 5;
+  string quote_amount = 6;
+  int64 created_at_micros = 7;
+  int64 valid_until_micros = 8;
+  repeated AtomicFeeSpec lp_fees = 9;  // SIGNED settlement fee(s); design §14 D18
+}
+
+// version "silvana.atomic-dvp.envelope.v1". Rev-7 of the AtomicDVP design:
+// NO transfer factories or choice contexts ride here — the user resolves both
+// legs' plans at settle time.
+message AtomicQuoteEnvelope {
+  string version = 1;
+  string synchronizer_id = 2;
+  AtomicAcsContract dvp = 3;                        // the AtomicDVP venue (payload carries quotePublicKey)
+  AtomicQuote quote = 4;
+  string canonical_message = 5;                     // v3: 16 lines / v4: 16 + fee block; client MUST re-derive and compare (H14)
+  string quote_signature = 6;                       // ASN.1 DER, lowercase hex, secp256k1 over SHA256(msg)
+  AtomicAcsContract ticket = 7;                     // present iff quote.ticket_id != ""
+  repeated string lp_input_holding_cids = 8;        // <= 100
+  repeated AtomicDisclosedContract disclosed = 9;   // venue + ticket + LP holdings, sanitized
+  // transport-only (dropped when exporting to the reference envelope file format):
+  string rfq_id = 10;
+  string quote_id = 11;                             // == quote.quote_id, routing before decode
+  string lp_party_id = 12;
+  string market_id = 13;
+}
+
+// ============================================================================
+// User-facing service (hosted by orderbook-rpc)
+// ============================================================================
+
+message RequestQuotesV2Request {
+  string market_id = 1;
+  string direction = 2;               // "buy" | "sell" (user's side)
+  string quantity = 3;                // base quantity
+  repeated string lp_names = 4;       // optional filter
+  optional uint32 timeout_secs = 5;   // default 10, clamp 1..30
+  // OPTIONAL priority-ordered fee-token preference (instruments-table symbols,
+  // e.g. "USDC", "CC"). The first entry in the rpc's supported set (config
+  // `settlement_fee_tokens`) denominates the settlement fee. Empty = CC
+  // (existing behavior). Non-empty with no supported entry = INVALID_ARGUMENT
+  // listing the supported tokens.
+  repeated string fee_tokens = 6;
+  // Swap-venue delegation: when present, the caller's JWT must be a
+  // platform-signed swap-venue token (aud = JWT_SWAP_VENUE_AUDIENCE) whose sub
+  // is registered in the swap_venues table; the RFQ is then created FOR this
+  // party (it owns the RFQ, is revealed to the LP at confirm, and signs
+  // settlement with its own Canton key). Absent => user = JWT sub (unchanged).
+  optional string user = 7;
+}
+
+message AtomicQuoteInfo {
+  string quote_id = 1;
+  string lp_name = 2;
+  string lp_party_id = 3;
+  string price = 4;
+  string quantity = 5;                // base
+  string quote_quantity = 6;
+  google.protobuf.Timestamp valid_until = 7;   // indicative/soft-reserve expiry
+  // The settlement fee the accepted quote will carry (signed into the LP's
+  // quote at confirm). Absent = zero-fee pair. Display before accept; the
+  // client asserts the signed envelope's lp_fees equals this (design §14 D21).
+  optional AtomicFeeSpec settlement_fee = 8;
+}
+
+message AtomicRejectInfo {
+  string lp_name = 1;
+  string reason = 2;
+  string min_quantity = 3;
+  string max_quantity = 4;
+}
+
+message RequestQuotesV2Response {
+  bool success = 1;
+  string message = 2;
+  string rfq_id = 3;                  // UUIDv7
+  repeated AtomicQuoteInfo quotes = 4;
+  repeated AtomicRejectInfo rejections = 5;
+  uint32 lps_requested = 6;
+  uint32 lps_responded = 7;
+}
+
+message AcceptQuoteAtomicRequest {
+  string rfq_id = 1;
+  string quote_id = 2;
+  optional uint32 timeout_secs = 3;   // confirm round-trip wait; default 10, clamp 1..30
+  // Swap-venue delegation (see RequestQuotesV2Request.user). Present => the
+  // caller must be a registered swap venue; the accept is performed FOR this
+  // party, which must be the RFQ's owner.
+  optional string user = 4;
+}
+
+// LP rejects travel in the response BODY (gRPC OK + success=false) so the
+// taker can branch on the enum; gRPC error statuses are reserved for
+// transport-level failures (timeout, LP disconnect).
+message AcceptQuoteAtomicResponse {
+  bool success = 1;
+  string message = 2;
+  AtomicQuoteEnvelope envelope = 3;              // set on success
+  RfqConfirmRejectReason reject_reason = 4;      // set on LP reject
+  string reject_detail = 5;
+}
+
+message GetAtomicLiquidityProvidersRequest {}
+
+message AtomicLpInfo {
+  string lp_name = 1;
+  string party_id = 2;
+  repeated string market_ids = 3;     // markets with validated AtomicDVP venues
+}
+
+message GetAtomicLiquidityProvidersResponse {
+  repeated AtomicLpInfo lps = 1;
+}
+
+message GetAtomicRfqAuditLogRequest {
+  optional string rfq_id = 1;
+  optional string market_id = 2;
+  uint32 limit = 3;
+}
+
+message AtomicRfqAuditEntry {
+  string rfq_id = 1;
+  string quote_id = 2;
+  string event_type = 3;              // atomic_confirm_request | atomic_confirm | atomic_reject | request | quote | reject
+  string market_id = 4;
+  string lp_name = 5;
+  string price = 6;
+  string quantity = 7;
+  google.protobuf.Timestamp created_at = 8;
+  string metadata_json = 9;
+}
+
+message GetAtomicRfqAuditLogResponse {
+  repeated AtomicRfqAuditEntry entries = 1;
+}
+
+message EstimateAtomicFeeRequest {
+  string market_id = 1;
+  // Same semantics as RequestQuotesV2Request.fee_tokens, so the advisory
+  // estimate matches what RequestQuotes will cache for the same preference.
+  repeated string fee_tokens = 2;
+}
+
+// Advisory estimate (per-call, uncached); the per-RFQ cache set at
+// RequestQuotes time is the authority (design §14 D19).
+message EstimateAtomicFeeResponse {
+  string fee_usd = 1;                          // pre-conversion USD amount
+  optional AtomicFeeSpec settlement_fee = 2;   // absent = zero-fee pair
+}
+
+service RfqV2Service {
+  rpc RequestQuotes(RequestQuotesV2Request) returns (RequestQuotesV2Response);
+  rpc AcceptQuoteAtomic(AcceptQuoteAtomicRequest) returns (AcceptQuoteAtomicResponse);
+  rpc GetAtomicLiquidityProviders(GetAtomicLiquidityProvidersRequest) returns (GetAtomicLiquidityProvidersResponse);
+  rpc GetAtomicRfqAuditLog(GetAtomicRfqAuditLogRequest) returns (GetAtomicRfqAuditLogResponse);
+  rpc EstimateAtomicFee(EstimateAtomicFeeRequest) returns (EstimateAtomicFeeResponse);
+}
+
+// ============================================================================
+// LP bidirectional stream (LP agent <-> orderbook-rpc)
+// Capability = an open AtomicRfqStream; no flags on v1 messages anywhere.
+// ============================================================================
+
+message AtomicHandshake {
+  repeated string party_ids = 1;
+  string lp_name = 2;
+  string agent_version = 3;
+  repeated string market_ids = 4;     // markets with validated venues (rfq_v2-enabled)
+}
+
+message AtomicHandshakeAck {
+  bool success = 1;
+  string session_id = 2;
+  string error = 3;
+}
+
+message AtomicHeartbeat {
+  google.protobuf.Timestamp at = 1;
+}
+
+// Phase 1: server -> LP quote request (anonymous, like v1 RfqRequest).
+// Arriving on THIS stream (vs the v1 stream) is what tells the LP to
+// soft-reserve the quoted amount.
+message AtomicRfqRequest {
+  string rfq_id = 1;
+  string market_id = 2;
+  string direction = 3;               // "buy" | "sell" (user's side)
+  string quantity = 4;
+  google.protobuf.Timestamp respond_by = 5;
+  google.protobuf.Timestamp created_at = 6;
+  // The AUTHORITATIVE settlement fee for this RFQ (computed by orderbook-rpc,
+  // cached per rfq_id): the LP must echo it on the indicative quote and sign
+  // it into Quote.lpFees at confirm. Absent = zero-fee pair (design §14 D18/D19).
+  optional AtomicFeeSpec settlement_fee = 7;
+}
+
+// Phase 1: LP -> server indicative quote (soft reserve taken).
+message AtomicRfqQuote {
+  string rfq_id = 1;
+  string quote_id = 2;
+  string market_id = 3;
+  string direction = 4;
+  string price = 5;
+  string quantity = 6;
+  string quote_quantity = 7;
+  uint32 valid_for_secs = 8;
+  google.protobuf.Timestamp valid_until = 9;
+  string lp_party_id = 10;
+  string lp_name = 11;
+  google.protobuf.Timestamp quoted_at = 12;
+  // Echo of AtomicRfqRequest.settlement_fee — the server drops the quote
+  // (fee_mismatch audit) unless it equals the cached fee field-for-field,
+  // absence included (design §14 D19 check a).
+  optional AtomicFeeSpec settlement_fee = 13;
+}
+
+message AtomicRfqReject {
+  string rfq_id = 1;
+  string market_id = 2;
+  string reason = 3;
+  string lp_party_id = 4;
+  string min_quantity = 5;
+  string max_quantity = 6;
+}
+
+// Phase 2: server -> LP confirm request (reveals the user party — v1 RFQ
+// stays anonymous until confirm).
+message RfqConfirmRequest {
+  string rfq_id = 1;
+  string quote_id = 2;
+  string user_party = 3;              // -> canonical line 9
+  string market_id = 4;               // echoes for LP-side validation
+  string direction = 5;
+  string quantity = 6;
+  string quote_quantity = 7;
+  string price = 8;
+  google.protobuf.Timestamp respond_by = 9;
+  // Confirm-time echo of the cached fee (defense-in-depth; the LP signs its
+  // OWN stored copy from the request, this lets it cross-check — design §14 D18).
+  optional AtomicFeeSpec settlement_fee = 10;
+}
+
+enum RfqConfirmRejectReason {
+  RFQ_CONFIRM_REJECT_REASON_UNSPECIFIED = 0;
+  RFQ_CONFIRM_REJECT_REASON_QUOTE_EXPIRED = 1;
+  RFQ_CONFIRM_REJECT_REASON_QUOTE_NOT_FOUND = 2;        // LP lost state (restart)
+  RFQ_CONFIRM_REJECT_REASON_INSUFFICIENT_HOLDINGS = 3;  // hard reserve failed
+  RFQ_CONFIRM_REJECT_REASON_NO_TICKET_AVAILABLE = 4;    // threshold hit, pool empty
+  RFQ_CONFIRM_REJECT_REASON_VENUE_UNAVAILABLE = 5;      // no venue / key mismatch
+  RFQ_CONFIRM_REJECT_REASON_INTERNAL_ERROR = 6;
+}
+
+message RfqConfirmReject {
+  string rfq_id = 1;
+  string quote_id = 2;
+  string lp_party_id = 3;
+  RfqConfirmRejectReason reason = 4;
+  optional string reason_detail = 5;
+  google.protobuf.Timestamp rejected_at = 6;
+}
+
+message AtomicServerToLp {
+  string session_id = 1;
+  uint64 sequence_number = 2;
+  google.protobuf.Timestamp sent_at = 3;
+  oneof message {
+    AtomicHandshakeAck handshake_ack = 10;
+    AtomicHeartbeat heartbeat = 11;
+    AtomicRfqRequest rfq_request = 12;
+    RfqConfirmRequest confirm_request = 13;
+  }
+}
+
+message AtomicLpToServer {
+  string session_id = 1;
+  uint64 sequence_number = 2;
+  google.protobuf.Timestamp sent_at = 3;
+  oneof message {
+    AtomicHandshake handshake = 10;
+    AtomicHeartbeat heartbeat = 11;
+    AtomicRfqQuote quote = 12;
+    AtomicRfqReject reject = 13;
+    AtomicQuoteEnvelope envelope = 14;    // phase-2 success
+    RfqConfirmReject confirm_reject = 15;
+  }
+}
+
+service AtomicRfqService {
+  rpc AtomicRfqStream(stream AtomicLpToServer) returns (stream AtomicServerToLp);
+}
