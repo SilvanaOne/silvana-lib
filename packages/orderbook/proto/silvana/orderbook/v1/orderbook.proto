@@ -361,6 +361,23 @@ message GetMarketsResponse {
   uint32 total = 4;
 }
 
+// Minimum order value enforced at placement. min_base_quantity is the exact
+// inverse of the SubmitOrder gate at the given price, so a client submitting
+// that quantity at that price always clears the floor.
+message GetMinOrderValueRequest {
+  // Auth via gRPC metadata: authorization: Bearer <token>
+  optional string market_id = 2; // needed to derive min_base_quantity
+  optional string price = 3;     // intended limit price; omitted => market mid (approx)
+}
+
+message GetMinOrderValueResponse {
+  bool success = 1;
+  string message = 2;
+  string min_order_value_usd = 3;         // DECIMAL(38,10) as string — the global floor
+  optional string min_base_quantity = 4;  // exact min qty at `price`, rounded up
+  bool price_is_estimate = 5;             // true when `price` omitted and mid was used
+}
+
 // Get user's order history
 message GetOrderHistoryRequest {
   // Auth via gRPC metadata: authorization: Bearer <token>
@@ -1102,6 +1119,10 @@ service OrderbookService {
   rpc GetMarketData(GetMarketDataRequest) returns (GetMarketDataResponse);
   rpc GetSettlements(GetSettlementsRequest) returns (GetSettlementsResponse);
   rpc EstimateSettlementFees(EstimateSettlementFeesRequest) returns (EstimateSettlementFeesResponse);
+  // Minimum order value enforced at placement (SubmitOrder). Returns the global
+  // USD floor; if market_id (+ optional price) is given, also the exact minimum
+  // base quantity that will clear the floor at that price.
+  rpc GetMinOrderValue(GetMinOrderValueRequest) returns (GetMinOrderValueResponse);
 
   // Order management operations
   rpc SubmitOrder(SubmitOrderRequest) returns (SubmitOrderResponse);

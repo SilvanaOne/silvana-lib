@@ -1,7 +1,7 @@
 {
   "name": "@silvana-one/orderbook",
   "description": "Silvana Orderbook Client",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
@@ -67,7 +67,8 @@
     "proto:news": "rm -rf src/proto/silvana/news proto/silvana/news && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/news proto/silvana && buf generate --template buf.gen.news.yaml",
     "proto:settlement": "rm -rf src/proto/silvana/settlement proto/silvana/settlement && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/settlement proto/silvana && buf generate --template buf.gen.settlement.yaml",
     "proto:ledger": "rm -rf src/proto/silvana/ledger proto/silvana/ledger && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/ledger proto/silvana && buf generate --template buf.gen.ledger.yaml",
-    "proto": "npm run proto:orderbook && npm run proto:pricing && npm run proto:news && npm run proto:settlement && npm run proto:ledger",
+    "proto:rfqv2": "rm -rf src/proto/silvana/rfqv2 proto/silvana/rfqv2 && mkdir -p proto/silvana && cp -R ../../../silvana-book-agent/proto/silvana/rfqv2 proto/silvana && buf generate --template buf.gen.rfqv2.yaml",
+    "proto": "npm run proto:orderbook && npm run proto:pricing && npm run proto:news && npm run proto:settlement && npm run proto:rfqv2 && npm run proto:ledger",
     "build": "rm -rf dist && tsc && tsc --build tsconfig.web.json && node build-cjs.js",
     "release": "npm publish --access public",
     "test": "NODE_NO_WARNINGS=1 node --loader=ts-node/esm --enable-source-maps -r dotenv/config --require dotenv/config --env-file=.env --test"

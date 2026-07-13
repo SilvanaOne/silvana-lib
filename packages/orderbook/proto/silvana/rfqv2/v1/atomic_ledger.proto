@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+package silvana.rfqv2.v1;
+
+import "silvana/rfqv2/v1/rfqv2.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;rfqv2";
+
+// ============================================================================
+// AtomicDvpProviderService — the V2-isolated two-phase prepare/execute
+// (CIP-0103 shape) for AtomicDVP operations. Hosted by orderbook-rpc,
+// answered by orderbook-ledger-service over the shared v1 reverse tunnel
+// (silvana/ledger/v1/bridge.proto — rev 3: no separate V2 tunnel). Operation
+// identity = the params oneof arm; the v1 TransactionOperation enum is NOT
+// used.
+// ============================================================================
+
+// Field-name twin of silvana.ledger.v1.MessageSignature.
+message AtomicMessageSignature {
+  string signature = 1;       // base64 Ed25519 signature over SHA-256(canonical)
+  string public_key = 2;      // base64url public key
+  string signing_scheme = 3;  // "ed25519-sha256-v1"
+}
+
+// Field-for-field twin of silvana.ledger.v1.Fee — the OFF-CHAIN schedule
+// (traffic entries debited from the sender's prepaid traffic balance after
+// execute succeeds). The ON-LEDGER settlement fee rides
+// AtomicDvpSettleParams.lp_fees instead (design §14 D22).
+message Fee {
+  string entry_type = 1;
+  string description = 2;
+  string amount_cc = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Params
+// ---------------------------------------------------------------------------
+
+// USER op — the ONE settle transaction.
+message AtomicDvpSettleParams {
+  // signed quote, verbatim from the LP envelope:
+  string venue_cid = 1;
+  AtomicQuote quote = 2;
+  string quote_signature_der_hex = 3;
+  string canonical_message = 4;      // server re-derives + compares (fail-fast; ledger is the enforcer)
+  // venue facts from the envelope's disclosed venue payload (ledger enforces
+  // truth via createdEventBlob <-> contract id at exercise time):
+  string lp_party = 5;
+  reserved 6;                        // was operator_party — the venue's provider is
+  reserved "operator_party";         // fixed by the AtomicDVPService singleton (fa-design G1/G2)
+  string pair_name = 7;
+  string base_instrument_id = 8;
+  string base_instrument_admin = 9;
+  string quote_instrument_id = 10;
+  string quote_instrument_admin = 11;
+  string quote_public_key_spki_hex = 12;
+  // LP-side inputs from the envelope (client-supplied — the server cannot
+  // fetch LP-side blobs as the user party):
+  optional string ticket_cid = 13;
+  repeated string lp_input_holding_cids = 14;
+  repeated AtomicDisclosedContract envelope_disclosures = 15;
+  // user-side inputs (agent-selected, <= 100):
+  repeated string user_input_holding_cids = 16;
+  string synchronizer_id = 17;
+  // SIGNED LP-required fee(s), verbatim from the envelope's quote.lp_fees —
+  // the server maps them onto the AtomicDVP_Settle `fees` argument (one
+  // FeeTransfer per entry, sender hardcoded on-ledger to quote.user, H17;
+  // one-step preapproval required, H18). Empty = fee-less v3 settle.
+  repeated AtomicFeeSpec lp_fees = 18;
+}
+
+// LP ops. lp = JWT party for all of them.
+// (atomic-dvp-v2: the ex-CreateTicketService op is DELETED — the singleton
+// AtomicDVPService is provider-managed; bootstrap = `orderbook atomic service`.)
+
+message IssueTicketsParams {
+  repeated string ticket_ids = 1;     // CLIENT-generated UUIDv7 (request signature binds them)
+}
+
+message SplitSpec {
+  string amount = 1;                  // denomination, canonical decimal string
+  uint32 count = 2;
+}
+
+// Utility instruments only; CC keeps using the v1 SplitCc operation.
+// The server discovers the AtomicDVPService singleton itself (find_atomic_service).
+message SplitHoldingsParams {
+  reserved 1;
+  reserved "ticket_service_cid";
+  string instrument_id = 2;
+  string instrument_admin = 3;
+  repeated string input_holding_cids = 4;
+  repeated SplitSpec splits = 5;
+}
+
+message CreateAtomicDvpVenueParams {
+  string pair_name = 1;               // = market_id
+  string base_instrument_id = 2;
+  string base_instrument_admin = 3;
+  string quote_instrument_id = 4;
+  string quote_instrument_admin = 5;
+  string quote_public_key_spki_hex = 6;  // the secp256k1 PRIVATE key never leaves the agent
+  reserved 7;                            // was operator_party — the venue's provider is fixed by the
+  reserved "operator_party";             // provider-signed singleton AtomicDVPService (fa-design G1/G2)
+}
+
+message UpdateVenueKeyParams {
+  string venue_cid = 1;
+  string new_quote_public_key_spki_hex = 2;
+}
+
+message CancelTicketsParams {
+  reserved 1;
+  reserved "ticket_service_cid";       // server discovers the singleton itself
+  repeated string ticket_cids = 2;
+}
+
+// ---------------------------------------------------------------------------
+// Prepare / Execute (twins of the v1 shapes so ledger-service shares its
+// session/fees/signature machinery)
+// ---------------------------------------------------------------------------
+
+message PrepareAtomicTransactionRequest {
+  reserved 11;                          // was create_ticket_service (op deleted, fa-design G2)
+  reserved "create_ticket_service";
+  oneof params {
+    AtomicDvpSettleParams atomic_dvp_settle = 10;
+    IssueTicketsParams issue_tickets = 12;
+    SplitHoldingsParams split_holdings = 13;
+    CreateAtomicDvpVenueParams create_atomic_dvp_venue = 14;
+    UpdateVenueKeyParams update_venue_key = 15;
+    CancelTicketsParams cancel_tickets = 16;
+  }
+  AtomicMessageSignature request_signature = 30;
+}
+
+message PrepareAtomicTransactionResponse {
+  string transaction_id = 1;
+  string prepared_transaction_hash = 2;   // DO NOT TRUST — verify locally (tx-verifier)
+  string command_id = 3;
+  string traffic_estimate = 4;
+  bytes prepared_transaction = 5;
+  string hashing_scheme_version = 6;      // "V2" | "V3"
+  repeated Fee fees = 7;                  // off-chain traffic schedule (design §14 D22)
+  string fees_json = 8;
+  AtomicMessageSignature response_signature = 30;
+  AtomicMessageSignature fees_signature = 31;
+}
+
+message ExecuteAtomicTransactionRequest {
+  string transaction_id = 1;
+  string signature = 2;                   // base64 ed25519 over the Canton multihash
+  string fees_json = 3;                   // echoed verbatim from prepare
+  AtomicMessageSignature request_signature = 30;
+  AtomicMessageSignature fees_authorization = 31;
+}
+
+message ExecuteAtomicTransactionResponse {
+  bool success = 1;
+  string update_id = 2;
+  string message = 3;
+  string created_contracts_json = 4;      // [{contract_id, template_id}] JSON
+  AtomicMessageSignature response_signature = 30;
+}
+
+// Discovery + targeted blob backfill (venue / service / tickets /
+// holdings visible to the JWT party).
+message GetAtomicContractsRequest {
+  repeated string template_ids = 1;       // default: the three atomic-dvp-v2 templates (venue / service / ticket)
+  repeated string contract_ids = 2;       // optional targeted fetch (blob backfill)
+}
+
+message GetAtomicContractsResponse {
+  repeated AtomicAcsContract contracts = 1;
+  repeated AtomicDisclosedContract disclosures = 2;
+}
+
+service AtomicDvpProviderService {
+  rpc PrepareAtomicTransaction(PrepareAtomicTransactionRequest) returns (PrepareAtomicTransactionResponse);
+  rpc ExecuteAtomicTransaction(ExecuteAtomicTransactionRequest) returns (ExecuteAtomicTransactionResponse);
+  rpc GetAtomicContracts(GetAtomicContractsRequest) returns (GetAtomicContractsResponse);
+}

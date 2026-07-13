@@ -1,0 +1,7 @@
+version: v2
+
+plugins:
+  # Generate TypeScript client for rfqv2 (RFQ V2 / AtomicDVP)
+  - remote: buf.build/bufbuild/es
+    out: src/proto
+    opt: target=ts,js_import_style=module,import_extension=.js

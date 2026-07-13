@@ -9,6 +9,7 @@ import "silvana/ledger/v1/preapproval.proto";  // GetPreapprovalsRequest/Respons
 import "silvana/ledger/v1/dvp.proto";          // GetSettlementContractsRequest/Response
 import "silvana/ledger/v1/faucet.proto";       // FaucetRequest/FaucetResponse
 import "silvana/ledger/v1/pay_fee.proto";      // PreparePayFee/ExecutePayFee request/response
+import "silvana/rfqv2/v1/atomic_ledger.proto"; // Atomic DVP prepare/execute/contracts (rev 3: shared tunnel)
 
 option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
 
@@ -66,6 +67,9 @@ message BridgeResponse {
     PreparePayFeeResponse        prepare_pay_fee = 27;
     ExecutePayFeeResponse        execute_pay_fee = 28;
     GetPrepaidTrafficBalanceResponse get_prepaid_traffic_balance = 29;
+    silvana.rfqv2.v1.PrepareAtomicTransactionResponse prepare_atomic_transaction = 30;
+    silvana.rfqv2.v1.ExecuteAtomicTransactionResponse execute_atomic_transaction = 31;
+    silvana.rfqv2.v1.GetAtomicContractsResponse get_atomic_contracts = 32;
   }
 }
 
@@ -112,5 +116,8 @@ message BridgeRequest {
     PreparePayFeeRequest         prepare_pay_fee = 26;
     ExecutePayFeeRequest         execute_pay_fee = 27;
     GetPrepaidTrafficBalanceRequest get_prepaid_traffic_balance = 28;
+    silvana.rfqv2.v1.PrepareAtomicTransactionRequest prepare_atomic_transaction = 29;
+    silvana.rfqv2.v1.ExecuteAtomicTransactionRequest execute_atomic_transaction = 30;
+    silvana.rfqv2.v1.GetAtomicContractsRequest get_atomic_contracts = 31;
   }
 }
