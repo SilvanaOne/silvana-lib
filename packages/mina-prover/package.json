@@ -1,16 +1,16 @@
 {
   "name": "@silvana-one/mina-prover",
   "description": "Silvana Mina Prover",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "author": "DFST",
   "bugs": "https://github.com/SilvanaOne/silvana-lib/issues",
   "dependencies": {
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@silvana-one/api": "1.2.6",
-    "@silvana-one/mina-utils": "1.2.6",
-    "@silvana-one/prover": "1.2.6",
+    "@silvana-one/api": "1.2.7",
+    "@silvana-one/mina-utils": "1.2.7",
+    "@silvana-one/prover": "1.2.7",
     "@types/node": "^25.9.1",
     "esbuild": "^0.28.0",
     "o1js": "2.15.0",
@@ -51,9 +51,9 @@
   "main": "dist/web/index.js",
   "peerDependencies": {
     "o1js": "2.15.0",
-    "@silvana-one/api": "1.2.6",
-    "@silvana-one/mina-utils": "1.2.6",
-    "@silvana-one/prover": "1.2.6"
+    "@silvana-one/api": "1.2.7",
+    "@silvana-one/mina-utils": "1.2.7",
+    "@silvana-one/prover": "1.2.7"
   },
   "publishConfig": {
     "access": "public"

@@ -70,6 +70,7 @@ message BridgeResponse {
     silvana.rfqv2.v1.PrepareAtomicTransactionResponse prepare_atomic_transaction = 30;
     silvana.rfqv2.v1.ExecuteAtomicTransactionResponse execute_atomic_transaction = 31;
     silvana.rfqv2.v1.GetAtomicContractsResponse get_atomic_contracts = 32;
+    silvana.rfqv2.v1.GetUtilityTransferRuleResponse get_utility_transfer_rule = 33;
   }
 }
 
@@ -119,5 +120,6 @@ message BridgeRequest {
     silvana.rfqv2.v1.PrepareAtomicTransactionRequest prepare_atomic_transaction = 29;
     silvana.rfqv2.v1.ExecuteAtomicTransactionRequest execute_atomic_transaction = 30;
     silvana.rfqv2.v1.GetAtomicContractsRequest get_atomic_contracts = 31;
+    silvana.rfqv2.v1.GetUtilityTransferRuleRequest get_utility_transfer_rule = 32;
   }
 }

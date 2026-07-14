@@ -175,6 +175,19 @@ message GetAtomicContractsResponse {
   repeated AtomicDisclosedContract disclosures = 2;
 }
 
+// Resolve the registrar-signed utility TransferRule disclosure for one
+// instrument (bridge-internal; used to stamp RFQ V2 envelopes so the taker can
+// build the two-step utility accept context seedlessly). The response is
+// registrar/instrument-static and cached SDK-side.
+message GetUtilityTransferRuleRequest {
+  string instrument_admin = 1;
+  string instrument_id = 2;
+}
+
+message GetUtilityTransferRuleResponse {
+  AtomicDisclosedContract transfer_rule = 1;
+}
+
 service AtomicDvpProviderService {
   rpc PrepareAtomicTransaction(PrepareAtomicTransactionRequest) returns (PrepareAtomicTransactionResponse);
   rpc ExecuteAtomicTransaction(ExecuteAtomicTransactionRequest) returns (ExecuteAtomicTransactionResponse);
