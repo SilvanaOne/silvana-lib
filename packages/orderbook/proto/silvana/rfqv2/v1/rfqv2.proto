@@ -30,6 +30,20 @@ message AtomicDisclosedContract {
   string synchronizer_id = 4;
 }
 
+// The registrar-signed utility `TransferRule` disclosure a two-step utility
+// leg needs for its in-tx `TransferInstruction_Accept`, keyed by instrument.
+// The taker cannot obtain this itself (registrar-signed, no metadata endpoint,
+// absent from its ACS), so the server resolves it (instruction-independent,
+// registrar/instrument-static) and stamps it here. The taker builds the accept
+// context from this + the InstrumentConfiguration it already gets from its own
+// transfer-factory call + empty credentials (no-KYC tokens). See
+// atomic-dvp/plans/rfq-v2-seedless-utility-accept-context.md.
+message UtilityAcceptRef {
+  string instrument_admin = 1;
+  string instrument_id = 2;
+  AtomicDisclosedContract transfer_rule = 3;  // registrar TransferRule cid + blob
+}
+
 // An ACS contract the client must inspect (venue, ticket): disclosure fields
 // plus the create-arguments payload for H14 canonical reconstruction.
 // payload_json is VERBATIM JSON text (never Struct — decimal/int64 safety).
@@ -88,6 +102,10 @@ message AtomicQuoteEnvelope {
   string quote_id = 11;                             // == quote.quote_id, routing before decode
   string lp_party_id = 12;
   string market_id = 13;
+  // Per-utility-instrument TransferRule disclosures for the two-step accept of
+  // utility legs (empty for CC-only pairs). Seedless accept context — see
+  // UtilityAcceptRef.
+  repeated UtilityAcceptRef utility_accept_refs = 14;
 }
 
 // ============================================================================

@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file silvana/rfqv2/v1/rfqv2.proto.
  */
 export const file_silvana_rfqv2_v1_rfqv2: GenFile = /*@__PURE__*/
-  fileDesc("ChxzaWx2YW5hL3JmcXYyL3YxL3JmcXYyLnByb3RvEhBzaWx2YW5hLnJmcXYyLnYxIngKF0F0b21pY0Rpc2Nsb3NlZENvbnRyYWN0EhMKC2NvbnRyYWN0X2lkGAEgASgJEhMKC3RlbXBsYXRlX2lkGAIgASgJEhoKEmNyZWF0ZWRfZXZlbnRfYmxvYhgDIAEoCRIXCg9zeW5jaHJvbml6ZXJfaWQYBCABKAkibwoRQXRvbWljQWNzQ29udHJhY3QSEwoLY29udHJhY3RfaWQYASABKAkSEwoLdGVtcGxhdGVfaWQYAiABKAkSGgoSY3JlYXRlZF9ldmVudF9ibG9iGAMgASgJEhQKDHBheWxvYWRfanNvbhgEIAEoCSJiCg1BdG9taWNGZWVTcGVjEhAKCHJlY2VpdmVyGAEgASgJEhgKEGluc3RydW1lbnRfYWRtaW4YAiABKAkSFQoNaW5zdHJ1bWVudF9pZBgDIAEoCRIOCgZhbW91bnQYBCABKAki4gEKC0F0b21pY1F1b3RlEhAKCHF1b3RlX2lkGAEgASgJEhEKCXRpY2tldF9pZBgCIAEoCRIMCgR1c2VyGAMgASgJEgwKBHNpZGUYBCABKAkSEwoLYmFzZV9hbW91bnQYBSABKAkSFAoMcXVvdGVfYW1vdW50GAYgASgJEhkKEWNyZWF0ZWRfYXRfbWljcm9zGAcgASgDEhoKEnZhbGlkX3VudGlsX21pY3JvcxgIIAEoAxIwCgdscF9mZWVzGAkgAygLMh8uc2lsdmFuYS5yZnF2Mi52MS5BdG9taWNGZWVTcGVjIq8DChNBdG9taWNRdW90ZUVudmVsb3BlEg8KB3ZlcnNpb24YASABKAkSFwoPc3luY2hyb25pemVyX2lkGAIgASgJEjAKA2R2cBgDIAEoCzIjLnNpbHZhbmEucmZxdjIudjEuQXRvbWljQWNzQ29udHJhY3QSLAoFcXVvdGUYBCABKAsyHS5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1F1b3RlEhkKEWNhbm9uaWNhbF9tZXNzYWdlGAUgASgJEhcKD3F1b3RlX3NpZ25hdHVyZRgGIAEoCRIzCgZ0aWNrZXQYByABKAsyIy5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0Fjc0NvbnRyYWN0Eh0KFWxwX2lucHV0X2hvbGRpbmdfY2lkcxgIIAMoCRI8CglkaXNjbG9zZWQYCSADKAsyKS5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0Rpc2Nsb3NlZENvbnRyYWN0Eg4KBnJmcV9pZBgKIAEoCRIQCghxdW90ZV9pZBgLIAEoCRITCgtscF9wYXJ0eV9pZBgMIAEoCRIRCgltYXJrZXRfaWQYDSABKAkivgEKFlJlcXVlc3RRdW90ZXNWMlJlcXVlc3QSEQoJbWFya2V0X2lkGAEgASgJEhEKCWRpcmVjdGlvbhgCIAEoCRIQCghxdWFudGl0eRgDIAEoCRIQCghscF9uYW1lcxgEIAMoCRIZCgx0aW1lb3V0X3NlY3MYBSABKA1IAIgBARISCgpmZWVfdG9rZW5zGAYgAygJEhEKBHVzZXIYByABKAlIAYgBAUIPCg1fdGltZW91dF9zZWNzQgcKBV91c2VyIoQCCg9BdG9taWNRdW90ZUluZm8SEAoIcXVvdGVfaWQYASABKAkSDwoHbHBfbmFtZRgCIAEoCRITCgtscF9wYXJ0eV9pZBgDIAEoCRINCgVwcmljZRgEIAEoCRIQCghxdWFudGl0eRgFIAEoCRIWCg5xdW90ZV9xdWFudGl0eRgGIAEoCRIvCgt2YWxpZF91bnRpbBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASPAoOc2V0dGxlbWVudF9mZWUYCCABKAsyHy5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0ZlZVNwZWNIAIgBAUIRCg9fc2V0dGxlbWVudF9mZWUiXwoQQXRvbWljUmVqZWN0SW5mbxIPCgdscF9uYW1lGAEgASgJEg4KBnJlYXNvbhgCIAEoCRIUCgxtaW5fcXVhbnRpdHkYAyABKAkSFAoMbWF4X3F1YW50aXR5GAQgASgJIuQBChdSZXF1ZXN0UXVvdGVzVjJSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkSDgoGcmZxX2lkGAMgASgJEjEKBnF1b3RlcxgEIAMoCzIhLnNpbHZhbmEucmZxdjIudjEuQXRvbWljUXVvdGVJbmZvEjYKCnJlamVjdGlvbnMYBSADKAsyIi5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1JlamVjdEluZm8SFQoNbHBzX3JlcXVlc3RlZBgGIAEoDRIVCg1scHNfcmVzcG9uZGVkGAcgASgNIoQBChhBY2NlcHRRdW90ZUF0b21pY1JlcXVlc3QSDgoGcmZxX2lkGAEgASgJEhAKCHF1b3RlX2lkGAIgASgJEhkKDHRpbWVvdXRfc2VjcxgDIAEoDUgAiAEBEhEKBHVzZXIYBCABKAlIAYgBAUIPCg1fdGltZW91dF9zZWNzQgcKBV91c2VyIs4BChlBY2NlcHRRdW90ZUF0b21pY1Jlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCRI3CghlbnZlbG9wZRgDIAEoCzIlLnNpbHZhbmEucmZxdjIudjEuQXRvbWljUXVvdGVFbnZlbG9wZRI/Cg1yZWplY3RfcmVhc29uGAQgASgOMiguc2lsdmFuYS5yZnF2Mi52MS5SZnFDb25maXJtUmVqZWN0UmVhc29uEhUKDXJlamVjdF9kZXRhaWwYBSABKAkiJAoiR2V0QXRvbWljTGlxdWlkaXR5UHJvdmlkZXJzUmVxdWVzdCJFCgxBdG9taWNMcEluZm8SDwoHbHBfbmFtZRgBIAEoCRIQCghwYXJ0eV9pZBgCIAEoCRISCgptYXJrZXRfaWRzGAMgAygJIlIKI0dldEF0b21pY0xpcXVpZGl0eVByb3ZpZGVyc1Jlc3BvbnNlEisKA2xwcxgBIAMoCzIeLnNpbHZhbmEucmZxdjIudjEuQXRvbWljTHBJbmZvInIKG0dldEF0b21pY1JmcUF1ZGl0TG9nUmVxdWVzdBITCgZyZnFfaWQYASABKAlIAIgBARIWCgltYXJrZXRfaWQYAiABKAlIAYgBARINCgVsaW1pdBgDIAEoDUIJCgdfcmZxX2lkQgwKCl9tYXJrZXRfaWQi1wEKE0F0b21pY1JmcUF1ZGl0RW50cnkSDgoGcmZxX2lkGAEgASgJEhAKCHF1b3RlX2lkGAIgASgJEhIKCmV2ZW50X3R5cGUYAyABKAkSEQoJbWFya2V0X2lkGAQgASgJEg8KB2xwX25hbWUYBSABKAkSDQoFcHJpY2UYBiABKAkSEAoIcXVhbnRpdHkYByABKAkSLgoKY3JlYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFQoNbWV0YWRhdGFfanNvbhgJIAEoCSJWChxHZXRBdG9taWNSZnFBdWRpdExvZ1Jlc3BvbnNlEjYKB2VudHJpZXMYASADKAsyJS5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1JmcUF1ZGl0RW50cnkiQQoYRXN0aW1hdGVBdG9taWNGZWVSZXF1ZXN0EhEKCW1hcmtldF9pZBgBIAEoCRISCgpmZWVfdG9rZW5zGAIgAygJIn0KGUVzdGltYXRlQXRvbWljRmVlUmVzcG9uc2USDwoHZmVlX3VzZBgBIAEoCRI8Cg5zZXR0bGVtZW50X2ZlZRgCIAEoCzIfLnNpbHZhbmEucmZxdjIudjEuQXRvbWljRmVlU3BlY0gAiAEBQhEKD19zZXR0bGVtZW50X2ZlZSJgCg9BdG9taWNIYW5kc2hha2USEQoJcGFydHlfaWRzGAEgAygJEg8KB2xwX25hbWUYAiABKAkSFQoNYWdlbnRfdmVyc2lvbhgDIAEoCRISCgptYXJrZXRfaWRzGAQgAygJIkgKEkF0b21pY0hhbmRzaGFrZUFjaxIPCgdzdWNjZXNzGAEgASgIEhIKCnNlc3Npb25faWQYAiABKAkSDQoFZXJyb3IYAyABKAkiOQoPQXRvbWljSGVhcnRiZWF0EiYKAmF0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKLAgoQQXRvbWljUmZxUmVxdWVzdBIOCgZyZnFfaWQYASABKAkSEQoJbWFya2V0X2lkGAIgASgJEhEKCWRpcmVjdGlvbhgDIAEoCRIQCghxdWFudGl0eRgEIAEoCRIuCgpyZXNwb25kX2J5GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI8Cg5zZXR0bGVtZW50X2ZlZRgHIAEoCzIfLnNpbHZhbmEucmZxdjIudjEuQXRvbWljRmVlU3BlY0gAiAEBQhEKD19zZXR0bGVtZW50X2ZlZSKAAwoOQXRvbWljUmZxUXVvdGUSDgoGcmZxX2lkGAEgASgJEhAKCHF1b3RlX2lkGAIgASgJEhEKCW1hcmtldF9pZBgDIAEoCRIRCglkaXJlY3Rpb24YBCABKAkSDQoFcHJpY2UYBSABKAkSEAoIcXVhbnRpdHkYBiABKAkSFgoOcXVvdGVfcXVhbnRpdHkYByABKAkSFgoOdmFsaWRfZm9yX3NlY3MYCCABKA0SLwoLdmFsaWRfdW50aWwYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC2xwX3BhcnR5X2lkGAogASgJEg8KB2xwX25hbWUYCyABKAkSLQoJcXVvdGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI8Cg5zZXR0bGVtZW50X2ZlZRgNIAEoCzIfLnNpbHZhbmEucmZxdjIudjEuQXRvbWljRmVlU3BlY0gAiAEBQhEKD19zZXR0bGVtZW50X2ZlZSKFAQoPQXRvbWljUmZxUmVqZWN0Eg4KBnJmcV9pZBgBIAEoCRIRCgltYXJrZXRfaWQYAiABKAkSDgoGcmVhc29uGAMgASgJEhMKC2xwX3BhcnR5X2lkGAQgASgJEhQKDG1pbl9xdWFudGl0eRgFIAEoCRIUCgxtYXhfcXVhbnRpdHkYBiABKAkiqQIKEVJmcUNvbmZpcm1SZXF1ZXN0Eg4KBnJmcV9pZBgBIAEoCRIQCghxdW90ZV9pZBgCIAEoCRISCgp1c2VyX3BhcnR5GAMgASgJEhEKCW1hcmtldF9pZBgEIAEoCRIRCglkaXJlY3Rpb24YBSABKAkSEAoIcXVhbnRpdHkYBiABKAkSFgoOcXVvdGVfcXVhbnRpdHkYByABKAkSDQoFcHJpY2UYCCABKAkSLgoKcmVzcG9uZF9ieRgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASPAoOc2V0dGxlbWVudF9mZWUYCiABKAsyHy5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0ZlZVNwZWNIAIgBAUIRCg9fc2V0dGxlbWVudF9mZWUi4gEKEFJmcUNvbmZpcm1SZWplY3QSDgoGcmZxX2lkGAEgASgJEhAKCHF1b3RlX2lkGAIgASgJEhMKC2xwX3BhcnR5X2lkGAMgASgJEjgKBnJlYXNvbhgEIAEoDjIoLnNpbHZhbmEucmZxdjIudjEuUmZxQ29uZmlybVJlamVjdFJlYXNvbhIaCg1yZWFzb25fZGV0YWlsGAUgASgJSACIAQESLwoLcmVqZWN0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhAKDl9yZWFzb25fZGV0YWlsIukCChBBdG9taWNTZXJ2ZXJUb0xwEhIKCnNlc3Npb25faWQYASABKAkSFwoPc2VxdWVuY2VfbnVtYmVyGAIgASgEEisKB3NlbnRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEj0KDWhhbmRzaGFrZV9hY2sYCiABKAsyJC5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0hhbmRzaGFrZUFja0gAEjYKCWhlYXJ0YmVhdBgLIAEoCzIhLnNpbHZhbmEucmZxdjIudjEuQXRvbWljSGVhcnRiZWF0SAASOQoLcmZxX3JlcXVlc3QYDCABKAsyIi5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1JmcVJlcXVlc3RIABI+Cg9jb25maXJtX3JlcXVlc3QYDSABKAsyIy5zaWx2YW5hLnJmcXYyLnYxLlJmcUNvbmZpcm1SZXF1ZXN0SABCCQoHbWVzc2FnZSLIAwoQQXRvbWljTHBUb1NlcnZlchISCgpzZXNzaW9uX2lkGAEgASgJEhcKD3NlcXVlbmNlX251bWJlchgCIAEoBBIrCgdzZW50X2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2CgloYW5kc2hha2UYCiABKAsyIS5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0hhbmRzaGFrZUgAEjYKCWhlYXJ0YmVhdBgLIAEoCzIhLnNpbHZhbmEucmZxdjIudjEuQXRvbWljSGVhcnRiZWF0SAASMQoFcXVvdGUYDCABKAsyIC5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1JmcVF1b3RlSAASMwoGcmVqZWN0GA0gASgLMiEuc2lsdmFuYS5yZnF2Mi52MS5BdG9taWNSZnFSZWplY3RIABI5CghlbnZlbG9wZRgOIAEoCzIlLnNpbHZhbmEucmZxdjIudjEuQXRvbWljUXVvdGVFbnZlbG9wZUgAEjwKDmNvbmZpcm1fcmVqZWN0GA8gASgLMiIuc2lsdmFuYS5yZnF2Mi52MS5SZnFDb25maXJtUmVqZWN0SABCCQoHbWVzc2FnZSrmAgoWUmZxQ29uZmlybVJlamVjdFJlYXNvbhIpCiVSRlFfQ09ORklSTV9SRUpFQ1RfUkVBU09OX1VOU1BFQ0lGSUVEEAASKwonUkZRX0NPTkZJUk1fUkVKRUNUX1JFQVNPTl9RVU9URV9FWFBJUkVEEAESLQopUkZRX0NPTkZJUk1fUkVKRUNUX1JFQVNPTl9RVU9URV9OT1RfRk9VTkQQAhIzCi9SRlFfQ09ORklSTV9SRUpFQ1RfUkVBU09OX0lOU1VGRklDSUVOVF9IT0xESU5HUxADEjEKLVJGUV9DT05GSVJNX1JFSkVDVF9SRUFTT05fTk9fVElDS0VUX0FWQUlMQUJMRRAEEi8KK1JGUV9DT05GSVJNX1JFSkVDVF9SRUFTT05fVkVOVUVfVU5BVkFJTEFCTEUQBRIsCihSRlFfQ09ORklSTV9SRUpFQ1RfUkVBU09OX0lOVEVSTkFMX0VSUk9SEAYy1AQKDFJmcVYyU2VydmljZRJkCg1SZXF1ZXN0UXVvdGVzEiguc2lsdmFuYS5yZnF2Mi52MS5SZXF1ZXN0UXVvdGVzVjJSZXF1ZXN0Gikuc2lsdmFuYS5yZnF2Mi52MS5SZXF1ZXN0UXVvdGVzVjJSZXNwb25zZRJsChFBY2NlcHRRdW90ZUF0b21pYxIqLnNpbHZhbmEucmZxdjIudjEuQWNjZXB0UXVvdGVBdG9taWNSZXF1ZXN0Gisuc2lsdmFuYS5yZnF2Mi52MS5BY2NlcHRRdW90ZUF0b21pY1Jlc3BvbnNlEooBChtHZXRBdG9taWNMaXF1aWRpdHlQcm92aWRlcnMSNC5zaWx2YW5hLnJmcXYyLnYxLkdldEF0b21pY0xpcXVpZGl0eVByb3ZpZGVyc1JlcXVlc3QaNS5zaWx2YW5hLnJmcXYyLnYxLkdldEF0b21pY0xpcXVpZGl0eVByb3ZpZGVyc1Jlc3BvbnNlEnUKFEdldEF0b21pY1JmcUF1ZGl0TG9nEi0uc2lsdmFuYS5yZnF2Mi52MS5HZXRBdG9taWNSZnFBdWRpdExvZ1JlcXVlc3QaLi5zaWx2YW5hLnJmcXYyLnYxLkdldEF0b21pY1JmcUF1ZGl0TG9nUmVzcG9uc2USbAoRRXN0aW1hdGVBdG9taWNGZWUSKi5zaWx2YW5hLnJmcXYyLnYxLkVzdGltYXRlQXRvbWljRmVlUmVxdWVzdBorLnNpbHZhbmEucmZxdjIudjEuRXN0aW1hdGVBdG9taWNGZWVSZXNwb25zZTJxChBBdG9taWNSZnFTZXJ2aWNlEl0KD0F0b21pY1JmcVN0cmVhbRIiLnNpbHZhbmEucmZxdjIudjEuQXRvbWljTHBUb1NlcnZlchoiLnNpbHZhbmEucmZxdjIudjEuQXRvbWljU2VydmVyVG9McCgBMAFCMFouZ2l0aHViLmNvbS9TaWx2YW5hT25lL2NhbnRvbi1hZ2VudC9wcm90bztyZnF2MmIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("ChxzaWx2YW5hL3JmcXYyL3YxL3JmcXYyLnByb3RvEhBzaWx2YW5hLnJmcXYyLnYxIngKF0F0b21pY0Rpc2Nsb3NlZENvbnRyYWN0EhMKC2NvbnRyYWN0X2lkGAEgASgJEhMKC3RlbXBsYXRlX2lkGAIgASgJEhoKEmNyZWF0ZWRfZXZlbnRfYmxvYhgDIAEoCRIXCg9zeW5jaHJvbml6ZXJfaWQYBCABKAkihQEKEFV0aWxpdHlBY2NlcHRSZWYSGAoQaW5zdHJ1bWVudF9hZG1pbhgBIAEoCRIVCg1pbnN0cnVtZW50X2lkGAIgASgJEkAKDXRyYW5zZmVyX3J1bGUYAyABKAsyKS5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0Rpc2Nsb3NlZENvbnRyYWN0Im8KEUF0b21pY0Fjc0NvbnRyYWN0EhMKC2NvbnRyYWN0X2lkGAEgASgJEhMKC3RlbXBsYXRlX2lkGAIgASgJEhoKEmNyZWF0ZWRfZXZlbnRfYmxvYhgDIAEoCRIUCgxwYXlsb2FkX2pzb24YBCABKAkiYgoNQXRvbWljRmVlU3BlYxIQCghyZWNlaXZlchgBIAEoCRIYChBpbnN0cnVtZW50X2FkbWluGAIgASgJEhUKDWluc3RydW1lbnRfaWQYAyABKAkSDgoGYW1vdW50GAQgASgJIuIBCgtBdG9taWNRdW90ZRIQCghxdW90ZV9pZBgBIAEoCRIRCgl0aWNrZXRfaWQYAiABKAkSDAoEdXNlchgDIAEoCRIMCgRzaWRlGAQgASgJEhMKC2Jhc2VfYW1vdW50GAUgASgJEhQKDHF1b3RlX2Ftb3VudBgGIAEoCRIZChFjcmVhdGVkX2F0X21pY3JvcxgHIAEoAxIaChJ2YWxpZF91bnRpbF9taWNyb3MYCCABKAMSMAoHbHBfZmVlcxgJIAMoCzIfLnNpbHZhbmEucmZxdjIudjEuQXRvbWljRmVlU3BlYyLwAwoTQXRvbWljUXVvdGVFbnZlbG9wZRIPCgd2ZXJzaW9uGAEgASgJEhcKD3N5bmNocm9uaXplcl9pZBgCIAEoCRIwCgNkdnAYAyABKAsyIy5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0Fjc0NvbnRyYWN0EiwKBXF1b3RlGAQgASgLMh0uc2lsdmFuYS5yZnF2Mi52MS5BdG9taWNRdW90ZRIZChFjYW5vbmljYWxfbWVzc2FnZRgFIAEoCRIXCg9xdW90ZV9zaWduYXR1cmUYBiABKAkSMwoGdGlja2V0GAcgASgLMiMuc2lsdmFuYS5yZnF2Mi52MS5BdG9taWNBY3NDb250cmFjdBIdChVscF9pbnB1dF9ob2xkaW5nX2NpZHMYCCADKAkSPAoJZGlzY2xvc2VkGAkgAygLMikuc2lsdmFuYS5yZnF2Mi52MS5BdG9taWNEaXNjbG9zZWRDb250cmFjdBIOCgZyZnFfaWQYCiABKAkSEAoIcXVvdGVfaWQYCyABKAkSEwoLbHBfcGFydHlfaWQYDCABKAkSEQoJbWFya2V0X2lkGA0gASgJEj8KE3V0aWxpdHlfYWNjZXB0X3JlZnMYDiADKAsyIi5zaWx2YW5hLnJmcXYyLnYxLlV0aWxpdHlBY2NlcHRSZWYivgEKFlJlcXVlc3RRdW90ZXNWMlJlcXVlc3QSEQoJbWFya2V0X2lkGAEgASgJEhEKCWRpcmVjdGlvbhgCIAEoCRIQCghxdWFudGl0eRgDIAEoCRIQCghscF9uYW1lcxgEIAMoCRIZCgx0aW1lb3V0X3NlY3MYBSABKA1IAIgBARISCgpmZWVfdG9rZW5zGAYgAygJEhEKBHVzZXIYByABKAlIAYgBAUIPCg1fdGltZW91dF9zZWNzQgcKBV91c2VyIoQCCg9BdG9taWNRdW90ZUluZm8SEAoIcXVvdGVfaWQYASABKAkSDwoHbHBfbmFtZRgCIAEoCRITCgtscF9wYXJ0eV9pZBgDIAEoCRINCgVwcmljZRgEIAEoCRIQCghxdWFudGl0eRgFIAEoCRIWCg5xdW90ZV9xdWFudGl0eRgGIAEoCRIvCgt2YWxpZF91bnRpbBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASPAoOc2V0dGxlbWVudF9mZWUYCCABKAsyHy5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0ZlZVNwZWNIAIgBAUIRCg9fc2V0dGxlbWVudF9mZWUiXwoQQXRvbWljUmVqZWN0SW5mbxIPCgdscF9uYW1lGAEgASgJEg4KBnJlYXNvbhgCIAEoCRIUCgxtaW5fcXVhbnRpdHkYAyABKAkSFAoMbWF4X3F1YW50aXR5GAQgASgJIuQBChdSZXF1ZXN0UXVvdGVzVjJSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkSDgoGcmZxX2lkGAMgASgJEjEKBnF1b3RlcxgEIAMoCzIhLnNpbHZhbmEucmZxdjIudjEuQXRvbWljUXVvdGVJbmZvEjYKCnJlamVjdGlvbnMYBSADKAsyIi5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1JlamVjdEluZm8SFQoNbHBzX3JlcXVlc3RlZBgGIAEoDRIVCg1scHNfcmVzcG9uZGVkGAcgASgNIoQBChhBY2NlcHRRdW90ZUF0b21pY1JlcXVlc3QSDgoGcmZxX2lkGAEgASgJEhAKCHF1b3RlX2lkGAIgASgJEhkKDHRpbWVvdXRfc2VjcxgDIAEoDUgAiAEBEhEKBHVzZXIYBCABKAlIAYgBAUIPCg1fdGltZW91dF9zZWNzQgcKBV91c2VyIs4BChlBY2NlcHRRdW90ZUF0b21pY1Jlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCRI3CghlbnZlbG9wZRgDIAEoCzIlLnNpbHZhbmEucmZxdjIudjEuQXRvbWljUXVvdGVFbnZlbG9wZRI/Cg1yZWplY3RfcmVhc29uGAQgASgOMiguc2lsdmFuYS5yZnF2Mi52MS5SZnFDb25maXJtUmVqZWN0UmVhc29uEhUKDXJlamVjdF9kZXRhaWwYBSABKAkiJAoiR2V0QXRvbWljTGlxdWlkaXR5UHJvdmlkZXJzUmVxdWVzdCJFCgxBdG9taWNMcEluZm8SDwoHbHBfbmFtZRgBIAEoCRIQCghwYXJ0eV9pZBgCIAEoCRISCgptYXJrZXRfaWRzGAMgAygJIlIKI0dldEF0b21pY0xpcXVpZGl0eVByb3ZpZGVyc1Jlc3BvbnNlEisKA2xwcxgBIAMoCzIeLnNpbHZhbmEucmZxdjIudjEuQXRvbWljTHBJbmZvInIKG0dldEF0b21pY1JmcUF1ZGl0TG9nUmVxdWVzdBITCgZyZnFfaWQYASABKAlIAIgBARIWCgltYXJrZXRfaWQYAiABKAlIAYgBARINCgVsaW1pdBgDIAEoDUIJCgdfcmZxX2lkQgwKCl9tYXJrZXRfaWQi1wEKE0F0b21pY1JmcUF1ZGl0RW50cnkSDgoGcmZxX2lkGAEgASgJEhAKCHF1b3RlX2lkGAIgASgJEhIKCmV2ZW50X3R5cGUYAyABKAkSEQoJbWFya2V0X2lkGAQgASgJEg8KB2xwX25hbWUYBSABKAkSDQoFcHJpY2UYBiABKAkSEAoIcXVhbnRpdHkYByABKAkSLgoKY3JlYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFQoNbWV0YWRhdGFfanNvbhgJIAEoCSJWChxHZXRBdG9taWNSZnFBdWRpdExvZ1Jlc3BvbnNlEjYKB2VudHJpZXMYASADKAsyJS5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1JmcUF1ZGl0RW50cnkiQQoYRXN0aW1hdGVBdG9taWNGZWVSZXF1ZXN0EhEKCW1hcmtldF9pZBgBIAEoCRISCgpmZWVfdG9rZW5zGAIgAygJIn0KGUVzdGltYXRlQXRvbWljRmVlUmVzcG9uc2USDwoHZmVlX3VzZBgBIAEoCRI8Cg5zZXR0bGVtZW50X2ZlZRgCIAEoCzIfLnNpbHZhbmEucmZxdjIudjEuQXRvbWljRmVlU3BlY0gAiAEBQhEKD19zZXR0bGVtZW50X2ZlZSJgCg9BdG9taWNIYW5kc2hha2USEQoJcGFydHlfaWRzGAEgAygJEg8KB2xwX25hbWUYAiABKAkSFQoNYWdlbnRfdmVyc2lvbhgDIAEoCRISCgptYXJrZXRfaWRzGAQgAygJIkgKEkF0b21pY0hhbmRzaGFrZUFjaxIPCgdzdWNjZXNzGAEgASgIEhIKCnNlc3Npb25faWQYAiABKAkSDQoFZXJyb3IYAyABKAkiOQoPQXRvbWljSGVhcnRiZWF0EiYKAmF0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKLAgoQQXRvbWljUmZxUmVxdWVzdBIOCgZyZnFfaWQYASABKAkSEQoJbWFya2V0X2lkGAIgASgJEhEKCWRpcmVjdGlvbhgDIAEoCRIQCghxdWFudGl0eRgEIAEoCRIuCgpyZXNwb25kX2J5GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI8Cg5zZXR0bGVtZW50X2ZlZRgHIAEoCzIfLnNpbHZhbmEucmZxdjIudjEuQXRvbWljRmVlU3BlY0gAiAEBQhEKD19zZXR0bGVtZW50X2ZlZSKAAwoOQXRvbWljUmZxUXVvdGUSDgoGcmZxX2lkGAEgASgJEhAKCHF1b3RlX2lkGAIgASgJEhEKCW1hcmtldF9pZBgDIAEoCRIRCglkaXJlY3Rpb24YBCABKAkSDQoFcHJpY2UYBSABKAkSEAoIcXVhbnRpdHkYBiABKAkSFgoOcXVvdGVfcXVhbnRpdHkYByABKAkSFgoOdmFsaWRfZm9yX3NlY3MYCCABKA0SLwoLdmFsaWRfdW50aWwYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC2xwX3BhcnR5X2lkGAogASgJEg8KB2xwX25hbWUYCyABKAkSLQoJcXVvdGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI8Cg5zZXR0bGVtZW50X2ZlZRgNIAEoCzIfLnNpbHZhbmEucmZxdjIudjEuQXRvbWljRmVlU3BlY0gAiAEBQhEKD19zZXR0bGVtZW50X2ZlZSKFAQoPQXRvbWljUmZxUmVqZWN0Eg4KBnJmcV9pZBgBIAEoCRIRCgltYXJrZXRfaWQYAiABKAkSDgoGcmVhc29uGAMgASgJEhMKC2xwX3BhcnR5X2lkGAQgASgJEhQKDG1pbl9xdWFudGl0eRgFIAEoCRIUCgxtYXhfcXVhbnRpdHkYBiABKAkiqQIKEVJmcUNvbmZpcm1SZXF1ZXN0Eg4KBnJmcV9pZBgBIAEoCRIQCghxdW90ZV9pZBgCIAEoCRISCgp1c2VyX3BhcnR5GAMgASgJEhEKCW1hcmtldF9pZBgEIAEoCRIRCglkaXJlY3Rpb24YBSABKAkSEAoIcXVhbnRpdHkYBiABKAkSFgoOcXVvdGVfcXVhbnRpdHkYByABKAkSDQoFcHJpY2UYCCABKAkSLgoKcmVzcG9uZF9ieRgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASPAoOc2V0dGxlbWVudF9mZWUYCiABKAsyHy5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0ZlZVNwZWNIAIgBAUIRCg9fc2V0dGxlbWVudF9mZWUi4gEKEFJmcUNvbmZpcm1SZWplY3QSDgoGcmZxX2lkGAEgASgJEhAKCHF1b3RlX2lkGAIgASgJEhMKC2xwX3BhcnR5X2lkGAMgASgJEjgKBnJlYXNvbhgEIAEoDjIoLnNpbHZhbmEucmZxdjIudjEuUmZxQ29uZmlybVJlamVjdFJlYXNvbhIaCg1yZWFzb25fZGV0YWlsGAUgASgJSACIAQESLwoLcmVqZWN0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQhAKDl9yZWFzb25fZGV0YWlsIukCChBBdG9taWNTZXJ2ZXJUb0xwEhIKCnNlc3Npb25faWQYASABKAkSFwoPc2VxdWVuY2VfbnVtYmVyGAIgASgEEisKB3NlbnRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEj0KDWhhbmRzaGFrZV9hY2sYCiABKAsyJC5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0hhbmRzaGFrZUFja0gAEjYKCWhlYXJ0YmVhdBgLIAEoCzIhLnNpbHZhbmEucmZxdjIudjEuQXRvbWljSGVhcnRiZWF0SAASOQoLcmZxX3JlcXVlc3QYDCABKAsyIi5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1JmcVJlcXVlc3RIABI+Cg9jb25maXJtX3JlcXVlc3QYDSABKAsyIy5zaWx2YW5hLnJmcXYyLnYxLlJmcUNvbmZpcm1SZXF1ZXN0SABCCQoHbWVzc2FnZSLIAwoQQXRvbWljTHBUb1NlcnZlchISCgpzZXNzaW9uX2lkGAEgASgJEhcKD3NlcXVlbmNlX251bWJlchgCIAEoBBIrCgdzZW50X2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2CgloYW5kc2hha2UYCiABKAsyIS5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY0hhbmRzaGFrZUgAEjYKCWhlYXJ0YmVhdBgLIAEoCzIhLnNpbHZhbmEucmZxdjIudjEuQXRvbWljSGVhcnRiZWF0SAASMQoFcXVvdGUYDCABKAsyIC5zaWx2YW5hLnJmcXYyLnYxLkF0b21pY1JmcVF1b3RlSAASMwoGcmVqZWN0GA0gASgLMiEuc2lsdmFuYS5yZnF2Mi52MS5BdG9taWNSZnFSZWplY3RIABI5CghlbnZlbG9wZRgOIAEoCzIlLnNpbHZhbmEucmZxdjIudjEuQXRvbWljUXVvdGVFbnZlbG9wZUgAEjwKDmNvbmZpcm1fcmVqZWN0GA8gASgLMiIuc2lsdmFuYS5yZnF2Mi52MS5SZnFDb25maXJtUmVqZWN0SABCCQoHbWVzc2FnZSrmAgoWUmZxQ29uZmlybVJlamVjdFJlYXNvbhIpCiVSRlFfQ09ORklSTV9SRUpFQ1RfUkVBU09OX1VOU1BFQ0lGSUVEEAASKwonUkZRX0NPTkZJUk1fUkVKRUNUX1JFQVNPTl9RVU9URV9FWFBJUkVEEAESLQopUkZRX0NPTkZJUk1fUkVKRUNUX1JFQVNPTl9RVU9URV9OT1RfRk9VTkQQAhIzCi9SRlFfQ09ORklSTV9SRUpFQ1RfUkVBU09OX0lOU1VGRklDSUVOVF9IT0xESU5HUxADEjEKLVJGUV9DT05GSVJNX1JFSkVDVF9SRUFTT05fTk9fVElDS0VUX0FWQUlMQUJMRRAEEi8KK1JGUV9DT05GSVJNX1JFSkVDVF9SRUFTT05fVkVOVUVfVU5BVkFJTEFCTEUQBRIsCihSRlFfQ09ORklSTV9SRUpFQ1RfUkVBU09OX0lOVEVSTkFMX0VSUk9SEAYy1AQKDFJmcVYyU2VydmljZRJkCg1SZXF1ZXN0UXVvdGVzEiguc2lsdmFuYS5yZnF2Mi52MS5SZXF1ZXN0UXVvdGVzVjJSZXF1ZXN0Gikuc2lsdmFuYS5yZnF2Mi52MS5SZXF1ZXN0UXVvdGVzVjJSZXNwb25zZRJsChFBY2NlcHRRdW90ZUF0b21pYxIqLnNpbHZhbmEucmZxdjIudjEuQWNjZXB0UXVvdGVBdG9taWNSZXF1ZXN0Gisuc2lsdmFuYS5yZnF2Mi52MS5BY2NlcHRRdW90ZUF0b21pY1Jlc3BvbnNlEooBChtHZXRBdG9taWNMaXF1aWRpdHlQcm92aWRlcnMSNC5zaWx2YW5hLnJmcXYyLnYxLkdldEF0b21pY0xpcXVpZGl0eVByb3ZpZGVyc1JlcXVlc3QaNS5zaWx2YW5hLnJmcXYyLnYxLkdldEF0b21pY0xpcXVpZGl0eVByb3ZpZGVyc1Jlc3BvbnNlEnUKFEdldEF0b21pY1JmcUF1ZGl0TG9nEi0uc2lsdmFuYS5yZnF2Mi52MS5HZXRBdG9taWNSZnFBdWRpdExvZ1JlcXVlc3QaLi5zaWx2YW5hLnJmcXYyLnYxLkdldEF0b21pY1JmcUF1ZGl0TG9nUmVzcG9uc2USbAoRRXN0aW1hdGVBdG9taWNGZWUSKi5zaWx2YW5hLnJmcXYyLnYxLkVzdGltYXRlQXRvbWljRmVlUmVxdWVzdBorLnNpbHZhbmEucmZxdjIudjEuRXN0aW1hdGVBdG9taWNGZWVSZXNwb25zZTJxChBBdG9taWNSZnFTZXJ2aWNlEl0KD0F0b21pY1JmcVN0cmVhbRIiLnNpbHZhbmEucmZxdjIudjEuQXRvbWljTHBUb1NlcnZlchoiLnNpbHZhbmEucmZxdjIudjEuQXRvbWljU2VydmVyVG9McCgBMAFCMFouZ2l0aHViLmNvbS9TaWx2YW5hT25lL2NhbnRvbi1hZ2VudC9wcm90bztyZnF2MmIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * {contractId, templateId, createdEventBlob, synchronizerId} — the canonical
@@ -52,6 +52,44 @@ export const AtomicDisclosedContractSchema: GenMessage<AtomicDisclosedContract> 
   messageDesc(file_silvana_rfqv2_v1_rfqv2, 0);
 
 /**
+ * The registrar-signed utility `TransferRule` disclosure a two-step utility
+ * leg needs for its in-tx `TransferInstruction_Accept`, keyed by instrument.
+ * The taker cannot obtain this itself (registrar-signed, no metadata endpoint,
+ * absent from its ACS), so the server resolves it (instruction-independent,
+ * registrar/instrument-static) and stamps it here. The taker builds the accept
+ * context from this + the InstrumentConfiguration it already gets from its own
+ * transfer-factory call + empty credentials (no-KYC tokens). See
+ * atomic-dvp/plans/rfq-v2-seedless-utility-accept-context.md.
+ *
+ * @generated from message silvana.rfqv2.v1.UtilityAcceptRef
+ */
+export type UtilityAcceptRef = Message<"silvana.rfqv2.v1.UtilityAcceptRef"> & {
+  /**
+   * @generated from field: string instrument_admin = 1;
+   */
+  instrumentAdmin: string;
+
+  /**
+   * @generated from field: string instrument_id = 2;
+   */
+  instrumentId: string;
+
+  /**
+   * registrar TransferRule cid + blob
+   *
+   * @generated from field: silvana.rfqv2.v1.AtomicDisclosedContract transfer_rule = 3;
+   */
+  transferRule?: AtomicDisclosedContract | undefined;
+};
+
+/**
+ * Describes the message silvana.rfqv2.v1.UtilityAcceptRef.
+ * Use `create(UtilityAcceptRefSchema)` to create a new message.
+ */
+export const UtilityAcceptRefSchema: GenMessage<UtilityAcceptRef> = /*@__PURE__*/
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 1);
+
+/**
  * An ACS contract the client must inspect (venue, ticket): disclosure fields
  * plus the create-arguments payload for H14 canonical reconstruction.
  * payload_json is VERBATIM JSON text (never Struct — decimal/int64 safety).
@@ -89,7 +127,7 @@ export type AtomicAcsContract = Message<"silvana.rfqv2.v1.AtomicAcsContract"> & 
  * Use `create(AtomicAcsContractSchema)` to create a new message.
  */
 export const AtomicAcsContractSchema: GenMessage<AtomicAcsContract> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 1);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 2);
 
 /**
  * One SIGNED LP-required fee — the DAML `FeeSpec` economic triple
@@ -136,7 +174,7 @@ export type AtomicFeeSpec = Message<"silvana.rfqv2.v1.AtomicFeeSpec"> & {
  * Use `create(AtomicFeeSpecSchema)` to create a new message.
  */
 export const AtomicFeeSpecSchema: GenMessage<AtomicFeeSpec> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 2);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 3);
 
 /**
  * The 9 DAML Quote fields (atomic-dvp-v2 AtomicDVP.Quote record: 8 + lpFees).
@@ -209,7 +247,7 @@ export type AtomicQuote = Message<"silvana.rfqv2.v1.AtomicQuote"> & {
  * Use `create(AtomicQuoteSchema)` to create a new message.
  */
 export const AtomicQuoteSchema: GenMessage<AtomicQuote> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 3);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 4);
 
 /**
  * version "silvana.atomic-dvp.envelope.v1". Rev-7 of the AtomicDVP design:
@@ -299,6 +337,15 @@ export type AtomicQuoteEnvelope = Message<"silvana.rfqv2.v1.AtomicQuoteEnvelope"
    * @generated from field: string market_id = 13;
    */
   marketId: string;
+
+  /**
+   * Per-utility-instrument TransferRule disclosures for the two-step accept of
+   * utility legs (empty for CC-only pairs). Seedless accept context — see
+   * UtilityAcceptRef.
+   *
+   * @generated from field: repeated silvana.rfqv2.v1.UtilityAcceptRef utility_accept_refs = 14;
+   */
+  utilityAcceptRefs: UtilityAcceptRef[];
 };
 
 /**
@@ -306,7 +353,7 @@ export type AtomicQuoteEnvelope = Message<"silvana.rfqv2.v1.AtomicQuoteEnvelope"
  * Use `create(AtomicQuoteEnvelopeSchema)` to create a new message.
  */
 export const AtomicQuoteEnvelopeSchema: GenMessage<AtomicQuoteEnvelope> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 4);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 5);
 
 /**
  * @generated from message silvana.rfqv2.v1.RequestQuotesV2Request
@@ -373,7 +420,7 @@ export type RequestQuotesV2Request = Message<"silvana.rfqv2.v1.RequestQuotesV2Re
  * Use `create(RequestQuotesV2RequestSchema)` to create a new message.
  */
 export const RequestQuotesV2RequestSchema: GenMessage<RequestQuotesV2Request> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 5);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 6);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicQuoteInfo
@@ -433,7 +480,7 @@ export type AtomicQuoteInfo = Message<"silvana.rfqv2.v1.AtomicQuoteInfo"> & {
  * Use `create(AtomicQuoteInfoSchema)` to create a new message.
  */
 export const AtomicQuoteInfoSchema: GenMessage<AtomicQuoteInfo> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 6);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 7);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicRejectInfo
@@ -465,7 +512,7 @@ export type AtomicRejectInfo = Message<"silvana.rfqv2.v1.AtomicRejectInfo"> & {
  * Use `create(AtomicRejectInfoSchema)` to create a new message.
  */
 export const AtomicRejectInfoSchema: GenMessage<AtomicRejectInfo> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 7);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 8);
 
 /**
  * @generated from message silvana.rfqv2.v1.RequestQuotesV2Response
@@ -514,7 +561,7 @@ export type RequestQuotesV2Response = Message<"silvana.rfqv2.v1.RequestQuotesV2R
  * Use `create(RequestQuotesV2ResponseSchema)` to create a new message.
  */
 export const RequestQuotesV2ResponseSchema: GenMessage<RequestQuotesV2Response> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 8);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 9);
 
 /**
  * @generated from message silvana.rfqv2.v1.AcceptQuoteAtomicRequest
@@ -552,7 +599,7 @@ export type AcceptQuoteAtomicRequest = Message<"silvana.rfqv2.v1.AcceptQuoteAtom
  * Use `create(AcceptQuoteAtomicRequestSchema)` to create a new message.
  */
 export const AcceptQuoteAtomicRequestSchema: GenMessage<AcceptQuoteAtomicRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 9);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 10);
 
 /**
  * LP rejects travel in the response BODY (gRPC OK + success=false) so the
@@ -597,7 +644,7 @@ export type AcceptQuoteAtomicResponse = Message<"silvana.rfqv2.v1.AcceptQuoteAto
  * Use `create(AcceptQuoteAtomicResponseSchema)` to create a new message.
  */
 export const AcceptQuoteAtomicResponseSchema: GenMessage<AcceptQuoteAtomicResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 10);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 11);
 
 /**
  * @generated from message silvana.rfqv2.v1.GetAtomicLiquidityProvidersRequest
@@ -610,7 +657,7 @@ export type GetAtomicLiquidityProvidersRequest = Message<"silvana.rfqv2.v1.GetAt
  * Use `create(GetAtomicLiquidityProvidersRequestSchema)` to create a new message.
  */
 export const GetAtomicLiquidityProvidersRequestSchema: GenMessage<GetAtomicLiquidityProvidersRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 11);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 12);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicLpInfo
@@ -639,7 +686,7 @@ export type AtomicLpInfo = Message<"silvana.rfqv2.v1.AtomicLpInfo"> & {
  * Use `create(AtomicLpInfoSchema)` to create a new message.
  */
 export const AtomicLpInfoSchema: GenMessage<AtomicLpInfo> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 12);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 13);
 
 /**
  * @generated from message silvana.rfqv2.v1.GetAtomicLiquidityProvidersResponse
@@ -656,7 +703,7 @@ export type GetAtomicLiquidityProvidersResponse = Message<"silvana.rfqv2.v1.GetA
  * Use `create(GetAtomicLiquidityProvidersResponseSchema)` to create a new message.
  */
 export const GetAtomicLiquidityProvidersResponseSchema: GenMessage<GetAtomicLiquidityProvidersResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 13);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 14);
 
 /**
  * @generated from message silvana.rfqv2.v1.GetAtomicRfqAuditLogRequest
@@ -683,7 +730,7 @@ export type GetAtomicRfqAuditLogRequest = Message<"silvana.rfqv2.v1.GetAtomicRfq
  * Use `create(GetAtomicRfqAuditLogRequestSchema)` to create a new message.
  */
 export const GetAtomicRfqAuditLogRequestSchema: GenMessage<GetAtomicRfqAuditLogRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 14);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 15);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicRfqAuditEntry
@@ -742,7 +789,7 @@ export type AtomicRfqAuditEntry = Message<"silvana.rfqv2.v1.AtomicRfqAuditEntry"
  * Use `create(AtomicRfqAuditEntrySchema)` to create a new message.
  */
 export const AtomicRfqAuditEntrySchema: GenMessage<AtomicRfqAuditEntry> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 15);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 16);
 
 /**
  * @generated from message silvana.rfqv2.v1.GetAtomicRfqAuditLogResponse
@@ -759,7 +806,7 @@ export type GetAtomicRfqAuditLogResponse = Message<"silvana.rfqv2.v1.GetAtomicRf
  * Use `create(GetAtomicRfqAuditLogResponseSchema)` to create a new message.
  */
 export const GetAtomicRfqAuditLogResponseSchema: GenMessage<GetAtomicRfqAuditLogResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 16);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 17);
 
 /**
  * @generated from message silvana.rfqv2.v1.EstimateAtomicFeeRequest
@@ -784,7 +831,7 @@ export type EstimateAtomicFeeRequest = Message<"silvana.rfqv2.v1.EstimateAtomicF
  * Use `create(EstimateAtomicFeeRequestSchema)` to create a new message.
  */
 export const EstimateAtomicFeeRequestSchema: GenMessage<EstimateAtomicFeeRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 17);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 18);
 
 /**
  * Advisory estimate (per-call, uncached); the per-RFQ cache set at
@@ -813,7 +860,7 @@ export type EstimateAtomicFeeResponse = Message<"silvana.rfqv2.v1.EstimateAtomic
  * Use `create(EstimateAtomicFeeResponseSchema)` to create a new message.
  */
 export const EstimateAtomicFeeResponseSchema: GenMessage<EstimateAtomicFeeResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 18);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 19);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicHandshake
@@ -847,7 +894,7 @@ export type AtomicHandshake = Message<"silvana.rfqv2.v1.AtomicHandshake"> & {
  * Use `create(AtomicHandshakeSchema)` to create a new message.
  */
 export const AtomicHandshakeSchema: GenMessage<AtomicHandshake> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 19);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 20);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicHandshakeAck
@@ -874,7 +921,7 @@ export type AtomicHandshakeAck = Message<"silvana.rfqv2.v1.AtomicHandshakeAck"> 
  * Use `create(AtomicHandshakeAckSchema)` to create a new message.
  */
 export const AtomicHandshakeAckSchema: GenMessage<AtomicHandshakeAck> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 20);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 21);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicHeartbeat
@@ -891,7 +938,7 @@ export type AtomicHeartbeat = Message<"silvana.rfqv2.v1.AtomicHeartbeat"> & {
  * Use `create(AtomicHeartbeatSchema)` to create a new message.
  */
 export const AtomicHeartbeatSchema: GenMessage<AtomicHeartbeat> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 21);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 22);
 
 /**
  * Phase 1: server -> LP quote request (anonymous, like v1 RfqRequest).
@@ -948,7 +995,7 @@ export type AtomicRfqRequest = Message<"silvana.rfqv2.v1.AtomicRfqRequest"> & {
  * Use `create(AtomicRfqRequestSchema)` to create a new message.
  */
 export const AtomicRfqRequestSchema: GenMessage<AtomicRfqRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 22);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 23);
 
 /**
  * Phase 1: LP -> server indicative quote (soft reserve taken).
@@ -1031,7 +1078,7 @@ export type AtomicRfqQuote = Message<"silvana.rfqv2.v1.AtomicRfqQuote"> & {
  * Use `create(AtomicRfqQuoteSchema)` to create a new message.
  */
 export const AtomicRfqQuoteSchema: GenMessage<AtomicRfqQuote> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 23);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 24);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicRfqReject
@@ -1073,7 +1120,7 @@ export type AtomicRfqReject = Message<"silvana.rfqv2.v1.AtomicRfqReject"> & {
  * Use `create(AtomicRfqRejectSchema)` to create a new message.
  */
 export const AtomicRfqRejectSchema: GenMessage<AtomicRfqReject> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 24);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 25);
 
 /**
  * Phase 2: server -> LP confirm request (reveals the user party — v1 RFQ
@@ -1145,7 +1192,7 @@ export type RfqConfirmRequest = Message<"silvana.rfqv2.v1.RfqConfirmRequest"> & 
  * Use `create(RfqConfirmRequestSchema)` to create a new message.
  */
 export const RfqConfirmRequestSchema: GenMessage<RfqConfirmRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 25);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 26);
 
 /**
  * @generated from message silvana.rfqv2.v1.RfqConfirmReject
@@ -1187,7 +1234,7 @@ export type RfqConfirmReject = Message<"silvana.rfqv2.v1.RfqConfirmReject"> & {
  * Use `create(RfqConfirmRejectSchema)` to create a new message.
  */
 export const RfqConfirmRejectSchema: GenMessage<RfqConfirmReject> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 26);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 27);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicServerToLp
@@ -1243,7 +1290,7 @@ export type AtomicServerToLp = Message<"silvana.rfqv2.v1.AtomicServerToLp"> & {
  * Use `create(AtomicServerToLpSchema)` to create a new message.
  */
 export const AtomicServerToLpSchema: GenMessage<AtomicServerToLp> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 27);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 28);
 
 /**
  * @generated from message silvana.rfqv2.v1.AtomicLpToServer
@@ -1313,7 +1360,7 @@ export type AtomicLpToServer = Message<"silvana.rfqv2.v1.AtomicLpToServer"> & {
  * Use `create(AtomicLpToServerSchema)` to create a new message.
  */
 export const AtomicLpToServerSchema: GenMessage<AtomicLpToServer> = /*@__PURE__*/
-  messageDesc(file_silvana_rfqv2_v1_rfqv2, 28);
+  messageDesc(file_silvana_rfqv2_v1_rfqv2, 29);
 
 /**
  * @generated from enum silvana.rfqv2.v1.RfqConfirmRejectReason
