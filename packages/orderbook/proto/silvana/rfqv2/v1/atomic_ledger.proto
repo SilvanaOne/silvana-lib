@@ -109,6 +109,13 @@ message UpdateVenueKeyParams {
   string new_quote_public_key_spki_hex = 2;
 }
 
+// LP retires (archives) its own venue via AtomicDVP_Retire. Use before
+// re-creating a venue under a changed instrument registrar. In-flight signed
+// envelopes for the pair die (their disclosed venue cid goes stale).
+message RetireVenueParams {
+  string venue_cid = 1;
+}
+
 message CancelTicketsParams {
   reserved 1;
   reserved "ticket_service_cid";       // server discovers the singleton itself
@@ -130,6 +137,7 @@ message PrepareAtomicTransactionRequest {
     CreateAtomicDvpVenueParams create_atomic_dvp_venue = 14;
     UpdateVenueKeyParams update_venue_key = 15;
     CancelTicketsParams cancel_tickets = 16;
+    RetireVenueParams retire_venue = 17;
   }
   AtomicMessageSignature request_signature = 30;
 }

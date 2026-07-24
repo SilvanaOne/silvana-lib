@@ -46,3 +46,16 @@ message AllocateParams {
   string dvp_cid = 2;
   repeated string amulet_cids = 3;  // Pre-selected amulet contract IDs (empty = server selects)
 }
+
+// Archive an expired DvpProposal. DvpProposal_Cancel is controller proposer,
+// so the authenticated party must be the proposal's proposer.
+message CancelDvpProposalParams {
+  string dvp_proposal_cid = 1;
+}
+
+// Reject an expired DvpProposal we received. DvpProposal_Reject is controller
+// counterparty; it archives the proposal but creates a RejectedDvpProposal.
+message RejectDvpProposalParams {
+  string dvp_proposal_cid = 1;
+  string reason = 2;
+}

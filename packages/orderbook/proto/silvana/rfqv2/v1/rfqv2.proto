@@ -115,7 +115,11 @@ message AtomicQuoteEnvelope {
 message RequestQuotesV2Request {
   string market_id = 1;
   string direction = 2;               // "buy" | "sell" (user's side)
-  string quantity = 3;                // base quantity
+  // The taker sizes the trade in EXACTLY ONE of `quantity` (base instrument)
+  // or `quote_quantity` (quote instrument). The LP prices whichever side is
+  // given and derives the other (it knows the price; the client must not
+  // guess). Both-set or neither-set => INVALID_ARGUMENT.
+  string quantity = 3;                // base quantity (empty when quote_quantity is set)
   repeated string lp_names = 4;       // optional filter
   optional uint32 timeout_secs = 5;   // default 10, clamp 1..30
   // OPTIONAL priority-ordered fee-token preference (instruments-table symbols,
@@ -130,6 +134,10 @@ message RequestQuotesV2Request {
   // party (it owns the RFQ, is revealed to the LP at confirm, and signs
   // settlement with its own Canton key). Absent => user = JWT sub (unchanged).
   optional string user = 7;
+  // Quote-instrument-denominated size, as an alternative to `quantity`. Set
+  // this (and leave `quantity` empty) to size by the quote token — e.g. "pay
+  // 50 USDC for EDELx". The LP derives base = quote_quantity / price.
+  optional string quote_quantity = 8;
 }
 
 message AtomicQuoteInfo {
@@ -269,13 +277,23 @@ message AtomicRfqRequest {
   string rfq_id = 1;
   string market_id = 2;
   string direction = 3;               // "buy" | "sell" (user's side)
-  string quantity = 4;
+  string quantity = 4;                // base quantity (empty when quote_quantity is set)
   google.protobuf.Timestamp respond_by = 5;
   google.protobuf.Timestamp created_at = 6;
   // The AUTHORITATIVE settlement fee for this RFQ (computed by orderbook-rpc,
   // cached per rfq_id): the LP must echo it on the indicative quote and sign
   // it into Quote.lpFees at confirm. Absent = zero-fee pair (design §14 D18/D19).
   optional AtomicFeeSpec settlement_fee = 7;
+  // Quote-instrument-denominated size (echoed from RequestQuotesV2Request):
+  // exactly one of `quantity` / `quote_quantity` is set. The LP derives the
+  // other from its price.
+  optional string quote_quantity = 8;
+  // Swap-venue slug for on-chain attribution (venue-attribution design VA2):
+  // when present, the LP MUST generate quote_id = "<prefix>-<uuidv7>" so the
+  // venue tag rides the LP-signed canonical message (line 13 quote_nonce) and
+  // the AtomicDVP_Settle exercise arguments. The server enforces the echo and
+  // DROPS quotes whose quote_id does not match the expected prefix.
+  optional string quote_id_prefix = 9;
 }
 
 // Phase 1: LP -> server indicative quote (soft reserve taken).

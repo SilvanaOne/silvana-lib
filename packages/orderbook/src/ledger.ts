@@ -24,6 +24,7 @@ import {
   TransactionOperation,
   TransactionStatus,
   ProviderErrorCode,
+  type MessageSignature,
 } from "./proto/silvana/ledger/v1/common_pb.js";
 import {
   type GetLedgerEndResponse,
@@ -290,6 +291,63 @@ export class LedgerClient {
       const request = create(ExecuteTransactionRequestSchema, params);
       return await this.client.executeTransaction(request, this.callOptions());
     }, 'executeTransaction');
+  }
+
+  // === DVP proposal lifecycle (phase 1 of two-phase; sign hash then executeTransaction) ===
+
+  /**
+   * Prepare a CANCEL_DVP_PROPOSAL transaction: archive an expired DvpProposal
+   * the caller proposed (DvpProposal_Cancel — controller is the proposer, so
+   * the authenticated party must be the proposal's proposer).
+   * Sign the returned hash and call `executeTransaction` to complete.
+   */
+  async prepareCancelDvpProposal(params: {
+    /** Contract ID of the expired DvpProposal to archive. */
+    dvpProposalCid: string;
+    /** Optional cloud-agent Ed25519 message signature over the canonical request. */
+    requestSignature?: MessageSignature;
+  }): Promise<PrepareTransactionResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(PrepareTransactionRequestSchema, {
+        operation: TransactionOperation.CANCEL_DVP_PROPOSAL,
+        params: {
+          case: "cancelDvpProposal",
+          value: { dvpProposalCid: params.dvpProposalCid },
+        },
+        requestSignature: params.requestSignature,
+      });
+      return await this.client.prepareTransaction(request, this.callOptions());
+    }, "prepareCancelDvpProposal");
+  }
+
+  /**
+   * Prepare a REJECT_DVP_PROPOSAL transaction: reject an expired DvpProposal
+   * received from a counterparty (DvpProposal_Reject — controller is the
+   * counterparty). Archives the proposal and creates a RejectedDvpProposal.
+   * Sign the returned hash and call `executeTransaction` to complete.
+   */
+  async prepareRejectDvpProposal(params: {
+    /** Contract ID of the DvpProposal to reject. */
+    dvpProposalCid: string;
+    /** Human-readable rejection reason (recorded on the RejectedDvpProposal). */
+    reason: string;
+    /** Optional cloud-agent Ed25519 message signature over the canonical request. */
+    requestSignature?: MessageSignature;
+  }): Promise<PrepareTransactionResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(PrepareTransactionRequestSchema, {
+        operation: TransactionOperation.REJECT_DVP_PROPOSAL,
+        params: {
+          case: "rejectDvpProposal",
+          value: {
+            dvpProposalCid: params.dvpProposalCid,
+            reason: params.reason,
+          },
+        },
+        requestSignature: params.requestSignature,
+      });
+      return await this.client.prepareTransaction(request, this.callOptions());
+    }, "prepareRejectDvpProposal");
   }
 
   // === Faucet RPC ===

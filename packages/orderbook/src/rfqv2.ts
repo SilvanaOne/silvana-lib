@@ -117,8 +117,14 @@ export class RfqV2Client {
     marketId: string;
     /** "buy" | "sell" (user side) */
     direction: string;
-    /** base quantity */
-    quantity: string;
+    /**
+     * Size the trade in the BASE instrument. Provide EXACTLY ONE of `quantity`
+     * or `quoteQuantity` — the LP prices whichever side is given and derives
+     * the other (the client must not guess the price).
+     */
+    quantity?: string;
+    /** Size the trade in the QUOTE instrument (e.g. "pay 50 USDC for EDELx"). */
+    quoteQuantity?: string;
     lpNames?: string[];
     /** default 10, clamped 1..30 server-side */
     timeoutSecs?: number;
