@@ -50,6 +50,8 @@ message PrepareTransactionRequest {
     ResizeLockParams resize_lock = 25;
     TerminateLockParams terminate_lock = 26;
     PrepayTrafficParams prepay_traffic = 27;
+    CancelDvpProposalParams cancel_dvp_proposal = 28;
+    RejectDvpProposalParams reject_dvp_proposal = 29;
   }
 
   // Message-level signature from cloud agent (Ed25519 over canonical request payload)

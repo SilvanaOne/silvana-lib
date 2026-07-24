@@ -139,4 +139,8 @@ enum TransactionOperation {
 
   // Prepay traffic — top up CC balance held by PARTY_PREPAID_TRAFFIC
   TRANSACTION_OPERATION_PREPAY_TRAFFIC = 19;
+
+  // DvpProposal garbage collection (archive expired proposals)
+  TRANSACTION_OPERATION_CANCEL_DVP_PROPOSAL = 20;
+  TRANSACTION_OPERATION_REJECT_DVP_PROPOSAL = 21;
 }
