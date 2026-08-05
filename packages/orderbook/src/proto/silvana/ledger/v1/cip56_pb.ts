@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file silvana/ledger/v1/cip56.proto.
  */
 export const file_silvana_ledger_v1_cip56: GenFile = /*@__PURE__*/
-  fileDesc("Ch1zaWx2YW5hL2xlZGdlci92MS9jaXA1Ni5wcm90bxIRc2lsdmFuYS5sZWRnZXIudjEilAEKE1RyYW5zZmVyQ2lwNTZQYXJhbXMSFQoNaW5zdHJ1bWVudF9pZBgBIAEoCRIYChBpbnN0cnVtZW50X2FkbWluGAIgASgJEhYKDnJlY2VpdmVyX3BhcnR5GAMgASgJEg4KBmFtb3VudBgEIAEoCRIWCglyZWZlcmVuY2UYBSABKAlIAIgBAUIMCgpfcmVmZXJlbmNlIigKEUFjY2VwdENpcDU2UGFyYW1zEhMKC2NvbnRyYWN0X2lkGAEgASgJQjFaL2dpdGh1Yi5jb20vU2lsdmFuYU9uZS9jYW50b24tYWdlbnQvcHJvdG87bGVkZ2VyYgZwcm90bzM");
+  fileDesc("Ch1zaWx2YW5hL2xlZGdlci92MS9jaXA1Ni5wcm90bxIRc2lsdmFuYS5sZWRnZXIudjEisAEKE1RyYW5zZmVyQ2lwNTZQYXJhbXMSFQoNaW5zdHJ1bWVudF9pZBgBIAEoCRIYChBpbnN0cnVtZW50X2FkbWluGAIgASgJEhYKDnJlY2VpdmVyX3BhcnR5GAMgASgJEg4KBmFtb3VudBgEIAEoCRIWCglyZWZlcmVuY2UYBSABKAlIAIgBARIaChJpbnB1dF9ob2xkaW5nX2NpZHMYBiADKAlCDAoKX3JlZmVyZW5jZSIoChFBY2NlcHRDaXA1NlBhcmFtcxITCgtjb250cmFjdF9pZBgBIAEoCUIxWi9naXRodWIuY29tL1NpbHZhbmFPbmUvY2FudG9uLWFnZW50L3Byb3RvO2xlZGdlcmIGcHJvdG8z");
 
 /**
  * CIP-56 instrument transfer — fully qualified instrument required
@@ -53,6 +53,17 @@ export type TransferCip56Params = Message<"silvana.ledger.v1.TransferCip56Params
    * @generated from field: optional string reference = 5;
    */
   reference?: string | undefined;
+
+  /**
+   * Explicit input holdings to consume. Empty ⇒ auto-select ALL unlocked
+   * holdings of the instrument (legacy behavior). Non-empty ⇒ use exactly these
+   * cids — required for a targeted self-transfer merge (receiver == sender,
+   * amount == Σ inputs → one output, no change) that must consume specific dust
+   * holdings without folding in the split-worker ladder rungs.
+   *
+   * @generated from field: repeated string input_holding_cids = 6;
+   */
+  inputHoldingCids: string[];
 };
 
 /**

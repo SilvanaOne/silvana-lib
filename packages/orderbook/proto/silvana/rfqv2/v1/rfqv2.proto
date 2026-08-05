@@ -231,6 +231,13 @@ message EstimateAtomicFeeRequest {
   // Same semantics as RequestQuotesV2Request.fee_tokens, so the advisory
   // estimate matches what RequestQuotes will cache for the same preference.
   repeated string fee_tokens = 2;
+  // OPTIONAL trade size, same semantics as RequestQuotesV2Request (at most
+  // one of base `quantity` / `quote_quantity`). When given, the estimate
+  // classifies the size against `min_order_value_usd` and reflects the 3x
+  // dust surcharge sub-minimum RFQs pay. Absent = no dust surcharge (the
+  // pre-2026-08 behavior).
+  optional string quantity = 3;
+  optional string quote_quantity = 4;
 }
 
 // Advisory estimate (per-call, uncached); the per-RFQ cache set at
@@ -238,6 +245,11 @@ message EstimateAtomicFeeRequest {
 message EstimateAtomicFeeResponse {
   string fee_usd = 1;                          // pre-conversion USD amount
   optional AtomicFeeSpec settlement_fee = 2;   // absent = zero-fee pair
+  // True when the supplied size is below `min_order_value_usd` AND the 3x
+  // dust surcharge is actually included in fee_usd / settlement_fee. Always
+  // false when no size was supplied, and false under a venue fee override
+  // (the venue map is that venue's final price — never surcharged).
+  bool below_min_value = 3;
 }
 
 service RfqV2Service {

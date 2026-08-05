@@ -16,6 +16,12 @@ message TransferCip56Params {
   string receiver_party = 3;      // Full Canton party ID of receiver
   string amount = 4;              // Decimal string
   optional string reference = 5;  // Optional transfer reference/description
+  // Explicit input holdings to consume. Empty ⇒ auto-select ALL unlocked
+  // holdings of the instrument (legacy behavior). Non-empty ⇒ use exactly these
+  // cids — required for a targeted self-transfer merge (receiver == sender,
+  // amount == Σ inputs → one output, no change) that must consume specific dust
+  // holdings without folding in the split-worker ladder rungs.
+  repeated string input_holding_cids = 6;
 }
 
 // Accept incoming CIP-56 TransferOffer — registrar extracted from contract payload
