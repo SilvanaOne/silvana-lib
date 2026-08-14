@@ -661,6 +661,13 @@ service SettlementService {
 
   // Cancel a settlement (buyer or seller can cancel before settlement execution)
   rpc CancelSettlement(CancelSettlementRequest) returns (CancelSettlementResponse);
+
+  // Report structured errors from any stack layer (frontend, agent).
+  // Best-effort ingestion: response reports per-event accept/reject counts;
+  // the RPC itself only fails on auth or an oversized batch. Requests over
+  // the per-IP pre-auth rate limit fail with RESOURCE_EXHAUSTED before
+  // authentication.
+  rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
 }
 
 // ============================================================================
@@ -1073,4 +1080,66 @@ message GetSettlementProposalByIdRequest {
 message GetSettlementProposalByIdResponse {
   bool found = 1;
   SettlementProposalMessage proposal = 2;
+}
+
+// ============================================================================
+// Error Reporting (cross-stack structured error ingestion)
+// See canton-agent/plans/errors/2026-08-13-error-logging.md
+// ============================================================================
+
+// One structured error occurrence. Field-for-field aligned with the
+// error_events table. All context fields optional — callers fill what they
+// have. The authenticated caller becomes reporter_party server-side; party_id
+// is the SUBJECT and is overwritten with the JWT sub for untrusted callers.
+message ErrorEvent {
+  string source = 1;                       // "frontend-orderbook" | "frontend-swap" | "agent" (server-whitelisted; backend sources never arrive via RPC)
+  string severity = 2;                     // "debug"|"info"|"warning"|"error"|"critical"; empty => "error"
+  string error_type = 3;                   // open taxonomy; unknown values stored as CLIENT_ERROR with the raw label preserved in error_code
+  optional string error_code = 4;          // provider/gRPC/HTTP/Daml error code
+  string error_message = 5;                // truncated server-side at 8 KiB
+
+  optional string party_id = 6;            // subject party (whose flow failed)
+
+  // Canton / Daml context
+  optional string update_id = 7;
+  optional string command_id = 8;
+  optional string submission_id = 9;
+  optional string contract_id = 10;
+  optional string daml_template_id = 11;
+  optional string daml_choice = 12;
+
+  // Business context
+  optional string settlement_proposal_id = 13;  // UUID v7
+  optional string market_id = 14;
+  optional string order_id = 15;
+  optional string venue_name = 16;   // swap-venue slug; for venue-audience callers the server FORCES the validated JWT venue_name claim
+  optional string venue_branch = 17; // analytics branch (VA12); NULL = "main" to consumers
+
+  // Client context
+  optional string correlation_id = 18;     // session / trace id (frontends: per-tab uuid v7)
+  optional string app_version = 19;        // build/commit stamp
+  optional string module = 20;             // code path, e.g. "useSwapSettlement" / "ledger_client.submit_transaction"
+
+  optional google.protobuf.Struct metadata = 21;  // stack traces, operation enums, retry counts; <= 16 KiB serialized
+  google.protobuf.Timestamp occurred_at = 22;     // client clock; server clamps to [now-7d, now+5m]
+}
+
+message ReportErrorsRequest {
+  // Auth is EXCLUSIVELY `authorization: Bearer <JWT>` gRPC metadata.
+  // There is deliberately NO CantonNodeAuth field: nothing may report an
+  // error anonymously, and the ingestion endpoint must never trust a
+  // proto-body identity assertion (it is the one internet-facing write RPC
+  // with no ledger-side consequence to keep callers honest).
+  repeated ErrorEvent errors = 1;   // max 50 per request
+}
+
+message ErrorRejection {
+  uint32 index = 1;    // index into ReportErrorsRequest.errors
+  string reason = 2;   // "rate_limited" | "invalid" | "too_large"
+}
+
+message ReportErrorsResponse {
+  uint32 accepted = 1;
+  uint32 rejected = 2;
+  repeated ErrorRejection rejections = 3;
 }
