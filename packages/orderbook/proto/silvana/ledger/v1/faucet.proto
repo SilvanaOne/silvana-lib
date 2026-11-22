@@ -44,8 +44,9 @@ message FaucetResponse {
 // ListFaucetInstruments — discovery RPC for cloud agents.
 //
 // Drives both faucet calls and CIP-56 TransferPreapproval creation on the
-// agent side. The list is sourced from the ledger-service configuration
-// ([[faucet_token]] in configuration.toml).
+// agent side. The list is the provider's preapproval targets: one entry per
+// registry admin, sourced from its configuration and from the instruments it
+// lists.
 // ----------------------------------------------------------------------------
 
 message FaucetInstrument {

@@ -12,7 +12,7 @@ option go_package = "github.com/SilvanaOne/canton-agent/proto;rfqv2";
 // This package is deliberately SELF-CONTAINED: it imports nothing from other
 // silvana packages so that RFQ V2 can evolve (including breaking changes
 // while in testing) without ever touching the v1 protos that order-book and
-// silvana-lib vendor. See atomic-dvp/plans/rfq-v2-integration-design.md §3.
+// silvana-lib vendor.
 // ============================================================================
 
 // ============================================================================
@@ -36,8 +36,7 @@ message AtomicDisclosedContract {
 // absent from its ACS), so the server resolves it (instruction-independent,
 // registrar/instrument-static) and stamps it here. The taker builds the accept
 // context from this + the InstrumentConfiguration it already gets from its own
-// transfer-factory call + empty credentials (no-KYC tokens). See
-// atomic-dvp/plans/rfq-v2-seedless-utility-accept-context.md.
+// transfer-factory call + empty credentials (no-KYC tokens).
 message UtilityAcceptRef {
   string instrument_admin = 1;
   string instrument_id = 2;
@@ -231,6 +230,13 @@ message EstimateAtomicFeeRequest {
   // Same semantics as RequestQuotesV2Request.fee_tokens, so the advisory
   // estimate matches what RequestQuotes will cache for the same preference.
   repeated string fee_tokens = 2;
+  // OPTIONAL trade size, same semantics as RequestQuotesV2Request (at most
+  // one of base `quantity` / `quote_quantity`). When given, the estimate
+  // classifies the size against `min_order_value_usd` and reflects the 3x
+  // dust surcharge sub-minimum RFQs pay. Absent = no dust surcharge (the
+  // pre-2026-08 behavior).
+  optional string quantity = 3;
+  optional string quote_quantity = 4;
 }
 
 // Advisory estimate (per-call, uncached); the per-RFQ cache set at
@@ -238,6 +244,11 @@ message EstimateAtomicFeeRequest {
 message EstimateAtomicFeeResponse {
   string fee_usd = 1;                          // pre-conversion USD amount
   optional AtomicFeeSpec settlement_fee = 2;   // absent = zero-fee pair
+  // True when the supplied size is below `min_order_value_usd` AND the 3x
+  // dust surcharge is actually included in fee_usd / settlement_fee. Always
+  // false when no size was supplied, and false under a venue fee override
+  // (the venue map is that venue's final price — never surcharged).
+  bool below_min_value = 3;
 }
 
 service RfqV2Service {
@@ -294,6 +305,13 @@ message AtomicRfqRequest {
   // the AtomicDVP_Settle exercise arguments. The server enforces the echo and
   // DROPS quotes whose quote_id does not match the expected prefix.
   optional string quote_id_prefix = 9;
+  // Explicit venue identity of the requesting user.
+  optional string venue_name = 10;
+  // Venue branch of the requesting user.
+  optional string venue_branch = 11;
+  // Party id of the requesting user, which the LP may see. Keys a
+  // per-counterparty accumulator; absent => no per-party term.
+  optional string user_party = 12;
 }
 
 // Phase 1: LP -> server indicative quote (soft reserve taken).

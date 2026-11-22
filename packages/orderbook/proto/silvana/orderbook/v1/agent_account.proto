@@ -1,0 +1,222 @@
+syntax = "proto3";
+
+package silvana.orderbook.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;orderbook";
+
+// Account-scoped agent invite codes and read-only agent views.
+service AgentAccountService {
+  rpc GetAgentAccount(GetAgentAccountRequest) returns (GetAgentAccountResponse);
+  rpc CreateAgentInvite(CreateAgentInviteRequest) returns (CreateAgentInviteResponse);
+  rpc GetAgentHoldings(GetAgentHoldingsRequest) returns (GetAgentHoldingsResponse);
+  rpc GetAgentActivity(GetAgentActivityRequest) returns (GetAgentActivityResponse);
+  rpc GetAgentLedger(GetAgentLedgerRequest) returns (GetAgentLedgerResponse);
+  rpc GetAgentTraffic(GetAgentTrafficRequest) returns (GetAgentTrafficResponse);
+  rpc CreateTrafficPurchase(CreateTrafficPurchaseRequest) returns (CreateTrafficPurchaseResponse);
+  rpc GetTrafficPurchase(GetTrafficPurchaseRequest) returns (GetTrafficPurchaseResponse);
+}
+
+enum AgentOnboardingStatus {
+  AGENT_ONBOARDING_STATUS_UNSPECIFIED = 0;
+  AGENT_ONBOARDING_STATUS_REQUESTED = 1;
+  AGENT_ONBOARDING_STATUS_SIGNATURE_REQUIRED = 2;
+  AGENT_ONBOARDING_STATUS_ACTIVE = 3;
+}
+
+message AgentSummary {
+  optional string party_id = 1;
+  string agent_name = 2;
+  AgentOnboardingStatus status = 3;
+  google.protobuf.Timestamp registered_at = 4;
+}
+
+message AgentInvite {
+  string invite_code = 1;
+  uint32 slot = 2;
+  string status = 3;
+  google.protobuf.Timestamp created_at = 4;
+  optional AgentSummary agent = 5;
+}
+
+message GetAgentAccountRequest {}
+
+message GetAgentAccountResponse {
+  repeated AgentInvite invites = 1;
+  uint32 max_invites = 2;
+}
+
+message CreateAgentInviteRequest {}
+
+message CreateAgentInviteResponse {
+  optional AgentInvite invite = 1;
+  bool limit_reached = 2;
+}
+
+message GetAgentHoldingsRequest {
+  string party_id = 1;
+}
+
+message AgentHolding {
+  string contract_id = 1;
+  string template_id = 2;
+  string instrument_id = 3;
+  string instrument_admin = 4;
+  string amount = 5;
+  bool is_locked = 6;
+  int64 lock_expires_at_micros = 7;
+  string label = 8;
+}
+
+message AgentTokenTotal {
+  string instrument_id = 1;
+  string instrument_admin = 2;
+  string total_amount = 3;
+  string locked_amount = 4;
+  string unlocked_amount = 5;
+}
+
+message GetAgentHoldingsResponse {
+  repeated AgentHolding holdings = 1;
+  repeated AgentTokenTotal totals = 2;
+  bool truncated = 3;
+  google.protobuf.Timestamp as_of = 4;
+  bool stale = 5;
+}
+
+message GetAgentActivityRequest {
+  string party_id = 1;
+  uint32 limit = 2;
+  uint32 offset = 3;
+}
+
+message AgentActivityItem {
+  string row_id = 1;
+  string source = 2;
+  string side = 3;
+  string role = 4;
+  string market_id = 5;
+  string base_instrument = 6;
+  string base_quantity = 7;
+  string quote_instrument = 8;
+  string quote_quantity = 9;
+  string status = 10;
+  google.protobuf.Timestamp created_at = 11;
+  optional google.protobuf.Timestamp settled_at = 12;
+  optional string update_id = 13;
+  optional string fee_amount = 14;
+  optional string fee_instrument = 15;
+}
+
+message GetAgentActivityResponse {
+  repeated AgentActivityItem items = 1;
+  uint64 total = 2;
+}
+
+message GetAgentLedgerRequest {
+  string party_id = 1;
+  uint32 limit = 2;
+  uint32 offset = 3;
+}
+
+message AgentLedgerTx {
+  uint64 id = 1;
+  string tx_type = 2;
+  string result = 3;
+  optional string update_id = 4;
+  optional string settlement_proposal_id = 5;
+  optional string market_id = 6;
+  optional string daml_choice = 7;
+  optional string amount = 8;
+  optional string token = 9;
+  optional uint64 traffic_total = 10;
+  google.protobuf.Timestamp created_at = 11;
+}
+
+message GetAgentLedgerResponse {
+  repeated AgentLedgerTx transactions = 1;
+  uint64 total = 2;
+}
+
+// Traffic amounts are decimal strings in CC unless the field says token.
+message AgentTrafficGrant {
+  uint64 id = 1;
+  string source = 2;
+  optional string campaign = 3;
+  string amount_cc = 4;
+  string remaining_cc = 5;
+  optional google.protobuf.Timestamp expires_at = 6;
+  string state = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message AgentTrafficPurchase {
+  string purchase_id = 1;
+  string status = 2;
+  string token = 3;
+  string token_amount = 4;
+  string credit_cc = 5;
+  optional string credited_cc = 6;
+  optional string remaining_cc = 7;
+  string payer_party = 8;
+  optional string update_id = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp expires_at = 11;
+  optional google.protobuf.Timestamp credited_at = 12;
+  optional string reject_reason = 13;
+}
+
+message TrafficPurchaseToken {
+  string token = 1;
+  string instrument_id = 2;
+  string instrument_admin = 3;
+  string transfer_kind = 4;
+  string cc_per_token = 5;
+  string min_token_amount = 6;
+  string max_token_amount = 7;
+  uint32 max_decimals = 8;
+}
+
+message GetAgentTrafficRequest {
+  string party_id = 1;
+}
+
+message GetAgentTrafficResponse {
+  string available_cc = 1;
+  string pool_cc = 2;
+  string granted_cc = 3;
+  string purchased_cc = 4;
+  string credit_limit_cc = 5;
+  optional google.protobuf.Timestamp next_expiry = 6;
+  string discount_pct = 7;
+  repeated AgentTrafficGrant grants = 8;
+  repeated AgentTrafficPurchase purchases = 9;
+  repeated TrafficPurchaseToken tokens = 10;
+  string recipient_party = 11;
+  google.protobuf.Timestamp as_of = 12;
+}
+
+message CreateTrafficPurchaseRequest {
+  string party_id = 1;
+  string payer_party = 2;
+  string token = 3;
+  string token_amount = 4;
+}
+
+message CreateTrafficPurchaseResponse {
+  AgentTrafficPurchase purchase = 1;
+  string recipient_party = 2;
+  string instrument_id = 3;
+  string instrument_admin = 4;
+  string transfer_kind = 5;
+  string memo = 6;
+}
+
+message GetTrafficPurchaseRequest {
+  string purchase_id = 1;
+}
+
+message GetTrafficPurchaseResponse {
+  AgentTrafficPurchase purchase = 1;
+}

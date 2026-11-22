@@ -11,6 +11,7 @@ import "silvana/ledger/v1/recurring.proto";
 import "silvana/ledger/v1/multicall.proto";
 import "silvana/ledger/v1/lock.proto";
 import "silvana/ledger/v1/fees.proto";
+import "silvana/ledger/v1/usdcx.proto";
 
 option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
 
@@ -52,6 +53,13 @@ message PrepareTransactionRequest {
     PrepayTrafficParams prepay_traffic = 27;
     CancelDvpProposalParams cancel_dvp_proposal = 28;
     RejectDvpProposalParams reject_dvp_proposal = 29;
+    // Field 30 is request_signature below.
+    UsdcxRequestAgreementParams usdcx_request_agreement = 31;
+    UsdcxMintParams usdcx_mint = 32;
+    UsdcxBurnParams usdcx_burn = 33;
+    UsdcxReclaimHoldingParams usdcx_reclaim_holding = 34;
+    UsdcxUpdatePreApprovalParams usdcx_update_pre_approval = 35;
+    UsdcxTerminateAgreementParams usdcx_terminate_agreement = 36;
   }
 
   // Message-level signature from cloud agent (Ed25519 over canonical request payload)

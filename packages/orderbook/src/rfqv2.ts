@@ -188,11 +188,21 @@ export class RfqV2Client {
   /**
    * Estimate the settlement fee for a market + fee-token preference.
    * Public RPC — the server ignores the token (the header is still sent for uniformity).
+   *
+   * Optionally pass the trade size (AT MOST ONE of `quantity` / `quoteQuantity`,
+   * same semantics as requestQuotes; both-set ⇒ INVALID_ARGUMENT) so the
+   * estimate reflects the 3x dust surcharge charged below the server's
+   * `min_order_value_usd` — the response's `belowMinValue` reports whether the
+   * surcharge is included. No size ⇒ no surcharge in the estimate.
    */
   async estimateAtomicFee(params: {
     marketId: string;
     /** priority-ordered fee-token preference; empty ⇒ CC */
     feeTokens?: string[];
+    /** trade size in the BASE instrument (optional, for dust classification) */
+    quantity?: string;
+    /** trade size in the QUOTE instrument (optional, alternative to quantity) */
+    quoteQuantity?: string;
   }): Promise<EstimateAtomicFeeResponse> {
     return await this.wrapCall(async () => {
       const request = create(EstimateAtomicFeeRequestSchema, params);

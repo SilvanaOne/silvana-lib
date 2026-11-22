@@ -1,6 +1,8 @@
 import { createClient, ConnectError } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { create } from "@bufbuild/protobuf";
+import type { JsonObject } from "@bufbuild/protobuf";
+import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
 // Import types needed for internal implementation
 import {
@@ -34,6 +36,8 @@ import {
   UpdateProposalStatusRequestSchema,
   GetSettlementProposalByIdRequestSchema,
   CancelSettlementRequestSchema,
+  ReportErrorsRequestSchema,
+  type ReportErrorsResponse,
   TransactionType,
   SenderType,
   TransactionResult,
@@ -186,8 +190,26 @@ export {
   RfqRejectionReasonSchema,
   NextAction,
   NextActionSchema,
+  // Error reporting (cross-stack structured error ingestion)
+  type ErrorEvent,
+  ErrorEventSchema,
+  type ReportErrorsRequest,
+  ReportErrorsRequestSchema,
+  type ReportErrorsResponse,
+  ReportErrorsResponseSchema,
+  type ErrorRejection,
+  ErrorRejectionSchema,
   SettlementService,
 } from "./proto/silvana/settlement/v1/settlement_pb.js";
+
+/**
+ * Converts a Date to a Timestamp message
+ */
+function dateToTimestamp(date: Date) {
+  const seconds = BigInt(Math.floor(date.getTime() / 1000));
+  const nanos = (date.getTime() % 1000) * 1000000;
+  return create(TimestampSchema, { seconds, nanos });
+}
 
 /**
  * Custom error class for Settlement client errors
@@ -479,5 +501,79 @@ export class SettlementClient {
       const request = create(GetTransactionHistoryRequestSchema, params);
       return await this.client.getTransactionHistory(request, this.callOptions());
     }, 'getTransactionHistory');
+  }
+
+  /**
+   * Report structured errors (best-effort ingestion; max 50 per batch —
+   * a larger batch fails WHOLE with INVALID_ARGUMENT, no per-event
+   * rejections).
+   *
+   * Auth is EXCLUSIVELY the Bearer JWT — the server derives the reporter
+   * from it and may overwrite partyId/venueName per its caller-class rules
+   * (untrusted callers cannot attribute errors to other parties). The
+   * response carries accepted/rejected counts plus per-event rejections
+   * with reason "rate_limited" | "invalid" ("too_large" is reserved but
+   * currently unused — oversize payloads are truncated server-side
+   * instead); callers should drop rejected events, never retry them.
+   * Requests over the per-IP pre-auth rate limit fail with
+   * RESOURCE_EXHAUSTED.
+   *
+   * Pass plain objects — this wrapper owns create() (constructing the
+   * request yourself and passing it here loses Struct fields; see the
+   * double-create() pitfall).
+   */
+  async reportErrors(params: {
+    errors: Array<{
+      /** "frontend-orderbook" | "frontend-swap" | "agent" (server-whitelisted) */
+      source?: string;
+      /** "debug"|"info"|"warning"|"error"|"critical"; empty => "error" */
+      severity?: string;
+      /**
+       * Error classification. For non-Trusted callers, values outside the
+       * server's vocabulary are STORED AS "CLIENT_ERROR" with the raw label
+       * moved into error_code (the column is an indexed analytics dimension
+       * and must not be free-text).
+       */
+      errorType: string;
+      errorCode?: string;
+      errorMessage?: string;
+      /** Subject party (whose flow failed) */
+      partyId?: string;
+      updateId?: string;
+      commandId?: string;
+      submissionId?: string;
+      contractId?: string;
+      damlTemplateId?: string;
+      damlChoice?: string;
+      settlementProposalId?: string;
+      marketId?: string;
+      orderId?: string;
+      venueName?: string;
+      venueBranch?: string;
+      /** Session / trace id (frontends: per-tab uuid v7) */
+      correlationId?: string;
+      /** Build/commit stamp, e.g. NEXT_PUBLIC_GIT_COMMIT */
+      appVersion?: string;
+      /** Code path, e.g. "useSwapSettlement" */
+      module?: string;
+      /**
+       * google.protobuf.Struct — JSON-serializable values ONLY, <= 16 KiB
+       * serialized. Pass `err.stack` as a string; an Error or Date object
+       * silently encodes as {} (non-enumerable/unsupported fields).
+       */
+      metadata?: JsonObject;
+      /** When the error occurred (client clock; converted to a Timestamp) */
+      occurredAt?: Date;
+    }>;
+  }): Promise<ReportErrorsResponse> {
+    return await this.wrapCall(async () => {
+      const request = create(ReportErrorsRequestSchema, {
+        errors: params.errors.map((e) => ({
+          ...e,
+          occurredAt: e.occurredAt ? dateToTimestamp(e.occurredAt) : undefined,
+        })),
+      });
+      return await this.client.reportErrors(request, this.callOptions());
+    }, 'reportErrors');
   }
 }
