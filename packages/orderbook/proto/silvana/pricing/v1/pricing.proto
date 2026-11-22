@@ -51,6 +51,19 @@ message GetPriceResponse {
   optional double low_24h = 8;   // Not available from CoinGecko simple API
   string source = 9;  // Source that provided this price
   google.protobuf.Timestamp timestamp = 10;
+  PoolDepth pool_depth = 11;  // ABSENT = no size reference; consumers MUST
+                              // treat absence as "no adjustment", never an error
+}
+
+// Optional size reference for a market, letting a consumer scale a quote by
+// trade size. Server-populated; opaque to consumers beyond the fields below.
+message PoolDepth {
+  string venue = 1;             // opaque source label
+  string model = 2;             // curve id; a change here is a proto change
+  double base_reserve = 3;      // whole units of THIS market's base token
+  double quote_reserve = 4;     // counter-side size, unit in field 5
+  string quote_instrument = 5;  // unit of field 4 — NOT the market's quote
+  double fee_rate = 6;          // informational; not used by size math
 }
 
 message GetPricesRequest {
@@ -73,6 +86,7 @@ message Price {
   optional double low_24h = 8;   // Not available from CoinGecko simple API
   string source = 9;
   google.protobuf.Timestamp timestamp = 10;
+  PoolDepth pool_depth = 11;  // same semantics as GetPriceResponse.pool_depth
 }
 
 // ============================================================================

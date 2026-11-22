@@ -12,7 +12,7 @@ option go_package = "github.com/SilvanaOne/canton-agent/proto;rfqv2";
 // This package is deliberately SELF-CONTAINED: it imports nothing from other
 // silvana packages so that RFQ V2 can evolve (including breaking changes
 // while in testing) without ever touching the v1 protos that order-book and
-// silvana-lib vendor. See atomic-dvp/plans/rfq-v2-integration-design.md §3.
+// silvana-lib vendor.
 // ============================================================================
 
 // ============================================================================
@@ -36,8 +36,7 @@ message AtomicDisclosedContract {
 // absent from its ACS), so the server resolves it (instruction-independent,
 // registrar/instrument-static) and stamps it here. The taker builds the accept
 // context from this + the InstrumentConfiguration it already gets from its own
-// transfer-factory call + empty credentials (no-KYC tokens). See
-// atomic-dvp/plans/rfq-v2-seedless-utility-accept-context.md.
+// transfer-factory call + empty credentials (no-KYC tokens).
 message UtilityAcceptRef {
   string instrument_admin = 1;
   string instrument_id = 2;
@@ -306,6 +305,13 @@ message AtomicRfqRequest {
   // the AtomicDVP_Settle exercise arguments. The server enforces the echo and
   // DROPS quotes whose quote_id does not match the expected prefix.
   optional string quote_id_prefix = 9;
+  // Explicit venue identity of the requesting user.
+  optional string venue_name = 10;
+  // Venue branch of the requesting user.
+  optional string venue_branch = 11;
+  // Party id of the requesting user, which the LP may see. Keys a
+  // per-counterparty accumulator; absent => no per-party term.
+  optional string user_party = 12;
 }
 
 // Phase 1: LP -> server indicative quote (soft reserve taken).

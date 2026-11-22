@@ -4,3 +4,4 @@ export * from "./news.js";
 export * from "./settlement.js";
 export * from "./ledger.js";
 export * from "./rfqv2.js";
+export * from "./agent-account.js";

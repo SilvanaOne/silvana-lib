@@ -71,6 +71,7 @@ message BridgeResponse {
     silvana.rfqv2.v1.ExecuteAtomicTransactionResponse execute_atomic_transaction = 31;
     silvana.rfqv2.v1.GetAtomicContractsResponse get_atomic_contracts = 32;
     silvana.rfqv2.v1.GetUtilityTransferRuleResponse get_utility_transfer_rule = 33;
+    GetPartyHoldingsResponse     get_party_holdings = 34;
   }
 }
 
@@ -121,5 +122,31 @@ message BridgeRequest {
     silvana.rfqv2.v1.ExecuteAtomicTransactionRequest execute_atomic_transaction = 30;
     silvana.rfqv2.v1.GetAtomicContractsRequest get_atomic_contracts = 31;
     silvana.rfqv2.v1.GetUtilityTransferRuleRequest get_utility_transfer_rule = 32;
+    GetPartyHoldingsRequest      get_party_holdings = 33;
   }
+}
+
+// Holdings of one agent party; sent over the bridge only.
+message GetPartyHoldingsRequest {
+  string party_id = 1;
+  uint64 owner_user_id = 2;
+}
+
+message PartyHolding {
+  string contract_id = 1;
+  string template_id = 2;
+  string instrument_id = 3;
+  string instrument_admin = 4;
+  string amount = 5;
+  bool is_locked = 6;
+  int64 lock_expires_at_micros = 7;
+  string label = 8;
+}
+
+message GetPartyHoldingsResponse {
+  string party_id = 1;
+  repeated PartyHolding holdings = 2;
+  repeated TokenBalance totals = 3;
+  bool truncated = 4;
+  uint32 contract_count = 5;
 }

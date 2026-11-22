@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// ============================================================================
+// USDCx <-> USDC bridge (Circle xReserve) operations on the party's
+// Utility.Bridge.V0 BridgeUserAgreement.
+//
+// The server resolves the party's agreement and pins the USDCx admin, the
+// bridge operator and the synchronizer per network; clients send only what
+// they decide. Every string value is signed in the request canonical, which
+// refuses line breaks.
+// ============================================================================
+
+// Create a BridgeUserAgreementRequest (onboarding).
+message UsdcxRequestAgreementParams {
+  bool pre_approval = 1;
+  // Client UUID v4, reused on every retry of this onboarding; keys the
+  // command id.
+  string request_id = 2;
+}
+
+// BridgeUserAgreement_Mint of a DepositAttestation.
+message UsdcxMintParams {
+  string deposit_attestation_cid = 1;
+}
+
+// BridgeUserAgreement_Burn; the destination domain is fixed to 0 (Ethereum).
+message UsdcxBurnParams {
+  // Decimal, at most 6 fractional digits.
+  string amount = 1;
+  // 0x + 40 hex; the server lowercases it.
+  string destination_recipient = 2;
+  // Client UUID v4: the idempotency key of this withdrawal. Reuse it on
+  // every retry; never start a new one while an earlier burn is unsettled.
+  string request_id = 3;
+  // Optional; empty = the server selects the party's unlocked holdings.
+  repeated string input_holding_cids = 4;
+  // Optional cap for server selection (default 20).
+  optional uint32 max_input_holdings = 5;
+}
+
+// BridgeUserAgreement_ReclaimHolding of a RevokedWithdrawAttestation.
+message UsdcxReclaimHoldingParams {
+  string revoked_withdraw_attestation_cid = 1;
+}
+
+// BridgeUserAgreement_UpdatePreApproval.
+message UsdcxUpdatePreApprovalParams {
+  bool pre_approval = 1;
+}
+
+// BridgeUserAgreement_Terminate, with the party as the actor.
+message UsdcxTerminateAgreementParams {
+  // Free text without line breaks.
+  string reason = 1;
+}

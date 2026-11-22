@@ -16,12 +16,12 @@ message TransferCip56Params {
   string receiver_party = 3;      // Full Canton party ID of receiver
   string amount = 4;              // Decimal string
   optional string reference = 5;  // Optional transfer reference/description
-  // Explicit input holdings to consume. Empty ⇒ auto-select ALL unlocked
-  // holdings of the instrument (legacy behavior). Non-empty ⇒ use exactly these
-  // cids — required for a targeted self-transfer merge (receiver == sender,
-  // amount == Σ inputs → one output, no change) that must consume specific dust
-  // holdings without folding in the split-worker ladder rungs.
+  // Empty ⇒ auto-select enough of the biggest unlocked holdings to cover the
+  // amount. Non-empty ⇒ use exactly these cids (self-transfer merge).
   repeated string input_holding_cids = 6;
+  // Cap on auto-selected inputs, biggest first. Unset ⇒ the amulet protocol
+  // limit for CC and no cap for registry instruments.
+  optional uint32 max_input_holdings = 7;
 }
 
 // Accept incoming CIP-56 TransferOffer — registrar extracted from contract payload

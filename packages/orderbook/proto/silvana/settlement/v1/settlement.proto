@@ -62,6 +62,13 @@ enum TransactionType {
   TRANSACTION_TYPE_UNLOCK = 12;
   TRANSACTION_TYPE_OTHER = 13;
   TRANSACTION_TYPE_TRANSFER = 14;
+  // USDCx bridge operations (recorded by the ledger service)
+  TRANSACTION_TYPE_USDCX_ONBOARD_REQUEST = 15;
+  TRANSACTION_TYPE_USDCX_MINT = 16;
+  TRANSACTION_TYPE_USDCX_BURN = 17;
+  TRANSACTION_TYPE_USDCX_RECLAIM = 18;
+  TRANSACTION_TYPE_USDCX_PREAPPROVAL_UPDATE = 19;
+  TRANSACTION_TYPE_USDCX_OFFBOARD = 20;
 }
 
 // Sender type for transaction history
@@ -1084,7 +1091,6 @@ message GetSettlementProposalByIdResponse {
 
 // ============================================================================
 // Error Reporting (cross-stack structured error ingestion)
-// See canton-agent/plans/errors/2026-08-13-error-logging.md
 // ============================================================================
 
 // One structured error occurrence. Field-for-field aligned with the
