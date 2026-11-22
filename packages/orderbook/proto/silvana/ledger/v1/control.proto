@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package silvana.ledger.v1;
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
+
+// A controller-directed command attached to a prepare request.
+message ControllerCommand {
+  bytes canonical = 1;     // silvana.agent.command.v1
+  string controller_id = 2;
+  bytes proof = 3;         // silvana.agent.proof.v1
+}

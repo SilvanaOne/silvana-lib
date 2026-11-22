@@ -1,0 +1,565 @@
+syntax = "proto3";
+
+package silvana.orderbook.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/SilvanaOne/canton-agent/proto;orderbook";
+
+// Signed documents and proofs are bytes in the agent-control encoding.
+// Hashes and controller ids are 64 lowercase hex; commitments are 32.
+
+// Account-scoped control of linked agents, for the web.
+service AgentControlService {
+  rpc GetControlAccount(GetControlAccountRequest) returns (GetControlAccountResponse);
+  rpc RegisterControlKey(RegisterControlKeyRequest) returns (RegisterControlKeyResponse);
+  rpc RetireControlKey(RetireControlKeyRequest) returns (RetireControlKeyResponse);
+  rpc CreateControlLink(CreateControlLinkRequest) returns (CreateControlLinkResponse);
+  rpc CancelControlLink(CancelControlLinkRequest) returns (CancelControlLinkResponse);
+  rpc GetControlState(GetControlStateRequest) returns (GetControlStateResponse);
+  rpc GetControlLog(GetControlLogRequest) returns (GetControlLogResponse);
+  rpc SubmitPolicy(SubmitPolicyRequest) returns (SubmitPolicyResponse);
+  rpc SubmitCommand(SubmitCommandRequest) returns (SubmitCommandResponse);
+  rpc GetCommand(GetCommandRequest) returns (GetCommandResponse);
+  rpc ListCommands(ListCommandsRequest) returns (ListCommandsResponse);
+  rpc OpenReadSession(OpenReadSessionRequest) returns (OpenReadSessionResponse);
+  rpc CloseReadSession(CloseReadSessionRequest) returns (CloseReadSessionResponse);
+}
+
+// The agent's side; the caller is the agent party of the token.
+service AgentControlAgentService {
+  rpc GetControlDescriptor(GetControlDescriptorRequest) returns (GetControlDescriptorResponse);
+  rpc GetControlLog(GetAgentControlLogRequest) returns (GetAgentControlLogResponse);
+  rpc AppendControlEntries(AppendControlEntriesRequest) returns (AppendControlEntriesResponse);
+  rpc ControlEvents(ControlEventsRequest) returns (stream AgentControlEvent);
+  rpc ListPendingControl(ListPendingControlRequest) returns (ListPendingControlResponse);
+  rpc GetPolicy(GetPolicyRequest) returns (GetPolicyResponse);
+  rpc PostReceipt(PostReceiptRequest) returns (PostReceiptResponse);
+  rpc AckPolicy(AckPolicyRequest) returns (AckPolicyResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum ControllerKeyType {
+  CONTROLLER_KEY_TYPE_UNSPECIFIED = 0;
+  CONTROLLER_KEY_TYPE_WEBAUTHN = 1;
+  CONTROLLER_KEY_TYPE_ED25519 = 2;
+}
+
+enum ControlCapability {
+  CONTROL_CAPABILITY_UNSPECIFIED = 0;
+  CONTROL_CAPABILITY_POLICY = 1;
+  CONTROL_CAPABILITY_DIRECT = 2;
+  CONTROL_CAPABILITY_READ = 3;
+}
+
+enum ControlBackupPolicy {
+  CONTROL_BACKUP_POLICY_UNSPECIFIED = 0;
+  CONTROL_BACKUP_POLICY_ANY = 1;
+  CONTROL_BACKUP_POLICY_DEVICE_BOUND = 2;
+}
+
+enum ControlKeyStatus {
+  CONTROL_KEY_STATUS_UNSPECIFIED = 0;
+  CONTROL_KEY_STATUS_REGISTERED = 1;
+  CONTROL_KEY_STATUS_RETIRED = 2;
+}
+
+// INVITE links a new agent at onboarding; LINK and ADD target an existing agent.
+enum ControlLinkPurpose {
+  CONTROL_LINK_PURPOSE_UNSPECIFIED = 0;
+  CONTROL_LINK_PURPOSE_INVITE = 1;
+  CONTROL_LINK_PURPOSE_LINK = 2;
+  CONTROL_LINK_PURPOSE_ADD = 3;
+}
+
+enum ControlLinkStatus {
+  CONTROL_LINK_STATUS_UNSPECIFIED = 0;
+  CONTROL_LINK_STATUS_OPEN = 1;
+  CONTROL_LINK_STATUS_USED = 2;
+  CONTROL_LINK_STATUS_CANCELLED = 3;
+  CONTROL_LINK_STATUS_EXPIRED = 4;
+}
+
+enum ControlVerification {
+  CONTROL_VERIFICATION_UNSPECIFIED = 0;
+  CONTROL_VERIFICATION_UNLINKED = 1;
+  CONTROL_VERIFICATION_VERIFIED = 2;
+  CONTROL_VERIFICATION_BROKEN = 3;
+  CONTROL_VERIFICATION_FORKED = 4;
+}
+
+// A pending controller change, effective 24 h after its entry was signed.
+enum ControlChangeKind {
+  CONTROL_CHANGE_KIND_UNSPECIFIED = 0;
+  CONTROL_CHANGE_KIND_ADD = 1;
+  CONTROL_CHANGE_KIND_REMOVE = 2;
+  CONTROL_CHANGE_KIND_SET_CAPABILITIES = 3;
+}
+
+enum ControlPolicyStatus {
+  CONTROL_POLICY_STATUS_UNSPECIFIED = 0;
+  CONTROL_POLICY_STATUS_PENDING = 1;
+  CONTROL_POLICY_STATUS_ACCEPTED = 2;
+  CONTROL_POLICY_STATUS_SUPERSEDED = 3;
+  CONTROL_POLICY_STATUS_REFUSED = 4;
+  CONTROL_POLICY_STATUS_EXPIRED = 5;
+}
+
+enum ControlCommandStatus {
+  CONTROL_COMMAND_STATUS_UNSPECIFIED = 0;
+  CONTROL_COMMAND_STATUS_PENDING = 1;
+  CONTROL_COMMAND_STATUS_DELIVERED = 2;
+  CONTROL_COMMAND_STATUS_EXECUTED = 3;
+  CONTROL_COMMAND_STATUS_FAILED = 4;
+  CONTROL_COMMAND_STATUS_REFUSED = 5;
+  CONTROL_COMMAND_STATUS_EXPIRED = 6;
+}
+
+enum ControlReceiptOutcome {
+  CONTROL_RECEIPT_OUTCOME_UNSPECIFIED = 0;
+  CONTROL_RECEIPT_OUTCOME_EXECUTED = 1;
+  CONTROL_RECEIPT_OUTCOME_REFUSED = 2;
+  CONTROL_RECEIPT_OUTCOME_FAILED = 3;
+}
+
+enum ControlReadSessionStatus {
+  CONTROL_READ_SESSION_STATUS_UNSPECIFIED = 0;
+  CONTROL_READ_SESSION_STATUS_OPEN = 1;
+  CONTROL_READ_SESSION_STATUS_CLOSED = 2;
+  CONTROL_READ_SESSION_STATUS_EXPIRED = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Shared messages
+// ---------------------------------------------------------------------------
+
+message ControlHead {
+  uint64 seq = 1;
+  string hash = 2;
+}
+
+message ControlLogEntry {
+  uint64 seq = 1;
+  bytes canonical = 2;   // silvana.agent.control.v1
+  bytes signature = 3;   // 64-byte Ed25519 by the agent key
+  string entry_hash = 4;
+}
+
+message ControlPolicyDocument {
+  string policy_hash = 1;
+  bytes document = 2;    // silvana.agent.policy.v1
+}
+
+message ControlKey {
+  string controller_id = 1;
+  ControllerKeyType key_type = 2;
+  string label = 3;
+  bytes public_key = 4;  // SPKI DER (webauthn) or 32 bytes (ed25519)
+  optional bytes credential_id = 5;
+  optional string rp_id = 6;
+  repeated string origins = 7;
+  ControlBackupPolicy backup_policy = 8;
+  optional bool backup_eligible = 9;
+  string fingerprint = 10;
+  ControlKeyStatus status = 11;
+  google.protobuf.Timestamp created_at = 12;
+}
+
+message ControlLink {
+  string commitment = 1;
+  string code = 2;       // AGT-<invite>-<commitment> or LNK-<commitment>
+  ControlLinkPurpose purpose = 3;
+  optional string invite_code = 4;
+  optional string agent_party = 5;
+  ControlLinkStatus status = 6;
+  bytes descriptor = 7;  // silvana.agent.link.v1
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp expires_at = 9;
+  optional uint64 used_seq = 10;
+  optional string used_by_party = 11;
+}
+
+message ControlPendingChange {
+  ControlChangeKind kind = 1;
+  uint64 seq = 2;
+  google.protobuf.Timestamp signed_at = 3;
+  google.protobuf.Timestamp effective_at = 4;
+  repeated ControlCapability capabilities = 5;  // the set once applied
+}
+
+// A controller from the verified log; labels never come from the key table.
+message ControllerView {
+  string controller_id = 1;
+  ControllerKeyType key_type = 2;
+  string label = 3;
+  repeated ControlCapability capabilities = 4;  // in effect now
+  string fingerprint = 5;
+  uint64 added_seq = 6;
+  ControlBackupPolicy backup_policy = 7;
+  optional string rp_id = 8;
+  repeated string origins = 9;
+  bool in_effect = 10;
+  repeated ControlPendingChange pending_changes = 11;
+}
+
+message ControlReceipt {
+  bytes canonical = 1;   // silvana.agent.receipt.v1
+  bytes signature = 2;   // 64-byte Ed25519 by the agent key
+  ControlReceiptOutcome outcome = 3;
+  optional string update_id = 4;
+  optional uint32 refusal_code = 5;
+  google.protobuf.Timestamp received_at = 6;
+  bool verified = 7;
+}
+
+message ControlPolicyView {
+  string policy_hash = 1;
+  uint64 version = 2;
+  string signed_by = 3;
+  bytes document = 4;    // silvana.agent.policy.v1
+  bytes proof = 5;       // silvana.agent.proof.v1
+  ControlPolicyStatus status = 6;
+  optional uint64 accepted_seq = 7;
+  optional google.protobuf.Timestamp not_before = 8;
+  optional google.protobuf.Timestamp effective_at = 9;
+  google.protobuf.Timestamp issued_at = 10;
+  google.protobuf.Timestamp expires_at = 11;
+  google.protobuf.Timestamp submitted_at = 12;
+  bool widening = 13;
+  optional ControlReceipt refusal = 14;
+}
+
+message ControlCommandView {
+  string command_id = 1;
+  string agent_party = 2;
+  bytes command = 3;     // silvana.agent.command.v1
+  string controller_id = 4;
+  bytes proof = 5;       // silvana.agent.proof.v1
+  string operation_kind = 6;
+  string summary = 7;
+  ControlCommandStatus status = 8;
+  ControlHead log_head = 9;
+  google.protobuf.Timestamp issued_at = 10;
+  google.protobuf.Timestamp expires_at = 11;
+  google.protobuf.Timestamp submitted_at = 12;
+  optional google.protobuf.Timestamp delivered_at = 13;
+  optional ControlReceipt receipt = 14;
+}
+
+message ControlReadSessionView {
+  string session_id = 1;
+  string controller_id = 2;
+  bytes request = 3;     // silvana.agent.read-session.v1
+  bytes proof = 4;       // silvana.agent.proof.v1
+  repeated string agent_parties = 5;
+  ControlReadSessionStatus status = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp expires_at = 8;
+  optional google.protobuf.Timestamp closed_at = 9;
+}
+
+message ControlAgentSummary {
+  string agent_party = 1;
+  ControlVerification verification = 2;
+  optional uint64 problem_seq = 3;
+  ControlHead head = 4;
+  optional ControlHead claimed_head = 5;
+  bool owner = 6;
+  uint32 controllers = 7;
+  uint32 pending_changes = 8;
+  optional uint64 policy_version = 9;
+  uint32 pending_policies = 10;
+  uint32 pending_commands = 11;
+  bool agent_connected = 12;
+  optional google.protobuf.Timestamp agent_last_seen = 13;
+}
+
+// ---------------------------------------------------------------------------
+// AgentControlService
+// ---------------------------------------------------------------------------
+
+message GetControlAccountRequest {}
+
+message GetControlAccountResponse {
+  string owner_account = 1;
+  string network = 2;
+  repeated ControlKey keys = 3;
+  uint32 max_keys = 4;
+  repeated ControlLink open_links = 5;
+  uint32 max_open_links = 6;
+  repeated ControlAgentSummary agents = 7;
+  google.protobuf.Timestamp as_of = 8;
+}
+
+message RegisterControlKeyRequest {
+  ControllerKeyType key_type = 1;
+  string label = 2;
+  bytes public_key = 3;  // SPKI DER (webauthn) or 32 bytes (ed25519)
+  optional bytes credential_id = 4;
+  optional string rp_id = 5;
+  repeated string origins = 6;
+  ControlBackupPolicy backup_policy = 7;
+  optional bytes authenticator_data = 8;
+}
+
+message RegisterControlKeyResponse {
+  optional ControlKey key = 1;
+  bool limit_reached = 2;
+}
+
+message RetireControlKeyRequest {
+  string controller_id = 1;
+}
+
+message RetireControlKeyResponse {}
+
+message CreateControlLinkRequest {
+  ControlLinkPurpose purpose = 1;
+  bytes descriptor = 2;  // silvana.agent.link.v1
+  optional string invite_code = 3;
+  optional string agent_party = 4;
+}
+
+message CreateControlLinkResponse {
+  optional ControlLink link = 1;
+  bool limit_reached = 2;
+}
+
+message CancelControlLinkRequest {
+  string commitment = 1;
+}
+
+message CancelControlLinkResponse {}
+
+message GetControlStateRequest {
+  string agent_party = 1;
+  uint64 from_seq = 2;
+}
+
+message GetControlStateResponse {
+  string agent_party = 1;
+  string network = 2;
+  ControlVerification verification = 3;
+  optional uint64 problem_seq = 4;
+  repeated ControlLogEntry entries = 5;
+  bool entries_truncated = 6;                       // page the rest with GetControlLog
+  repeated ControlPolicyDocument documents = 7;     // every policy the log references
+  ControlHead head = 8;
+  optional ControlHead claimed_head = 9;
+  optional string owner_account = 10;
+  repeated ControllerView controllers = 11;
+  optional ControlPolicyView policy_in_force = 12;
+  optional ControlPolicyView policy_scheduled = 13;
+  bool default_policy = 14;
+  repeated ControlPolicyView pending_policies = 15;
+  repeated ControlCommandView commands = 16;
+  repeated ControlReadSessionView read_sessions = 17;
+  repeated ControlLink open_links = 18;
+  repeated ControlCapability uncovered_capabilities = 19;
+  repeated ControlLogEntry fork_entries = 20;
+  bool agent_connected = 21;
+  optional google.protobuf.Timestamp agent_last_seen = 22;
+  google.protobuf.Timestamp as_of = 23;
+}
+
+message GetControlLogRequest {
+  string agent_party = 1;
+  uint64 from_seq = 2;
+  uint32 limit = 3;
+}
+
+message GetControlLogResponse {
+  repeated ControlLogEntry entries = 1;
+  repeated ControlPolicyDocument documents = 2;
+  ControlHead head = 3;
+  bool has_more = 4;
+}
+
+message SubmitPolicyRequest {
+  string agent_party = 1;
+  bytes document = 2;    // silvana.agent.policy.v1
+  string controller_id = 3;
+  bytes proof = 4;       // silvana.agent.proof.v1
+}
+
+message SubmitPolicyResponse {
+  ControlPolicyView policy = 1;
+}
+
+message SubmitCommandRequest {
+  string agent_party = 1;
+  bytes command = 2;     // silvana.agent.command.v1
+  string controller_id = 3;
+  bytes proof = 4;       // silvana.agent.proof.v1
+}
+
+message SubmitCommandResponse {
+  ControlCommandView command = 1;
+}
+
+message GetCommandRequest {
+  string command_id = 1;
+}
+
+message GetCommandResponse {
+  ControlCommandView command = 1;
+}
+
+message ListCommandsRequest {
+  string agent_party = 1;
+  uint32 limit = 2;
+  uint32 offset = 3;
+}
+
+message ListCommandsResponse {
+  repeated ControlCommandView commands = 1;
+  uint64 total = 2;
+}
+
+message OpenReadSessionRequest {
+  bytes request = 1;     // silvana.agent.read-session.v1
+  string controller_id = 2;
+  bytes proof = 3;       // silvana.agent.proof.v1
+}
+
+message OpenReadSessionResponse {
+  string session_id = 1;
+  repeated string agent_parties = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message CloseReadSessionRequest {
+  string session_id = 1;
+}
+
+message CloseReadSessionResponse {}
+
+// ---------------------------------------------------------------------------
+// AgentControlAgentService
+// ---------------------------------------------------------------------------
+
+message GetControlDescriptorRequest {
+  string commitment = 1;
+}
+
+message GetControlDescriptorResponse {
+  ControlLinkPurpose purpose = 1;
+  bytes descriptor = 2;  // silvana.agent.link.v1; the agent re-hashes it
+  optional string invite_code = 3;
+  optional string agent_party = 4;
+  string owner_account = 5;
+  ControlLinkStatus status = 6;
+  google.protobuf.Timestamp expires_at = 7;
+  google.protobuf.Timestamp server_time = 8;  // rpc clock, for the signer's skew check
+}
+
+message GetAgentControlLogRequest {
+  uint64 from_seq = 1;
+  uint32 limit = 2;
+}
+
+message GetAgentControlLogResponse {
+  repeated ControlLogEntry entries = 1;
+  repeated ControlPolicyDocument documents = 2;
+  ControlHead stored_head = 3;
+  bool has_more = 4;
+  optional uint64 upload_from = 5;
+  ControlVerification verification = 6;
+  optional uint64 problem_seq = 7;
+  google.protobuf.Timestamp server_time = 8;
+}
+
+message AppendControlEntriesRequest {
+  repeated ControlLogEntry entries = 1;
+  repeated ControlPolicyDocument documents = 2;
+}
+
+message AppendControlEntriesResponse {
+  ControlHead head = 1;
+  uint32 appended = 2;
+  uint32 already_stored = 3;
+  uint32 repaired = 4;
+  google.protobuf.Timestamp server_time = 5;
+}
+
+// The agent's head travels in its token claims.
+message ControlEventsRequest {}
+
+message AgentControlEvent {
+  string event_id = 1;
+  oneof event {
+    PendingPolicy pending_policy = 10;
+    PendingCommand pending_command = 11;
+    UploadRequest upload_request = 12;
+    ControlHeartbeat heartbeat = 13;
+  }
+}
+
+message PendingPolicy {
+  string policy_hash = 1;
+  bytes document = 2;    // silvana.agent.policy.v1
+  string controller_id = 3;
+  bytes proof = 4;       // silvana.agent.proof.v1
+  google.protobuf.Timestamp submitted_at = 5;
+}
+
+message PendingCommand {
+  string command_id = 1;
+  bytes command = 2;     // silvana.agent.command.v1
+  string controller_id = 3;
+  bytes proof = 4;       // silvana.agent.proof.v1
+  google.protobuf.Timestamp submitted_at = 5;
+}
+
+// The rpc lacks entries from `from_seq` on.
+message UploadRequest {
+  uint64 from_seq = 1;
+  ControlHead stored_head = 2;
+}
+
+message ControlHeartbeat {
+  google.protobuf.Timestamp at = 1;
+  ControlHead stored_head = 2;
+}
+
+message ListPendingControlRequest {}
+
+message ListPendingControlResponse {
+  repeated PendingPolicy policies = 1;
+  repeated PendingCommand commands = 2;
+  ControlHead stored_head = 3;
+  optional uint64 upload_from = 4;
+  google.protobuf.Timestamp server_time = 5;
+}
+
+message GetPolicyRequest {
+  string policy_hash = 1;
+}
+
+message GetPolicyResponse {
+  ControlPolicyView policy = 1;
+}
+
+message PostReceiptRequest {
+  bytes receipt = 1;     // silvana.agent.receipt.v1
+  bytes signature = 2;   // 64-byte Ed25519 by the agent key
+}
+
+message PostReceiptResponse {
+  string command_id = 1;
+  ControlCommandStatus status = 2;
+}
+
+// A refusal is an agent-signed receipt with the policy as its subject.
+message AckPolicyRequest {
+  string policy_hash = 1;
+  bytes receipt = 2;     // silvana.agent.receipt.v1
+  bytes signature = 3;   // 64-byte Ed25519 by the agent key
+}
+
+message AckPolicyResponse {
+  ControlPolicyStatus status = 1;
+}

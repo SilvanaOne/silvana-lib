@@ -16,6 +16,7 @@ service AgentAccountService {
   rpc GetAgentTraffic(GetAgentTrafficRequest) returns (GetAgentTrafficResponse);
   rpc CreateTrafficPurchase(CreateTrafficPurchaseRequest) returns (CreateTrafficPurchaseResponse);
   rpc GetTrafficPurchase(GetTrafficPurchaseRequest) returns (GetTrafficPurchaseResponse);
+  rpc CancelTrafficPurchase(CancelTrafficPurchaseRequest) returns (CancelTrafficPurchaseResponse);
 }
 
 enum AgentOnboardingStatus {
@@ -40,6 +41,16 @@ message AgentInvite {
   optional AgentSummary agent = 5;
 }
 
+// A read of a linked agent, signed by the browser's read-session key.
+message ReadSessionAuth {
+  string session_id = 1;
+  uint64 issued_at_ms = 2;
+  bytes nonce = 3;
+  uint64 range_offset = 4;
+  uint64 range_limit = 5;
+  bytes signature = 6;
+}
+
 message GetAgentAccountRequest {}
 
 message GetAgentAccountResponse {
@@ -56,6 +67,7 @@ message CreateAgentInviteResponse {
 
 message GetAgentHoldingsRequest {
   string party_id = 1;
+  optional ReadSessionAuth read_session = 2;
 }
 
 message AgentHolding {
@@ -89,6 +101,7 @@ message GetAgentActivityRequest {
   string party_id = 1;
   uint32 limit = 2;
   uint32 offset = 3;
+  optional ReadSessionAuth read_session = 4;
 }
 
 message AgentActivityItem {
@@ -118,6 +131,7 @@ message GetAgentLedgerRequest {
   string party_id = 1;
   uint32 limit = 2;
   uint32 offset = 3;
+  optional ReadSessionAuth read_session = 4;
 }
 
 message AgentLedgerTx {
@@ -180,6 +194,7 @@ message TrafficPurchaseToken {
 
 message GetAgentTrafficRequest {
   string party_id = 1;
+  optional ReadSessionAuth read_session = 2;
 }
 
 message GetAgentTrafficResponse {
@@ -218,5 +233,13 @@ message GetTrafficPurchaseRequest {
 }
 
 message GetTrafficPurchaseResponse {
+  AgentTrafficPurchase purchase = 1;
+}
+
+message CancelTrafficPurchaseRequest {
+  string purchase_id = 1;
+}
+
+message CancelTrafficPurchaseResponse {
   AgentTrafficPurchase purchase = 1;
 }

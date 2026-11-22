@@ -3,6 +3,7 @@ syntax = "proto3";
 package silvana.rfqv2.v1;
 
 import "silvana/rfqv2/v1/rfqv2.proto";
+import "silvana/ledger/v1/control.proto";
 
 option go_package = "github.com/SilvanaOne/canton-agent/proto;rfqv2";
 
@@ -140,6 +141,8 @@ message PrepareAtomicTransactionRequest {
     RetireVenueParams retire_venue = 17;
   }
   AtomicMessageSignature request_signature = 30;
+  // Set only for a controller-directed command.
+  silvana.ledger.v1.ControllerCommand controller_command = 31;
 }
 
 message PrepareAtomicTransactionResponse {

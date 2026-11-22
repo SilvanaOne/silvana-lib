@@ -5,3 +5,4 @@ export * from "./settlement.js";
 export * from "./ledger.js";
 export * from "./rfqv2.js";
 export * from "./agent-account.js";
+export * from "./agent-control.js";
