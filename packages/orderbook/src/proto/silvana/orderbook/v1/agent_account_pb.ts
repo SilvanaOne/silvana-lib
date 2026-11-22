@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file silvana/orderbook/v1/agent_account.proto.
  */
 export const file_silvana_orderbook_v1_agent_account: GenFile = /*@__PURE__*/
-  fileDesc("CihzaWx2YW5hL29yZGVyYm9vay92MS9hZ2VudF9hY2NvdW50LnByb3RvEhRzaWx2YW5hLm9yZGVyYm9vay52MSK2AQoMQWdlbnRTdW1tYXJ5EhUKCHBhcnR5X2lkGAEgASgJSACIAQESEgoKYWdlbnRfbmFtZRgCIAEoCRI7CgZzdGF0dXMYAyABKA4yKy5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudE9uYm9hcmRpbmdTdGF0dXMSMQoNcmVnaXN0ZXJlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCwoJX3BhcnR5X2lkIrIBCgtBZ2VudEludml0ZRITCgtpbnZpdGVfY29kZRgBIAEoCRIMCgRzbG90GAIgASgNEg4KBnN0YXR1cxgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2CgVhZ2VudBgFIAEoCzIiLnNpbHZhbmEub3JkZXJib29rLnYxLkFnZW50U3VtbWFyeUgAiAEBQggKBl9hZ2VudCIYChZHZXRBZ2VudEFjY291bnRSZXF1ZXN0ImIKF0dldEFnZW50QWNjb3VudFJlc3BvbnNlEjIKB2ludml0ZXMYASADKAsyIS5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudEludml0ZRITCgttYXhfaW52aXRlcxgCIAEoDSIaChhDcmVhdGVBZ2VudEludml0ZVJlcXVlc3QidQoZQ3JlYXRlQWdlbnRJbnZpdGVSZXNwb25zZRI2CgZpbnZpdGUYASABKAsyIS5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudEludml0ZUgAiAEBEhUKDWxpbWl0X3JlYWNoZWQYAiABKAhCCQoHX2ludml0ZSIrChdHZXRBZ2VudEhvbGRpbmdzUmVxdWVzdBIQCghwYXJ0eV9pZBgBIAEoCSK7AQoMQWdlbnRIb2xkaW5nEhMKC2NvbnRyYWN0X2lkGAEgASgJEhMKC3RlbXBsYXRlX2lkGAIgASgJEhUKDWluc3RydW1lbnRfaWQYAyABKAkSGAoQaW5zdHJ1bWVudF9hZG1pbhgEIAEoCRIOCgZhbW91bnQYBSABKAkSEQoJaXNfbG9ja2VkGAYgASgIEh4KFmxvY2tfZXhwaXJlc19hdF9taWNyb3MYByABKAMSDQoFbGFiZWwYCCABKAkiiAEKD0FnZW50VG9rZW5Ub3RhbBIVCg1pbnN0cnVtZW50X2lkGAEgASgJEhgKEGluc3RydW1lbnRfYWRtaW4YAiABKAkSFAoMdG90YWxfYW1vdW50GAMgASgJEhUKDWxvY2tlZF9hbW91bnQYBCABKAkSFwoPdW5sb2NrZWRfYW1vdW50GAUgASgJItQBChhHZXRBZ2VudEhvbGRpbmdzUmVzcG9uc2USNAoIaG9sZGluZ3MYASADKAsyIi5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudEhvbGRpbmcSNQoGdG90YWxzGAIgAygLMiUuc2lsdmFuYS5vcmRlcmJvb2sudjEuQWdlbnRUb2tlblRvdGFsEhEKCXRydW5jYXRlZBgDIAEoCBIpCgVhc19vZhgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDQoFc3RhbGUYBSABKAgiSgoXR2V0QWdlbnRBY3Rpdml0eVJlcXVlc3QSEAoIcGFydHlfaWQYASABKAkSDQoFbGltaXQYAiABKA0SDgoGb2Zmc2V0GAMgASgNIsYDChFBZ2VudEFjdGl2aXR5SXRlbRIOCgZyb3dfaWQYASABKAkSDgoGc291cmNlGAIgASgJEgwKBHNpZGUYAyABKAkSDAoEcm9sZRgEIAEoCRIRCgltYXJrZXRfaWQYBSABKAkSFwoPYmFzZV9pbnN0cnVtZW50GAYgASgJEhUKDWJhc2VfcXVhbnRpdHkYByABKAkSGAoQcXVvdGVfaW5zdHJ1bWVudBgIIAEoCRIWCg5xdW90ZV9xdWFudGl0eRgJIAEoCRIOCgZzdGF0dXMYCiABKAkSLgoKY3JlYXRlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMwoKc2V0dGxlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAIgBARIWCgl1cGRhdGVfaWQYDSABKAlIAYgBARIXCgpmZWVfYW1vdW50GA4gASgJSAKIAQESGwoOZmVlX2luc3RydW1lbnQYDyABKAlIA4gBAUINCgtfc2V0dGxlZF9hdEIMCgpfdXBkYXRlX2lkQg0KC19mZWVfYW1vdW50QhEKD19mZWVfaW5zdHJ1bWVudCJhChhHZXRBZ2VudEFjdGl2aXR5UmVzcG9uc2USNgoFaXRlbXMYASADKAsyJy5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudEFjdGl2aXR5SXRlbRINCgV0b3RhbBgCIAEoBCJIChVHZXRBZ2VudExlZGdlclJlcXVlc3QSEAoIcGFydHlfaWQYASABKAkSDQoFbGltaXQYAiABKA0SDgoGb2Zmc2V0GAMgASgNIo4DCg1BZ2VudExlZGdlclR4EgoKAmlkGAEgASgEEg8KB3R4X3R5cGUYAiABKAkSDgoGcmVzdWx0GAMgASgJEhYKCXVwZGF0ZV9pZBgEIAEoCUgAiAEBEiMKFnNldHRsZW1lbnRfcHJvcG9zYWxfaWQYBSABKAlIAYgBARIWCgltYXJrZXRfaWQYBiABKAlIAogBARIYCgtkYW1sX2Nob2ljZRgHIAEoCUgDiAEBEhMKBmFtb3VudBgIIAEoCUgEiAEBEhIKBXRva2VuGAkgASgJSAWIAQESGgoNdHJhZmZpY190b3RhbBgKIAEoBEgGiAEBEi4KCmNyZWF0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgwKCl91cGRhdGVfaWRCGQoXX3NldHRsZW1lbnRfcHJvcG9zYWxfaWRCDAoKX21hcmtldF9pZEIOCgxfZGFtbF9jaG9pY2VCCQoHX2Ftb3VudEIICgZfdG9rZW5CEAoOX3RyYWZmaWNfdG90YWwiYgoWR2V0QWdlbnRMZWRnZXJSZXNwb25zZRI5Cgx0cmFuc2FjdGlvbnMYASADKAsyIy5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudExlZGdlclR4Eg0KBXRvdGFsGAIgASgEIv8BChFBZ2VudFRyYWZmaWNHcmFudBIKCgJpZBgBIAEoBBIOCgZzb3VyY2UYAiABKAkSFQoIY2FtcGFpZ24YAyABKAlIAIgBARIRCglhbW91bnRfY2MYBCABKAkSFAoMcmVtYWluaW5nX2NjGAUgASgJEjMKCmV4cGlyZXNfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAGIAQESDQoFc3RhdGUYByABKAkSLgoKY3JlYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCwoJX2NhbXBhaWduQg0KC19leHBpcmVzX2F0ItgDChRBZ2VudFRyYWZmaWNQdXJjaGFzZRITCgtwdXJjaGFzZV9pZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSDQoFdG9rZW4YAyABKAkSFAoMdG9rZW5fYW1vdW50GAQgASgJEhEKCWNyZWRpdF9jYxgFIAEoCRIYCgtjcmVkaXRlZF9jYxgGIAEoCUgAiAEBEhkKDHJlbWFpbmluZ19jYxgHIAEoCUgBiAEBEhMKC3BheWVyX3BhcnR5GAggASgJEhYKCXVwZGF0ZV9pZBgJIAEoCUgCiAEBEi4KCmNyZWF0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmV4cGlyZXNfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKC2NyZWRpdGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgDiAEBEhoKDXJlamVjdF9yZWFzb24YDSABKAlIBIgBAUIOCgxfY3JlZGl0ZWRfY2NCDwoNX3JlbWFpbmluZ19jY0IMCgpfdXBkYXRlX2lkQg4KDF9jcmVkaXRlZF9hdEIQCg5fcmVqZWN0X3JlYXNvbiLNAQoUVHJhZmZpY1B1cmNoYXNlVG9rZW4SDQoFdG9rZW4YASABKAkSFQoNaW5zdHJ1bWVudF9pZBgCIAEoCRIYChBpbnN0cnVtZW50X2FkbWluGAMgASgJEhUKDXRyYW5zZmVyX2tpbmQYBCABKAkSFAoMY2NfcGVyX3Rva2VuGAUgASgJEhgKEG1pbl90b2tlbl9hbW91bnQYBiABKAkSGAoQbWF4X3Rva2VuX2Ftb3VudBgHIAEoCRIUCgxtYXhfZGVjaW1hbHMYCCABKA0iKgoWR2V0QWdlbnRUcmFmZmljUmVxdWVzdBIQCghwYXJ0eV9pZBgBIAEoCSLXAwoXR2V0QWdlbnRUcmFmZmljUmVzcG9uc2USFAoMYXZhaWxhYmxlX2NjGAEgASgJEg8KB3Bvb2xfY2MYAiABKAkSEgoKZ3JhbnRlZF9jYxgDIAEoCRIUCgxwdXJjaGFzZWRfY2MYBCABKAkSFwoPY3JlZGl0X2xpbWl0X2NjGAUgASgJEjQKC25leHRfZXhwaXJ5GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgAiAEBEhQKDGRpc2NvdW50X3BjdBgHIAEoCRI3CgZncmFudHMYCCADKAsyJy5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudFRyYWZmaWNHcmFudBI9CglwdXJjaGFzZXMYCSADKAsyKi5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudFRyYWZmaWNQdXJjaGFzZRI6CgZ0b2tlbnMYCiADKAsyKi5zaWx2YW5hLm9yZGVyYm9vay52MS5UcmFmZmljUHVyY2hhc2VUb2tlbhIXCg9yZWNpcGllbnRfcGFydHkYCyABKAkSKQoFYXNfb2YYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQg4KDF9uZXh0X2V4cGlyeSJqChxDcmVhdGVUcmFmZmljUHVyY2hhc2VSZXF1ZXN0EhAKCHBhcnR5X2lkGAEgASgJEhMKC3BheWVyX3BhcnR5GAIgASgJEg0KBXRva2VuGAMgASgJEhQKDHRva2VuX2Ftb3VudBgEIAEoCSLMAQodQ3JlYXRlVHJhZmZpY1B1cmNoYXNlUmVzcG9uc2USPAoIcHVyY2hhc2UYASABKAsyKi5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudFRyYWZmaWNQdXJjaGFzZRIXCg9yZWNpcGllbnRfcGFydHkYAiABKAkSFQoNaW5zdHJ1bWVudF9pZBgDIAEoCRIYChBpbnN0cnVtZW50X2FkbWluGAQgASgJEhUKDXRyYW5zZmVyX2tpbmQYBSABKAkSDAoEbWVtbxgGIAEoCSIwChlHZXRUcmFmZmljUHVyY2hhc2VSZXF1ZXN0EhMKC3B1cmNoYXNlX2lkGAEgASgJIloKGkdldFRyYWZmaWNQdXJjaGFzZVJlc3BvbnNlEjwKCHB1cmNoYXNlGAEgASgLMiouc2lsdmFuYS5vcmRlcmJvb2sudjEuQWdlbnRUcmFmZmljUHVyY2hhc2UquwEKFUFnZW50T25ib2FyZGluZ1N0YXR1cxInCiNBR0VOVF9PTkJPQVJESU5HX1NUQVRVU19VTlNQRUNJRklFRBAAEiUKIUFHRU5UX09OQk9BUkRJTkdfU1RBVFVTX1JFUVVFU1RFRBABEi4KKkFHRU5UX09OQk9BUkRJTkdfU1RBVFVTX1NJR05BVFVSRV9SRVFVSVJFRBACEiIKHkFHRU5UX09OQk9BUkRJTkdfU1RBVFVTX0FDVElWRRADMroHChNBZ2VudEFjY291bnRTZXJ2aWNlEm4KD0dldEFnZW50QWNjb3VudBIsLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50QWNjb3VudFJlcXVlc3QaLS5zaWx2YW5hLm9yZGVyYm9vay52MS5HZXRBZ2VudEFjY291bnRSZXNwb25zZRJ0ChFDcmVhdGVBZ2VudEludml0ZRIuLnNpbHZhbmEub3JkZXJib29rLnYxLkNyZWF0ZUFnZW50SW52aXRlUmVxdWVzdBovLnNpbHZhbmEub3JkZXJib29rLnYxLkNyZWF0ZUFnZW50SW52aXRlUmVzcG9uc2UScQoQR2V0QWdlbnRIb2xkaW5ncxItLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50SG9sZGluZ3NSZXF1ZXN0Gi4uc2lsdmFuYS5vcmRlcmJvb2sudjEuR2V0QWdlbnRIb2xkaW5nc1Jlc3BvbnNlEnEKEEdldEFnZW50QWN0aXZpdHkSLS5zaWx2YW5hLm9yZGVyYm9vay52MS5HZXRBZ2VudEFjdGl2aXR5UmVxdWVzdBouLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50QWN0aXZpdHlSZXNwb25zZRJrCg5HZXRBZ2VudExlZGdlchIrLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50TGVkZ2VyUmVxdWVzdBosLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50TGVkZ2VyUmVzcG9uc2USbgoPR2V0QWdlbnRUcmFmZmljEiwuc2lsdmFuYS5vcmRlcmJvb2sudjEuR2V0QWdlbnRUcmFmZmljUmVxdWVzdBotLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50VHJhZmZpY1Jlc3BvbnNlEoABChVDcmVhdGVUcmFmZmljUHVyY2hhc2USMi5zaWx2YW5hLm9yZGVyYm9vay52MS5DcmVhdGVUcmFmZmljUHVyY2hhc2VSZXF1ZXN0GjMuc2lsdmFuYS5vcmRlcmJvb2sudjEuQ3JlYXRlVHJhZmZpY1B1cmNoYXNlUmVzcG9uc2USdwoSR2V0VHJhZmZpY1B1cmNoYXNlEi8uc2lsdmFuYS5vcmRlcmJvb2sudjEuR2V0VHJhZmZpY1B1cmNoYXNlUmVxdWVzdBowLnNpbHZhbmEub3JkZXJib29rLnYxLkdldFRyYWZmaWNQdXJjaGFzZVJlc3BvbnNlQjRaMmdpdGh1Yi5jb20vU2lsdmFuYU9uZS9jYW50b24tYWdlbnQvcHJvdG87b3JkZXJib29rYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("CihzaWx2YW5hL29yZGVyYm9vay92MS9hZ2VudF9hY2NvdW50LnByb3RvEhRzaWx2YW5hLm9yZGVyYm9vay52MSK2AQoMQWdlbnRTdW1tYXJ5EhUKCHBhcnR5X2lkGAEgASgJSACIAQESEgoKYWdlbnRfbmFtZRgCIAEoCRI7CgZzdGF0dXMYAyABKA4yKy5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudE9uYm9hcmRpbmdTdGF0dXMSMQoNcmVnaXN0ZXJlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCwoJX3BhcnR5X2lkIrIBCgtBZ2VudEludml0ZRITCgtpbnZpdGVfY29kZRgBIAEoCRIMCgRzbG90GAIgASgNEg4KBnN0YXR1cxgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2CgVhZ2VudBgFIAEoCzIiLnNpbHZhbmEub3JkZXJib29rLnYxLkFnZW50U3VtbWFyeUgAiAEBQggKBl9hZ2VudCKIAQoPUmVhZFNlc3Npb25BdXRoEhIKCnNlc3Npb25faWQYASABKAkSFAoMaXNzdWVkX2F0X21zGAIgASgEEg0KBW5vbmNlGAMgASgMEhQKDHJhbmdlX29mZnNldBgEIAEoBBITCgtyYW5nZV9saW1pdBgFIAEoBBIRCglzaWduYXR1cmUYBiABKAwiGAoWR2V0QWdlbnRBY2NvdW50UmVxdWVzdCJiChdHZXRBZ2VudEFjY291bnRSZXNwb25zZRIyCgdpbnZpdGVzGAEgAygLMiEuc2lsdmFuYS5vcmRlcmJvb2sudjEuQWdlbnRJbnZpdGUSEwoLbWF4X2ludml0ZXMYAiABKA0iGgoYQ3JlYXRlQWdlbnRJbnZpdGVSZXF1ZXN0InUKGUNyZWF0ZUFnZW50SW52aXRlUmVzcG9uc2USNgoGaW52aXRlGAEgASgLMiEuc2lsdmFuYS5vcmRlcmJvb2sudjEuQWdlbnRJbnZpdGVIAIgBARIVCg1saW1pdF9yZWFjaGVkGAIgASgIQgkKB19pbnZpdGUifgoXR2V0QWdlbnRIb2xkaW5nc1JlcXVlc3QSEAoIcGFydHlfaWQYASABKAkSQAoMcmVhZF9zZXNzaW9uGAIgASgLMiUuc2lsdmFuYS5vcmRlcmJvb2sudjEuUmVhZFNlc3Npb25BdXRoSACIAQFCDwoNX3JlYWRfc2Vzc2lvbiK7AQoMQWdlbnRIb2xkaW5nEhMKC2NvbnRyYWN0X2lkGAEgASgJEhMKC3RlbXBsYXRlX2lkGAIgASgJEhUKDWluc3RydW1lbnRfaWQYAyABKAkSGAoQaW5zdHJ1bWVudF9hZG1pbhgEIAEoCRIOCgZhbW91bnQYBSABKAkSEQoJaXNfbG9ja2VkGAYgASgIEh4KFmxvY2tfZXhwaXJlc19hdF9taWNyb3MYByABKAMSDQoFbGFiZWwYCCABKAkiiAEKD0FnZW50VG9rZW5Ub3RhbBIVCg1pbnN0cnVtZW50X2lkGAEgASgJEhgKEGluc3RydW1lbnRfYWRtaW4YAiABKAkSFAoMdG90YWxfYW1vdW50GAMgASgJEhUKDWxvY2tlZF9hbW91bnQYBCABKAkSFwoPdW5sb2NrZWRfYW1vdW50GAUgASgJItQBChhHZXRBZ2VudEhvbGRpbmdzUmVzcG9uc2USNAoIaG9sZGluZ3MYASADKAsyIi5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudEhvbGRpbmcSNQoGdG90YWxzGAIgAygLMiUuc2lsdmFuYS5vcmRlcmJvb2sudjEuQWdlbnRUb2tlblRvdGFsEhEKCXRydW5jYXRlZBgDIAEoCBIpCgVhc19vZhgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDQoFc3RhbGUYBSABKAginQEKF0dldEFnZW50QWN0aXZpdHlSZXF1ZXN0EhAKCHBhcnR5X2lkGAEgASgJEg0KBWxpbWl0GAIgASgNEg4KBm9mZnNldBgDIAEoDRJACgxyZWFkX3Nlc3Npb24YBCABKAsyJS5zaWx2YW5hLm9yZGVyYm9vay52MS5SZWFkU2Vzc2lvbkF1dGhIAIgBAUIPCg1fcmVhZF9zZXNzaW9uIsYDChFBZ2VudEFjdGl2aXR5SXRlbRIOCgZyb3dfaWQYASABKAkSDgoGc291cmNlGAIgASgJEgwKBHNpZGUYAyABKAkSDAoEcm9sZRgEIAEoCRIRCgltYXJrZXRfaWQYBSABKAkSFwoPYmFzZV9pbnN0cnVtZW50GAYgASgJEhUKDWJhc2VfcXVhbnRpdHkYByABKAkSGAoQcXVvdGVfaW5zdHJ1bWVudBgIIAEoCRIWCg5xdW90ZV9xdWFudGl0eRgJIAEoCRIOCgZzdGF0dXMYCiABKAkSLgoKY3JlYXRlZF9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMwoKc2V0dGxlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAIgBARIWCgl1cGRhdGVfaWQYDSABKAlIAYgBARIXCgpmZWVfYW1vdW50GA4gASgJSAKIAQESGwoOZmVlX2luc3RydW1lbnQYDyABKAlIA4gBAUINCgtfc2V0dGxlZF9hdEIMCgpfdXBkYXRlX2lkQg0KC19mZWVfYW1vdW50QhEKD19mZWVfaW5zdHJ1bWVudCJhChhHZXRBZ2VudEFjdGl2aXR5UmVzcG9uc2USNgoFaXRlbXMYASADKAsyJy5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudEFjdGl2aXR5SXRlbRINCgV0b3RhbBgCIAEoBCKbAQoVR2V0QWdlbnRMZWRnZXJSZXF1ZXN0EhAKCHBhcnR5X2lkGAEgASgJEg0KBWxpbWl0GAIgASgNEg4KBm9mZnNldBgDIAEoDRJACgxyZWFkX3Nlc3Npb24YBCABKAsyJS5zaWx2YW5hLm9yZGVyYm9vay52MS5SZWFkU2Vzc2lvbkF1dGhIAIgBAUIPCg1fcmVhZF9zZXNzaW9uIo4DCg1BZ2VudExlZGdlclR4EgoKAmlkGAEgASgEEg8KB3R4X3R5cGUYAiABKAkSDgoGcmVzdWx0GAMgASgJEhYKCXVwZGF0ZV9pZBgEIAEoCUgAiAEBEiMKFnNldHRsZW1lbnRfcHJvcG9zYWxfaWQYBSABKAlIAYgBARIWCgltYXJrZXRfaWQYBiABKAlIAogBARIYCgtkYW1sX2Nob2ljZRgHIAEoCUgDiAEBEhMKBmFtb3VudBgIIAEoCUgEiAEBEhIKBXRva2VuGAkgASgJSAWIAQESGgoNdHJhZmZpY190b3RhbBgKIAEoBEgGiAEBEi4KCmNyZWF0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgwKCl91cGRhdGVfaWRCGQoXX3NldHRsZW1lbnRfcHJvcG9zYWxfaWRCDAoKX21hcmtldF9pZEIOCgxfZGFtbF9jaG9pY2VCCQoHX2Ftb3VudEIICgZfdG9rZW5CEAoOX3RyYWZmaWNfdG90YWwiYgoWR2V0QWdlbnRMZWRnZXJSZXNwb25zZRI5Cgx0cmFuc2FjdGlvbnMYASADKAsyIy5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudExlZGdlclR4Eg0KBXRvdGFsGAIgASgEIv8BChFBZ2VudFRyYWZmaWNHcmFudBIKCgJpZBgBIAEoBBIOCgZzb3VyY2UYAiABKAkSFQoIY2FtcGFpZ24YAyABKAlIAIgBARIRCglhbW91bnRfY2MYBCABKAkSFAoMcmVtYWluaW5nX2NjGAUgASgJEjMKCmV4cGlyZXNfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAGIAQESDQoFc3RhdGUYByABKAkSLgoKY3JlYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCwoJX2NhbXBhaWduQg0KC19leHBpcmVzX2F0ItgDChRBZ2VudFRyYWZmaWNQdXJjaGFzZRITCgtwdXJjaGFzZV9pZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSDQoFdG9rZW4YAyABKAkSFAoMdG9rZW5fYW1vdW50GAQgASgJEhEKCWNyZWRpdF9jYxgFIAEoCRIYCgtjcmVkaXRlZF9jYxgGIAEoCUgAiAEBEhkKDHJlbWFpbmluZ19jYxgHIAEoCUgBiAEBEhMKC3BheWVyX3BhcnR5GAggASgJEhYKCXVwZGF0ZV9pZBgJIAEoCUgCiAEBEi4KCmNyZWF0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmV4cGlyZXNfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKC2NyZWRpdGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgDiAEBEhoKDXJlamVjdF9yZWFzb24YDSABKAlIBIgBAUIOCgxfY3JlZGl0ZWRfY2NCDwoNX3JlbWFpbmluZ19jY0IMCgpfdXBkYXRlX2lkQg4KDF9jcmVkaXRlZF9hdEIQCg5fcmVqZWN0X3JlYXNvbiLNAQoUVHJhZmZpY1B1cmNoYXNlVG9rZW4SDQoFdG9rZW4YASABKAkSFQoNaW5zdHJ1bWVudF9pZBgCIAEoCRIYChBpbnN0cnVtZW50X2FkbWluGAMgASgJEhUKDXRyYW5zZmVyX2tpbmQYBCABKAkSFAoMY2NfcGVyX3Rva2VuGAUgASgJEhgKEG1pbl90b2tlbl9hbW91bnQYBiABKAkSGAoQbWF4X3Rva2VuX2Ftb3VudBgHIAEoCRIUCgxtYXhfZGVjaW1hbHMYCCABKA0ifQoWR2V0QWdlbnRUcmFmZmljUmVxdWVzdBIQCghwYXJ0eV9pZBgBIAEoCRJACgxyZWFkX3Nlc3Npb24YAiABKAsyJS5zaWx2YW5hLm9yZGVyYm9vay52MS5SZWFkU2Vzc2lvbkF1dGhIAIgBAUIPCg1fcmVhZF9zZXNzaW9uItcDChdHZXRBZ2VudFRyYWZmaWNSZXNwb25zZRIUCgxhdmFpbGFibGVfY2MYASABKAkSDwoHcG9vbF9jYxgCIAEoCRISCgpncmFudGVkX2NjGAMgASgJEhQKDHB1cmNoYXNlZF9jYxgEIAEoCRIXCg9jcmVkaXRfbGltaXRfY2MYBSABKAkSNAoLbmV4dF9leHBpcnkYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSACIAQESFAoMZGlzY291bnRfcGN0GAcgASgJEjcKBmdyYW50cxgIIAMoCzInLnNpbHZhbmEub3JkZXJib29rLnYxLkFnZW50VHJhZmZpY0dyYW50Ej0KCXB1cmNoYXNlcxgJIAMoCzIqLnNpbHZhbmEub3JkZXJib29rLnYxLkFnZW50VHJhZmZpY1B1cmNoYXNlEjoKBnRva2VucxgKIAMoCzIqLnNpbHZhbmEub3JkZXJib29rLnYxLlRyYWZmaWNQdXJjaGFzZVRva2VuEhcKD3JlY2lwaWVudF9wYXJ0eRgLIAEoCRIpCgVhc19vZhgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCDgoMX25leHRfZXhwaXJ5ImoKHENyZWF0ZVRyYWZmaWNQdXJjaGFzZVJlcXVlc3QSEAoIcGFydHlfaWQYASABKAkSEwoLcGF5ZXJfcGFydHkYAiABKAkSDQoFdG9rZW4YAyABKAkSFAoMdG9rZW5fYW1vdW50GAQgASgJIswBCh1DcmVhdGVUcmFmZmljUHVyY2hhc2VSZXNwb25zZRI8CghwdXJjaGFzZRgBIAEoCzIqLnNpbHZhbmEub3JkZXJib29rLnYxLkFnZW50VHJhZmZpY1B1cmNoYXNlEhcKD3JlY2lwaWVudF9wYXJ0eRgCIAEoCRIVCg1pbnN0cnVtZW50X2lkGAMgASgJEhgKEGluc3RydW1lbnRfYWRtaW4YBCABKAkSFQoNdHJhbnNmZXJfa2luZBgFIAEoCRIMCgRtZW1vGAYgASgJIjAKGUdldFRyYWZmaWNQdXJjaGFzZVJlcXVlc3QSEwoLcHVyY2hhc2VfaWQYASABKAkiWgoaR2V0VHJhZmZpY1B1cmNoYXNlUmVzcG9uc2USPAoIcHVyY2hhc2UYASABKAsyKi5zaWx2YW5hLm9yZGVyYm9vay52MS5BZ2VudFRyYWZmaWNQdXJjaGFzZSIzChxDYW5jZWxUcmFmZmljUHVyY2hhc2VSZXF1ZXN0EhMKC3B1cmNoYXNlX2lkGAEgASgJIl0KHUNhbmNlbFRyYWZmaWNQdXJjaGFzZVJlc3BvbnNlEjwKCHB1cmNoYXNlGAEgASgLMiouc2lsdmFuYS5vcmRlcmJvb2sudjEuQWdlbnRUcmFmZmljUHVyY2hhc2UquwEKFUFnZW50T25ib2FyZGluZ1N0YXR1cxInCiNBR0VOVF9PTkJPQVJESU5HX1NUQVRVU19VTlNQRUNJRklFRBAAEiUKIUFHRU5UX09OQk9BUkRJTkdfU1RBVFVTX1JFUVVFU1RFRBABEi4KKkFHRU5UX09OQk9BUkRJTkdfU1RBVFVTX1NJR05BVFVSRV9SRVFVSVJFRBACEiIKHkFHRU5UX09OQk9BUkRJTkdfU1RBVFVTX0FDVElWRRADMr0IChNBZ2VudEFjY291bnRTZXJ2aWNlEm4KD0dldEFnZW50QWNjb3VudBIsLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50QWNjb3VudFJlcXVlc3QaLS5zaWx2YW5hLm9yZGVyYm9vay52MS5HZXRBZ2VudEFjY291bnRSZXNwb25zZRJ0ChFDcmVhdGVBZ2VudEludml0ZRIuLnNpbHZhbmEub3JkZXJib29rLnYxLkNyZWF0ZUFnZW50SW52aXRlUmVxdWVzdBovLnNpbHZhbmEub3JkZXJib29rLnYxLkNyZWF0ZUFnZW50SW52aXRlUmVzcG9uc2UScQoQR2V0QWdlbnRIb2xkaW5ncxItLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50SG9sZGluZ3NSZXF1ZXN0Gi4uc2lsdmFuYS5vcmRlcmJvb2sudjEuR2V0QWdlbnRIb2xkaW5nc1Jlc3BvbnNlEnEKEEdldEFnZW50QWN0aXZpdHkSLS5zaWx2YW5hLm9yZGVyYm9vay52MS5HZXRBZ2VudEFjdGl2aXR5UmVxdWVzdBouLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50QWN0aXZpdHlSZXNwb25zZRJrCg5HZXRBZ2VudExlZGdlchIrLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50TGVkZ2VyUmVxdWVzdBosLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50TGVkZ2VyUmVzcG9uc2USbgoPR2V0QWdlbnRUcmFmZmljEiwuc2lsdmFuYS5vcmRlcmJvb2sudjEuR2V0QWdlbnRUcmFmZmljUmVxdWVzdBotLnNpbHZhbmEub3JkZXJib29rLnYxLkdldEFnZW50VHJhZmZpY1Jlc3BvbnNlEoABChVDcmVhdGVUcmFmZmljUHVyY2hhc2USMi5zaWx2YW5hLm9yZGVyYm9vay52MS5DcmVhdGVUcmFmZmljUHVyY2hhc2VSZXF1ZXN0GjMuc2lsdmFuYS5vcmRlcmJvb2sudjEuQ3JlYXRlVHJhZmZpY1B1cmNoYXNlUmVzcG9uc2USdwoSR2V0VHJhZmZpY1B1cmNoYXNlEi8uc2lsdmFuYS5vcmRlcmJvb2sudjEuR2V0VHJhZmZpY1B1cmNoYXNlUmVxdWVzdBowLnNpbHZhbmEub3JkZXJib29rLnYxLkdldFRyYWZmaWNQdXJjaGFzZVJlc3BvbnNlEoABChVDYW5jZWxUcmFmZmljUHVyY2hhc2USMi5zaWx2YW5hLm9yZGVyYm9vay52MS5DYW5jZWxUcmFmZmljUHVyY2hhc2VSZXF1ZXN0GjMuc2lsdmFuYS5vcmRlcmJvb2sudjEuQ2FuY2VsVHJhZmZpY1B1cmNoYXNlUmVzcG9uc2VCNFoyZ2l0aHViLmNvbS9TaWx2YW5hT25lL2NhbnRvbi1hZ2VudC9wcm90bztvcmRlcmJvb2tiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message silvana.orderbook.v1.AgentSummary
@@ -84,6 +84,50 @@ export const AgentInviteSchema: GenMessage<AgentInvite> = /*@__PURE__*/
   messageDesc(file_silvana_orderbook_v1_agent_account, 1);
 
 /**
+ * A read of a linked agent, signed by the browser's read-session key.
+ *
+ * @generated from message silvana.orderbook.v1.ReadSessionAuth
+ */
+export type ReadSessionAuth = Message<"silvana.orderbook.v1.ReadSessionAuth"> & {
+  /**
+   * @generated from field: string session_id = 1;
+   */
+  sessionId: string;
+
+  /**
+   * @generated from field: uint64 issued_at_ms = 2;
+   */
+  issuedAtMs: bigint;
+
+  /**
+   * @generated from field: bytes nonce = 3;
+   */
+  nonce: Uint8Array;
+
+  /**
+   * @generated from field: uint64 range_offset = 4;
+   */
+  rangeOffset: bigint;
+
+  /**
+   * @generated from field: uint64 range_limit = 5;
+   */
+  rangeLimit: bigint;
+
+  /**
+   * @generated from field: bytes signature = 6;
+   */
+  signature: Uint8Array;
+};
+
+/**
+ * Describes the message silvana.orderbook.v1.ReadSessionAuth.
+ * Use `create(ReadSessionAuthSchema)` to create a new message.
+ */
+export const ReadSessionAuthSchema: GenMessage<ReadSessionAuth> = /*@__PURE__*/
+  messageDesc(file_silvana_orderbook_v1_agent_account, 2);
+
+/**
  * @generated from message silvana.orderbook.v1.GetAgentAccountRequest
  */
 export type GetAgentAccountRequest = Message<"silvana.orderbook.v1.GetAgentAccountRequest"> & {
@@ -94,7 +138,7 @@ export type GetAgentAccountRequest = Message<"silvana.orderbook.v1.GetAgentAccou
  * Use `create(GetAgentAccountRequestSchema)` to create a new message.
  */
 export const GetAgentAccountRequestSchema: GenMessage<GetAgentAccountRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 2);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 3);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentAccountResponse
@@ -116,7 +160,7 @@ export type GetAgentAccountResponse = Message<"silvana.orderbook.v1.GetAgentAcco
  * Use `create(GetAgentAccountResponseSchema)` to create a new message.
  */
 export const GetAgentAccountResponseSchema: GenMessage<GetAgentAccountResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 3);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 4);
 
 /**
  * @generated from message silvana.orderbook.v1.CreateAgentInviteRequest
@@ -129,7 +173,7 @@ export type CreateAgentInviteRequest = Message<"silvana.orderbook.v1.CreateAgent
  * Use `create(CreateAgentInviteRequestSchema)` to create a new message.
  */
 export const CreateAgentInviteRequestSchema: GenMessage<CreateAgentInviteRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 4);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 5);
 
 /**
  * @generated from message silvana.orderbook.v1.CreateAgentInviteResponse
@@ -151,7 +195,7 @@ export type CreateAgentInviteResponse = Message<"silvana.orderbook.v1.CreateAgen
  * Use `create(CreateAgentInviteResponseSchema)` to create a new message.
  */
 export const CreateAgentInviteResponseSchema: GenMessage<CreateAgentInviteResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 5);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 6);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentHoldingsRequest
@@ -161,6 +205,11 @@ export type GetAgentHoldingsRequest = Message<"silvana.orderbook.v1.GetAgentHold
    * @generated from field: string party_id = 1;
    */
   partyId: string;
+
+  /**
+   * @generated from field: optional silvana.orderbook.v1.ReadSessionAuth read_session = 2;
+   */
+  readSession?: ReadSessionAuth | undefined;
 };
 
 /**
@@ -168,7 +217,7 @@ export type GetAgentHoldingsRequest = Message<"silvana.orderbook.v1.GetAgentHold
  * Use `create(GetAgentHoldingsRequestSchema)` to create a new message.
  */
 export const GetAgentHoldingsRequestSchema: GenMessage<GetAgentHoldingsRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 6);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 7);
 
 /**
  * @generated from message silvana.orderbook.v1.AgentHolding
@@ -220,7 +269,7 @@ export type AgentHolding = Message<"silvana.orderbook.v1.AgentHolding"> & {
  * Use `create(AgentHoldingSchema)` to create a new message.
  */
 export const AgentHoldingSchema: GenMessage<AgentHolding> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 7);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 8);
 
 /**
  * @generated from message silvana.orderbook.v1.AgentTokenTotal
@@ -257,7 +306,7 @@ export type AgentTokenTotal = Message<"silvana.orderbook.v1.AgentTokenTotal"> & 
  * Use `create(AgentTokenTotalSchema)` to create a new message.
  */
 export const AgentTokenTotalSchema: GenMessage<AgentTokenTotal> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 8);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 9);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentHoldingsResponse
@@ -294,7 +343,7 @@ export type GetAgentHoldingsResponse = Message<"silvana.orderbook.v1.GetAgentHol
  * Use `create(GetAgentHoldingsResponseSchema)` to create a new message.
  */
 export const GetAgentHoldingsResponseSchema: GenMessage<GetAgentHoldingsResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 9);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 10);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentActivityRequest
@@ -314,6 +363,11 @@ export type GetAgentActivityRequest = Message<"silvana.orderbook.v1.GetAgentActi
    * @generated from field: uint32 offset = 3;
    */
   offset: number;
+
+  /**
+   * @generated from field: optional silvana.orderbook.v1.ReadSessionAuth read_session = 4;
+   */
+  readSession?: ReadSessionAuth | undefined;
 };
 
 /**
@@ -321,7 +375,7 @@ export type GetAgentActivityRequest = Message<"silvana.orderbook.v1.GetAgentActi
  * Use `create(GetAgentActivityRequestSchema)` to create a new message.
  */
 export const GetAgentActivityRequestSchema: GenMessage<GetAgentActivityRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 10);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 11);
 
 /**
  * @generated from message silvana.orderbook.v1.AgentActivityItem
@@ -408,7 +462,7 @@ export type AgentActivityItem = Message<"silvana.orderbook.v1.AgentActivityItem"
  * Use `create(AgentActivityItemSchema)` to create a new message.
  */
 export const AgentActivityItemSchema: GenMessage<AgentActivityItem> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 11);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 12);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentActivityResponse
@@ -430,7 +484,7 @@ export type GetAgentActivityResponse = Message<"silvana.orderbook.v1.GetAgentAct
  * Use `create(GetAgentActivityResponseSchema)` to create a new message.
  */
 export const GetAgentActivityResponseSchema: GenMessage<GetAgentActivityResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 12);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 13);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentLedgerRequest
@@ -450,6 +504,11 @@ export type GetAgentLedgerRequest = Message<"silvana.orderbook.v1.GetAgentLedger
    * @generated from field: uint32 offset = 3;
    */
   offset: number;
+
+  /**
+   * @generated from field: optional silvana.orderbook.v1.ReadSessionAuth read_session = 4;
+   */
+  readSession?: ReadSessionAuth | undefined;
 };
 
 /**
@@ -457,7 +516,7 @@ export type GetAgentLedgerRequest = Message<"silvana.orderbook.v1.GetAgentLedger
  * Use `create(GetAgentLedgerRequestSchema)` to create a new message.
  */
 export const GetAgentLedgerRequestSchema: GenMessage<GetAgentLedgerRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 13);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 14);
 
 /**
  * @generated from message silvana.orderbook.v1.AgentLedgerTx
@@ -524,7 +583,7 @@ export type AgentLedgerTx = Message<"silvana.orderbook.v1.AgentLedgerTx"> & {
  * Use `create(AgentLedgerTxSchema)` to create a new message.
  */
 export const AgentLedgerTxSchema: GenMessage<AgentLedgerTx> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 14);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 15);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentLedgerResponse
@@ -546,7 +605,7 @@ export type GetAgentLedgerResponse = Message<"silvana.orderbook.v1.GetAgentLedge
  * Use `create(GetAgentLedgerResponseSchema)` to create a new message.
  */
 export const GetAgentLedgerResponseSchema: GenMessage<GetAgentLedgerResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 15);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 16);
 
 /**
  * Traffic amounts are decimal strings in CC unless the field says token.
@@ -600,7 +659,7 @@ export type AgentTrafficGrant = Message<"silvana.orderbook.v1.AgentTrafficGrant"
  * Use `create(AgentTrafficGrantSchema)` to create a new message.
  */
 export const AgentTrafficGrantSchema: GenMessage<AgentTrafficGrant> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 16);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 17);
 
 /**
  * @generated from message silvana.orderbook.v1.AgentTrafficPurchase
@@ -677,7 +736,7 @@ export type AgentTrafficPurchase = Message<"silvana.orderbook.v1.AgentTrafficPur
  * Use `create(AgentTrafficPurchaseSchema)` to create a new message.
  */
 export const AgentTrafficPurchaseSchema: GenMessage<AgentTrafficPurchase> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 17);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 18);
 
 /**
  * @generated from message silvana.orderbook.v1.TrafficPurchaseToken
@@ -729,7 +788,7 @@ export type TrafficPurchaseToken = Message<"silvana.orderbook.v1.TrafficPurchase
  * Use `create(TrafficPurchaseTokenSchema)` to create a new message.
  */
 export const TrafficPurchaseTokenSchema: GenMessage<TrafficPurchaseToken> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 18);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 19);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentTrafficRequest
@@ -739,6 +798,11 @@ export type GetAgentTrafficRequest = Message<"silvana.orderbook.v1.GetAgentTraff
    * @generated from field: string party_id = 1;
    */
   partyId: string;
+
+  /**
+   * @generated from field: optional silvana.orderbook.v1.ReadSessionAuth read_session = 2;
+   */
+  readSession?: ReadSessionAuth | undefined;
 };
 
 /**
@@ -746,7 +810,7 @@ export type GetAgentTrafficRequest = Message<"silvana.orderbook.v1.GetAgentTraff
  * Use `create(GetAgentTrafficRequestSchema)` to create a new message.
  */
 export const GetAgentTrafficRequestSchema: GenMessage<GetAgentTrafficRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 19);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 20);
 
 /**
  * @generated from message silvana.orderbook.v1.GetAgentTrafficResponse
@@ -818,7 +882,7 @@ export type GetAgentTrafficResponse = Message<"silvana.orderbook.v1.GetAgentTraf
  * Use `create(GetAgentTrafficResponseSchema)` to create a new message.
  */
 export const GetAgentTrafficResponseSchema: GenMessage<GetAgentTrafficResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 20);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 21);
 
 /**
  * @generated from message silvana.orderbook.v1.CreateTrafficPurchaseRequest
@@ -850,7 +914,7 @@ export type CreateTrafficPurchaseRequest = Message<"silvana.orderbook.v1.CreateT
  * Use `create(CreateTrafficPurchaseRequestSchema)` to create a new message.
  */
 export const CreateTrafficPurchaseRequestSchema: GenMessage<CreateTrafficPurchaseRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 21);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 22);
 
 /**
  * @generated from message silvana.orderbook.v1.CreateTrafficPurchaseResponse
@@ -892,7 +956,7 @@ export type CreateTrafficPurchaseResponse = Message<"silvana.orderbook.v1.Create
  * Use `create(CreateTrafficPurchaseResponseSchema)` to create a new message.
  */
 export const CreateTrafficPurchaseResponseSchema: GenMessage<CreateTrafficPurchaseResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 22);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 23);
 
 /**
  * @generated from message silvana.orderbook.v1.GetTrafficPurchaseRequest
@@ -909,7 +973,7 @@ export type GetTrafficPurchaseRequest = Message<"silvana.orderbook.v1.GetTraffic
  * Use `create(GetTrafficPurchaseRequestSchema)` to create a new message.
  */
 export const GetTrafficPurchaseRequestSchema: GenMessage<GetTrafficPurchaseRequest> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 23);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 24);
 
 /**
  * @generated from message silvana.orderbook.v1.GetTrafficPurchaseResponse
@@ -926,7 +990,41 @@ export type GetTrafficPurchaseResponse = Message<"silvana.orderbook.v1.GetTraffi
  * Use `create(GetTrafficPurchaseResponseSchema)` to create a new message.
  */
 export const GetTrafficPurchaseResponseSchema: GenMessage<GetTrafficPurchaseResponse> = /*@__PURE__*/
-  messageDesc(file_silvana_orderbook_v1_agent_account, 24);
+  messageDesc(file_silvana_orderbook_v1_agent_account, 25);
+
+/**
+ * @generated from message silvana.orderbook.v1.CancelTrafficPurchaseRequest
+ */
+export type CancelTrafficPurchaseRequest = Message<"silvana.orderbook.v1.CancelTrafficPurchaseRequest"> & {
+  /**
+   * @generated from field: string purchase_id = 1;
+   */
+  purchaseId: string;
+};
+
+/**
+ * Describes the message silvana.orderbook.v1.CancelTrafficPurchaseRequest.
+ * Use `create(CancelTrafficPurchaseRequestSchema)` to create a new message.
+ */
+export const CancelTrafficPurchaseRequestSchema: GenMessage<CancelTrafficPurchaseRequest> = /*@__PURE__*/
+  messageDesc(file_silvana_orderbook_v1_agent_account, 26);
+
+/**
+ * @generated from message silvana.orderbook.v1.CancelTrafficPurchaseResponse
+ */
+export type CancelTrafficPurchaseResponse = Message<"silvana.orderbook.v1.CancelTrafficPurchaseResponse"> & {
+  /**
+   * @generated from field: silvana.orderbook.v1.AgentTrafficPurchase purchase = 1;
+   */
+  purchase?: AgentTrafficPurchase | undefined;
+};
+
+/**
+ * Describes the message silvana.orderbook.v1.CancelTrafficPurchaseResponse.
+ * Use `create(CancelTrafficPurchaseResponseSchema)` to create a new message.
+ */
+export const CancelTrafficPurchaseResponseSchema: GenMessage<CancelTrafficPurchaseResponse> = /*@__PURE__*/
+  messageDesc(file_silvana_orderbook_v1_agent_account, 27);
 
 /**
  * @generated from enum silvana.orderbook.v1.AgentOnboardingStatus
@@ -1028,6 +1126,14 @@ export const AgentAccountService: GenService<{
     methodKind: "unary";
     input: typeof GetTrafficPurchaseRequestSchema;
     output: typeof GetTrafficPurchaseResponseSchema;
+  },
+  /**
+   * @generated from rpc silvana.orderbook.v1.AgentAccountService.CancelTrafficPurchase
+   */
+  cancelTrafficPurchase: {
+    methodKind: "unary";
+    input: typeof CancelTrafficPurchaseRequestSchema;
+    output: typeof CancelTrafficPurchaseResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_silvana_orderbook_v1_agent_account, 0);

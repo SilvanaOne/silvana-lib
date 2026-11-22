@@ -12,6 +12,7 @@ import "silvana/ledger/v1/multicall.proto";
 import "silvana/ledger/v1/lock.proto";
 import "silvana/ledger/v1/fees.proto";
 import "silvana/ledger/v1/usdcx.proto";
+import "silvana/ledger/v1/control.proto";
 
 option go_package = "github.com/SilvanaOne/canton-agent/proto;ledger";
 
@@ -64,6 +65,9 @@ message PrepareTransactionRequest {
 
   // Message-level signature from cloud agent (Ed25519 over canonical request payload)
   MessageSignature request_signature = 30;
+
+  // Set only for a controller-directed command.
+  ControllerCommand controller_command = 37;
 }
 
 // --- PrepareTransaction Response ---
