@@ -3,6 +3,7 @@ syntax = "proto3";
 package silvana.orderbook.v1;
 
 import "google/protobuf/timestamp.proto";
+import "silvana/orderbook/v1/agent_account.proto";
 
 option go_package = "github.com/SilvanaOne/canton-agent/proto;orderbook";
 
@@ -24,6 +25,7 @@ service AgentControlService {
   rpc ListCommands(ListCommandsRequest) returns (ListCommandsResponse);
   rpc OpenReadSession(OpenReadSessionRequest) returns (OpenReadSessionResponse);
   rpc CloseReadSession(CloseReadSessionRequest) returns (CloseReadSessionResponse);
+  rpc ListNodePackages(ListNodePackagesRequest) returns (ListNodePackagesResponse);
 }
 
 // The agent's side; the caller is the agent party of the token.
@@ -36,6 +38,30 @@ service AgentControlAgentService {
   rpc GetPolicy(GetPolicyRequest) returns (GetPolicyResponse);
   rpc PostReceipt(PostReceiptRequest) returns (PostReceiptResponse);
   rpc AckPolicy(AckPolicyRequest) returns (AckPolicyResponse);
+  rpc ListNodePackages(ListNodePackagesRequest) returns (ListNodePackagesResponse);
+}
+
+// Ed25519 controllers sign in by signing a challenge this rpc issued.
+service AgentControllerSignInService {
+  rpc GetControllerChallenge(GetControllerChallengeRequest) returns (GetControllerChallengeResponse);
+  rpc ControllerSignIn(ControllerSignInRequest) returns (ControllerSignInResponse);
+}
+
+// A signed-in controller's calls; policies and commands still carry their own proofs.
+service AgentControllerService {
+  rpc GetControllerState(GetControlStateRequest) returns (GetControlStateResponse);
+  rpc GetControllerLog(GetControlLogRequest) returns (GetControlLogResponse);
+  rpc GetControllerPolicy(GetPolicyRequest) returns (GetPolicyResponse);
+  rpc SubmitControllerPolicy(SubmitPolicyRequest) returns (SubmitPolicyResponse);
+  rpc SubmitControllerCommand(SubmitCommandRequest) returns (SubmitCommandResponse);
+  rpc GetControllerCommand(GetCommandRequest) returns (GetCommandResponse);
+  rpc ListControllerCommands(ListCommandsRequest) returns (ListCommandsResponse);
+  rpc GetControllerHoldings(ControllerAgentRequest) returns (GetAgentHoldingsResponse);
+  rpc GetControllerTraffic(ControllerAgentRequest) returns (GetAgentTrafficResponse);
+  rpc GetControllerActivity(ControllerPageRequest) returns (GetAgentActivityResponse);
+  rpc GetControllerLedger(ControllerPageRequest) returns (GetAgentLedgerResponse);
+  rpc ListNodePackages(ListNodePackagesRequest) returns (ListNodePackagesResponse);
+  rpc EndControllerSession(EndControllerSessionRequest) returns (EndControllerSessionResponse);
 }
 
 // ---------------------------------------------------------------------------
@@ -91,7 +117,8 @@ enum ControlVerification {
   CONTROL_VERIFICATION_FORKED = 4;
 }
 
-// A pending controller change, effective 24 h after its entry was signed.
+// A pending controller change, effective one controller-change delay after the entry was
+// signed (1 h devnet, 24 h mainnet).
 enum ControlChangeKind {
   CONTROL_CHANGE_KIND_UNSPECIFIED = 0;
   CONTROL_CHANGE_KIND_ADD = 1;
@@ -206,7 +233,7 @@ message ControllerView {
 }
 
 message ControlReceipt {
-  bytes canonical = 1;   // silvana.agent.receipt.v1
+  bytes canonical = 1;   // silvana.agent.receipt.v1, or v2 for an executed swap
   bytes signature = 2;   // 64-byte Ed25519 by the agent key
   ControlReceiptOutcome outcome = 3;
   optional string update_id = 4;
@@ -544,7 +571,7 @@ message GetPolicyResponse {
 }
 
 message PostReceiptRequest {
-  bytes receipt = 1;     // silvana.agent.receipt.v1
+  bytes receipt = 1;     // silvana.agent.receipt.v1, or v2 for an executed swap
   bytes signature = 2;   // 64-byte Ed25519 by the agent key
 }
 
@@ -563,3 +590,74 @@ message AckPolicyRequest {
 message AckPolicyResponse {
   ControlPolicyStatus status = 1;
 }
+
+// ---------------------------------------------------------------------------
+// Node packages (both services and the controller service)
+// ---------------------------------------------------------------------------
+
+message ListNodePackagesRequest {
+  bool include_removed = 1;
+}
+
+// A package the node vets; the times are absent when unknown.
+message NodePackage {
+  string package_id = 1;   // 64 lowercase hex
+  string package_name = 2;
+  string package_version = 3;
+  optional google.protobuf.Timestamp valid_from = 4;
+  optional google.protobuf.Timestamp valid_until = 5;
+  optional google.protobuf.Timestamp first_seen_at = 6;
+  optional google.protobuf.Timestamp last_seen_at = 7;
+  optional google.protobuf.Timestamp removed_at = 8;
+}
+
+// Ordered by package_name, package_version, package_id.
+message ListNodePackagesResponse {
+  string network = 1;
+  string participant_id = 2;
+  string synchronizer_id = 3;
+  google.protobuf.Timestamp refreshed_at = 4;
+  repeated NodePackage packages = 5;
+  uint32 max_packages = 6;   // most ids one policy may select
+  google.protobuf.Timestamp as_of = 7;
+}
+
+// ---------------------------------------------------------------------------
+// AgentControllerSignInService and AgentControllerService
+// ---------------------------------------------------------------------------
+
+message GetControllerChallengeRequest {
+  string agent_party = 1;
+  bytes public_key = 2;  // 32-byte Ed25519
+}
+
+message GetControllerChallengeResponse {
+  bytes challenge = 1;   // silvana.agent.controller-challenge.v1
+  google.protobuf.Timestamp expires_at = 2;
+  google.protobuf.Timestamp server_time = 3;
+}
+
+message ControllerSignInRequest {
+  bytes challenge = 1;   // the bytes as issued
+  bytes proof = 2;       // silvana.agent.proof.v1, Ed25519
+}
+
+message ControllerSignInResponse {
+  string session_token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  google.protobuf.Timestamp server_time = 3;
+}
+
+message ControllerAgentRequest {
+  string agent_party = 1;
+}
+
+message ControllerPageRequest {
+  string agent_party = 1;
+  uint32 limit = 2;
+  uint32 offset = 3;
+}
+
+message EndControllerSessionRequest {}
+
+message EndControllerSessionResponse {}
